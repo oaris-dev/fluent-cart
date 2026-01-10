@@ -85,6 +85,9 @@
   &.fct-create-new-order-bump-modal-popover {
     @apply max-w-[520px];
 
+    .el-select-dropdown__wrap {
+      @apply max-w-[520px];
+    }
     .el-tree {
       .el-tree-node__content {
         @apply h-auto;

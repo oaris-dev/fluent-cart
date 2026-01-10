@@ -9,6 +9,7 @@ use FluentCart\App\Modules\Tax\TaxModule;
 use FluentCart\App\Modules\Templating\AssetLoader;
 use FluentCart\App\Vite;
 use FluentCart\Framework\Support\Arr;
+use FluentCart\App\Modules\PaymentMethods\Core\GatewayManager;
 
 class ThankYouRender
 {
@@ -168,6 +169,8 @@ class ThankYouRender
 
                         <?php $this->renderAddress(); ?>
 
+                        <?php $this->renderThankYouPageInstructions(); ?>
+
                     </div>
                 </div>
             </div>
@@ -279,6 +282,7 @@ class ThankYouRender
         <div class="fct-thank-you-page-order-items-body">
             <?php
             $orderItems = $order->order_items->toArray();
+            $orderItems = $this->buildBundleItemsTree($orderItems);
 
             foreach ($orderItems as $item) :
                 ?>
@@ -287,7 +291,7 @@ class ThankYouRender
                         <p class="fct-thank-you-page-order-items-list-quantity">
                             <?php echo esc_html($item['post_title']); ?>
                             <?php if ($item['quantity'] > 1): ?>
-                                <span>x <?php echo esc_html($item['quantity']); ?></span>
+                                <span>x <?php echo esc_html(Helper::translateNumber($item['quantity'])); ?></span>
                             <?php endif; ?>
                         </p>
                         <p class="fct-thank-you-page-order-items-list-variant-title">
@@ -298,6 +302,8 @@ class ThankYouRender
                                 <?php echo wp_kses_post($item['payment_info']) ?>
                             </p>
                         <?php endif; ?>
+
+                        <?php $this->renderBundleProducts($item); ?>
                     </div>
                     <div class="fct-thank-you-page-order-items-list-price">
                         <div class="fct-thank-you-page-order-items-list-price-inner">
@@ -305,6 +311,8 @@ class ThankYouRender
                         </div>
                     </div>
                 </div>
+
+
             <?php endforeach; ?>
 
             <?php $this->renderOrderTotal(); ?>
@@ -314,6 +322,34 @@ class ThankYouRender
 
         </div>
         <?php
+    }
+
+    public function renderThankYouPageInstructions()
+    {
+        $order = Arr::get($this->config, 'order', null);
+        if (!$order) {
+            return;
+        }
+        $transaction = $order->getLatestTransaction();
+        if ($transaction && !empty($transaction->payment_method)) {
+            $methodSlug = $transaction->payment_method;
+        }
+        if (GatewayManager::has($methodSlug)) {
+            $gatewayInstance = GatewayManager::getInstance($methodSlug);
+            if ($gatewayInstance && isset($gatewayInstance->settings)) {
+                $gatewaySettings = (array) $gatewayInstance->settings->get();
+                $thankYouPageInstructions = Arr::get($gatewaySettings, 'thank_you_page_instructions', '');
+            }
+        }
+
+        if (!empty($thankYouPageInstructions)) : ?>
+
+            <div style="max-width: 620px; margin: 15px auto 0; font-family: Arial, Helvetica, sans-serif;">
+                <div style="font-size: 14px; color: #2F3448; padding: 12px 0; border-top: 1px solid #e7eaee;">
+                    <?php echo wp_kses_post($thankYouPageInstructions); ?>
+                </div>
+            </div>
+        <?php endif;
     }
 
     public function renderOrderTotal()
@@ -466,7 +502,10 @@ class ThankYouRender
                 <?php if ($transaction->card_last_4) :
                     echo esc_html($transaction->card_brand) . ' ' . esc_html($transaction->card_last_4);
                 else:
-                    echo esc_html($transaction->payment_method);
+                    $title = $transaction->payment_method;
+                    $gateway = GatewayManager::getInstance($transaction->payment_method);
+                    $title = $gateway ? $gateway->getMeta('title') : $title;
+                    echo esc_html($title);
                 endif; ?>
             </div>
         </div>
@@ -833,6 +872,106 @@ class ThankYouRender
             )) ?>">
             <?php echo esc_html__('Download Receipt', 'fluent-cart'); ?>
         </a>
+        <?php
+    }
+
+    /**
+     * Build a parent → bundle items relationship from flat order items
+     *
+     * Converts a flat order items list into:
+     * - Parent items
+     * - Each parent contains a ` bundle_items ` array
+     *
+     * @param array $orderItems
+     * @return array
+     */
+    protected function buildBundleItemsTree($orderItems)
+    {
+        if (!$orderItems) {
+            return [];
+        }
+
+        $parents = [];
+        $childrenByParent = [];
+
+        // Separate parents and children
+        foreach ($orderItems as $item) {
+            $parentId = Arr::get($item, 'line_meta.bundle_parent_item_id', null);
+
+            // If bundle child → group by parent ID
+            if ($parentId) {
+                $childrenByParent[$parentId][] = $item;
+
+                // Otherwise it's a parent item
+            } else {
+                $item['bundle_items'] = [];
+                $parents[$item['id']] = $item;
+            }
+        }
+
+        // Attach children to their parent
+        foreach ($childrenByParent as $parentId => $children) {
+            if (isset($parents[$parentId])) {
+                $parents[$parentId]['bundle_items'] = $children;
+            }
+        }
+
+        // Re-index a final array
+        return array_values($parents);
+    }
+
+    public function renderBundleProducts($item)
+    {
+        //dd($item);
+        if (!$item['bundle_items']) {
+            return;
+        }
+
+        $total = count($item['bundle_items']);
+        ?>
+            <div class="fct-bundle-products" data-fluent-cart-collapsibles>
+                <h4 class="fct-bundle-products-title">
+                    <?php echo esc_html__('Bundle of', 'fluent-cart') . ':'; ?>
+                </h4>
+
+                <div class="fct-bundle-products-list">
+                    <?php foreach (array_slice($item['bundle_items'], 0, 2) as $bundleItem): ?>
+                        <p>
+                            <?php echo esc_html(Arr::get($bundleItem, 'title', '')); ?>
+                        </p>
+                    <?php endforeach; ?>
+
+                    <?php if ($total > 2): ?>
+                        <div class="fct-bundle-products-more">
+                            <div class="fct-bundle-products-more-list">
+                                <?php foreach (array_slice($item['bundle_items'], 2) as $bundleItem): ?>
+                                    <p>
+                                        <?php echo esc_html(Arr::get($bundleItem, 'title', '')); ?>
+                                    </p>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <?php if ($total > 2) : ?>
+                    <a href="#" class="fct-see-more-btn" data-fluent-cart-collapsible-toggle>
+                        <span class="see-more-text">
+                            <?php echo esc_html__('See More', 'fluent-cart'); ?>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="7" viewBox="0 0 12 7" fill="none">
+                                <path d="M0.75 0.75L5.04289 5.04289C5.37623 5.37623 5.54289 5.54289 5.75 5.54289C5.95711 5.54289 6.12377 5.37623 6.45711 5.04289L10.75 0.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
+
+                        <span class="see-less-text">
+                            <?php echo esc_html__('See Less', 'fluent-cart'); ?>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="7" viewBox="0 0 14 8" fill="none">
+                                <path d="M0.75 6.54297L6.04289 1.25008C6.37623 0.916742 6.54289 0.750076 6.75 0.750076C6.95711 0.750076 7.12377 0.916742 7.45711 1.25008L12.75 6.54297" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
+                    </a>
+                <?php endif; ?>
+            </div>
         <?php
     }
 

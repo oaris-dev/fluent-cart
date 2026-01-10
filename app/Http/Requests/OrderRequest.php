@@ -17,7 +17,6 @@ class OrderRequest extends RequestGuard
             'invoice_no'            => 'nullable|sanitizeText|maxLength:100',
             'fulfillment_type'      => 'nullable|sanitizeText|maxLength:50',
             'type'                  => 'nullable|sanitizeText|maxLength:50',
-            'customer_id'           => 'required',
             'payment_method'        => 'nullable|sanitizeText|maxLength:50',
             'payment_method_title'  => 'nullable|sanitizeText|maxLength:50',
             'payment_status'        => 'nullable|sanitizeText|maxLength:50',
@@ -32,12 +31,12 @@ class OrderRequest extends RequestGuard
             'total_amount'          => 'numeric',
             'rate'                  => 'numeric',
             'note'                  => 'nullable|sanitizeTextArea|maxLength:5000',
-            'uuid'                  => 'nullable|sanitizeText',
-            'ip_address'            => 'nullable|sanitizeText',
-            'billing_address_id'    => 'nullable|numeric',
-            'shipping_address_id'   => 'nullable|numeric',
-            'completed_at'          => 'nullable|sanitizeText',
-            'refunded_at'           => 'nullable|sanitizeText',
+            'uuid'                  => 'nullable|sanitizeText|maxLength:100',
+            'ip_address'            => 'nullable|sanitizeText|maxLength:100',
+            'completed_at'          => 'nullable|sanitizeText|maxLength:100',
+            'refunded_at'           => 'nullable|sanitizeText|maxLength:100',
+            'customer_id'           => 'required|numeric',
+            'user_tz'               => 'nullable|sanitizeText|maxLength:50',
 
             'order_items'                   => 'required|array',
             "order_items.*.id"              => 'numeric|min:1',
@@ -45,9 +44,10 @@ class OrderRequest extends RequestGuard
             "order_items.*.post_id"         => 'numeric|min:1',
             "order_items.*.variation_id"    => 'numeric|min:1',
             "order_items.*.object_id"       => 'numeric|min:1',
-            "order_items.*.type"            => 'nullable|sanitizeText',
             "order_items.*.fulfillment_type" => 'nullable|sanitizeText',
+            "order_items.*.payment_type"    => 'nullable|sanitizeText|maxLength:100',
             "order_items.*.quantity"        => 'numeric|min:1',
+            "order_items.*.post_title"      => 'nullable|sanitizeText|maxLength:255',
             "order_items.*.title"           => 'nullable|sanitizeText|maxLength:255',
             "order_items.*.price"           => 'numeric',
             "order_items.*.unit_price"      => 'numeric',
@@ -60,36 +60,19 @@ class OrderRequest extends RequestGuard
             "order_items.*.line_total"      => 'numeric',
             "order_items.*.cart_index"      => 'nullable|numeric',
             "order_items.*.rate"            => 'nullable|numeric',
-            "order_items.*.line_meta"       => 'nullable|sanitizeTextArea',
+            "order_items.*.line_meta"       => 'nullable|array',
             "order_items.*.other_info"      => 'nullable|array',
 
-            "discount.type"   => 'nullable|sanitizeText',
+            "discount.type"   => 'nullable|sanitizeText|maxLength:100',
             "discount.value"  => 'nullable|numeric',
-            "discount.label"  => 'nullable|sanitizeText|maxLength:255',
-            "discount.reason" => 'nullable|sanitizeTextArea|maxLength:500',
-            "discount.action" => 'nullable|sanitizeText',
+            "discount.label"  => 'nullable|sanitizeText|maxLength:100',
+            "discount.reason" => 'nullable|sanitizeText|maxLength:100',
+            "discount.action" => 'nullable|sanitizeText|maxLength:100',
 
-            'shipping'                  => 'nullable|array',
-            "shipping.*.type"           => 'nullable|sanitizeText',
-            "shipping.*.rate_name"      => 'nullable|sanitizeText',
-            "shipping.*.custom_price"   => 'nullable|numeric',
-
-            // 'customer' => 'required|array',
-            "customer.id"             => 'required|numeric|min:1',
-            "customer.user_id"        => 'nullable|numeric|min:1',
-            "customer.contact_id"     => 'nullable|numeric|min:1',
-            "customer.email"          => 'required|sanitizeText|email',
-            "customer.first_name"     => 'required|sanitizeText|maxLength:255',
-            "customer.last_name"      => 'sanitizeText|maxLength:255',
-            "customer.status"         => 'nullable|sanitizeText|maxLength:255',
-            "customer.purchase_value" => 'nullable|numeric|min:1',
-            "customer.purchase_count" => 'nullable|numeric|min:1',
-            "customer.country"        => 'nullable|sanitizeText|maxLength:100',
-            "customer.city"           => 'nullable|sanitizeText|maxLength:100',
-            "customer.state"          => 'nullable|sanitizeText|maxLength:100',
-            "customer.postcode"       => 'nullable|sanitizeText|maxPostCode',
-            "customer.uuid"           => 'nullable|sanitizeText|maxLength:100',
-            "customer.full_name"      => 'required|sanitizeText|maxLength:100',
+            'shipping'                => 'nullable|array',
+            "shipping.*.type"         => 'nullable|sanitizeText|maxLength:100',
+            "shipping.*.rate_name"    => 'nullable|sanitizeText|maxLength:100',
+            "shipping.*.custom_price" => 'nullable|numeric',
 
             'deletedItems' => 'nullable|array',
 
@@ -97,10 +80,10 @@ class OrderRequest extends RequestGuard
             "applied_coupon.*.id"                  => 'nullable|numeric|min:1',
             "applied_coupon.*.order_id"            => 'nullable|numeric|min:1',
             "applied_coupon.*.coupon_id"           => 'required|numeric|min:1',
-            //"applied_coupon.*.title"               => 'required|sanitizeText|max:100',
+            //"applied_coupon.*.title"               => 'required|string|max:100',
             "applied_coupon.*.code"                => 'required|sanitizeText|maxLength:100',
-            //"applied_coupon.*.status"              => 'required|sanitizeText|max:100',
-            //"applied_coupon.*.type"                => 'required|sanitizeText|max:100',
+            //"applied_coupon.*.status"              => 'required|string|max:100',
+            //"applied_coupon.*.type"                => 'required|string|max:100',
             "applied_coupon.*.amount"              => 'nullable|numeric',
             "applied_coupon.*.discounted_amount"   => 'required|numeric',
             "applied_coupon.*.discount"            => 'nullable|numeric',
@@ -112,8 +95,7 @@ class OrderRequest extends RequestGuard
             "applied_coupon.*.min_purchase_amount" => 'nullable|numeric',
             "applied_coupon.*.max_discount_amount" => 'nullable|numeric',
             "applied_coupon.*.notes"               => 'nullable|sanitizeTextArea|maxLength:100',
-            'trigger'                              => 'nullable|sanitizeText',
-            'user_tz'                              => 'nullable|sanitizeText',
+            'trigger'                              => 'nullable|string',
         ];
     }
 
@@ -162,16 +144,15 @@ class OrderRequest extends RequestGuard
             'shipping_address_id'   => 'intval',
             'completed_at'          => 'sanitize_text_field',
             'refunded_at'           => 'sanitize_text_field',
-
+            'user_tz'               => 'sanitize_text_field',
 
             "order_items.*.id"              => 'intval',
             "order_items.*.order_id"        => 'intval',
             "order_items.*.post_id"         => 'intval',
-            "order_items.*.variation_id"    => 'intval',
-            "order_items.*.object_id"    => 'intval',
-            "order_items.*.type"            => 'sanitize_text_field',
-            "order_items.*.fulfillment_type" => 'sanitize_text_field',
+            "order_items.*.object_id"       => 'intval',
+            "order_items.*.payment_type"    => 'sanitize_text_field',
             "order_items.*.quantity"        => 'intval',
+            "order_items.*.post_title"      => 'sanitize_text_field',
             "order_items.*.title"           => 'sanitize_text_field',
             "order_items.*.shipping_charge" => 'intval',
             "order_items.*.price"           => 'floatval',
@@ -199,29 +180,9 @@ class OrderRequest extends RequestGuard
             "shipping.*.rate_name"    => 'sanitize_text_field',
             "shipping.*.custom_price" => 'floatval',
 
-            "customer.id"             => 'intval',
-            "customer.user_id"        => 'intval',
-            "customer.contact_id"     => 'intval',
-            "customer.email"          => function ($value) {
-                if(empty($value)) {
-                    return '';
-                }
-
-                return sanitize_email($value);
+            "deletedItems"      => function ($value) {
+                return is_array($value) ? $value : [];
             },
-            "customer.first_name"     => 'sanitize_text_field',
-            "customer.last_name"      => 'sanitize_text_field',
-            "customer.status"         => 'sanitize_text_field',
-            "customer.purchase_value" => 'floatval',
-            "customer.purchase_count" => 'intval',
-            "customer.country"        => 'sanitize_text_field',
-            "customer.city"           => 'sanitize_text_field',
-            "customer.state"          => 'sanitize_text_field',
-            "customer.postcode"       => 'sanitize_text_field',
-            "customer.uuid"           => 'sanitize_text_field',
-            "customer.full_name"      => 'sanitize_text_field',
-
-            'deletedItems' => 'sanitize_text_field',
 
             "applied_coupon.*.id"                  => 'intval',
             "applied_coupon.*.order_id"            => 'intval',
@@ -242,7 +203,6 @@ class OrderRequest extends RequestGuard
             "applied_coupon.*.max_discount_amount" => 'intval',
             "applied_coupon.*.notes"               => 'sanitize_text_field',
             'trigger'                              => 'sanitize_text_field',
-            'user_tz'                              => 'sanitize_text_field',
         ];
 
     }

@@ -6,7 +6,7 @@ window.addEventListener("fluent_cart_app_loaded", function (event) {
     });
 });
 
-window.addEventListener('fluentCartSingleProductModalOpened' , function (event) {
+window.addEventListener('fluentCartSingleProductModalOpened', function (event) {
     let enableZoom = false;
     if (window.fluentcart_single_product_vars.enable_image_zoom_in_modal === 'yes') {
         enableZoom = true;
@@ -58,7 +58,7 @@ export default class ImageGallery {
                 return;
             }
             this.#currentlySelectedVariationId = event.detail.variationId;
-            this.updateGalleryByVariation(this.#currentlySelectedVariationId)
+            this.updateGalleryByVariation(this.#currentlySelectedVariationId);
 
             let controlButtons = this.#thumbnailControlsWrapper?.querySelectorAll(`[data-fluent-cart-thumb-control-button][data-variation-id="${this.#currentlySelectedVariationId}"]`);
             this.#setupControlWrapper(controlButtons);
@@ -79,9 +79,13 @@ export default class ImageGallery {
 
 
     #initImageGallery() {
-        this.#imgContainer.removeEventListener('click', this.#openLightBox.bind(this));
+        if(this.#imgContainer){
+            this.#imgContainer.removeEventListener('click', this.#openLightBox.bind(this));
+        }
         this.#lightBox = new Lightbox({}, []);
-        this.#imgContainer.addEventListener('click', this.#openLightBox.bind(this));
+        if (this.#imgContainer){
+            this.#imgContainer.addEventListener('click', this.#openLightBox.bind(this));
+        }
     }
 
 
@@ -288,8 +292,10 @@ export default class ImageGallery {
         // First, remove 'active' class from all thumbnails
         this.#thumbnailControls.forEach(ctrl => ctrl.classList.remove('active'));
 
+
         if (controlButtons && controlButtons.length > 0) {
             const control = controlButtons[0];
+            control.click();
             control.classList.add('active');
             this.#setThumbImage(control);
         }

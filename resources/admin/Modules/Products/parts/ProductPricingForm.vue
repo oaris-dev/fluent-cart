@@ -137,7 +137,7 @@ keyboardShortcuts.bind(['mod+s'], (event) => {
               <el-input
                   :class="productEditModel.hasValidationError(`${props.fieldKey}.variation_title`) ? 'is-error' : ''"
                   :id="`${props.fieldKey}.variation_title`"
-                  :placeholder="translate('Title')" type="text" v-model="variant.variation_title"
+                  :placeholder="translate('e.g. Small, Medium, Large')" type="text" v-model="variant.variation_title"
                   @input="value => {productEditModel.updatePricingValue('variation_title', value, props.fieldKey, variant, modeType)}">
               </el-input>
               <ValidationError :validation-errors="productEditModel.validationErrors"
@@ -147,7 +147,7 @@ keyboardShortcuts.bind(['mod+s'], (event) => {
           <el-col :lg="8">
             <el-form-item required class="has-tooltip-and-required">
               <LabelHint
-                  :title="translate('Type')"
+                  :title="translate('Fulfillment Type')"
                   placement="bottom"
                   :content="translate('Choosing the Type will impact your order status change flow upon successful payment. For physical items, the status changes from On-Hold to Processing, while for digital items, it changes from On-Hold to Completed.')"
                   style="margin-bottom: 8px;"
@@ -360,7 +360,8 @@ keyboardShortcuts.bind(['mod+s'], (event) => {
                       <template #content>
                         {{ translate('This feature is available in pro version only.') }}
                       </template>
-                      <img :src="appVars?.asset_url + 'images/crown.svg'" alt="pro feature" class="pro-feature-icon">
+
+                      <DynamicIcon name="Crown" class="fct-pro-icon" style="margin-left: 5px;"/>
                     </el-tooltip>
                   </template>
                   <ValidationError :validation-errors="productEditModel.validationErrors"
@@ -456,10 +457,11 @@ keyboardShortcuts.bind(['mod+s'], (event) => {
               <span v-if="!hasPro">
                 <el-tooltip
                     popper-class="fct-tooltip">
-                 <template #content>
-                      {{ translate('This feature is available in pro version only.') }}
-                    </template>
-                       <img :src="appVars?.asset_url + 'images/crown.svg'" alt="pro feature" class="pro-feature-icon">
+                   <template #content>
+                        {{ translate('This feature is available in pro version only.') }}
+                   </template>
+
+                  <DynamicIcon name="Crown" class="fct-pro-icon" style="margin-left: 5px;"/>
                 </el-tooltip>
               </span>
             </el-form-item>
@@ -637,6 +639,23 @@ keyboardShortcuts.bind(['mod+s'], (event) => {
               />
             </el-form-item>
           </div><!-- .fct-admin-input-wrapper -->
+        </el-col>
+      </el-row>
+      <el-row v-if="product.detail?.variation_type === 'simple'">
+        <el-col :lg="24">
+          <el-form-item required class="has-tooltip-and-required">
+            <template #label>
+              <LabelHint :title="translate('Fulfillment Type')"
+                         placement="bottom"
+                         :content="translate('Choosing the Type will impact your order status change flow upon successful payment. For physical items, the status changes from On-Hold to Processing, while for digital items, it changes from On-Hold to Completed.')"
+                         style="margin-bottom: 8px;"
+              />
+            </template>
+            <el-select v-model="variant.fulfillment_type" @change="value => {productEditModel.updatePricingValue('fulfillment_type', value, props.fieldKey, variant, modeType)}" :placeholder="translate('Select')">
+              <el-option v-for="(fulfilmentType, value) in getVariationOptions" :label="fulfilmentType"
+                         :value="value"></el-option>
+            </el-select>
+          </el-form-item>
         </el-col>
       </el-row>
 

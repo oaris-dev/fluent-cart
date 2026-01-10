@@ -155,15 +155,8 @@ const selectFromEmail = () => {
       icon="Message"
     >
       <template #action>
-        <el-switch
-          active-value="yes"
-          inactive-value="no"
-          v-model="notification.enabled"
-          :active-text="
-            notification.enabled == 'yes' ? $t('Enabled') : $t('Enable')
-          "
-        >
-        </el-switch>
+        <!-- Since order_placed notifications should always be enabled for offline payments, we don't show the switch -->
+        <!-- The switch is not relevant for our use case since these notifications auto-trigger for offline payments -->
       </template>
     </CardHeader>
     <CardBody>

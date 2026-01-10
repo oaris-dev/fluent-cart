@@ -167,7 +167,10 @@ class PaypalCheckout {
             createSubscription: function (data, actions) {
                 return actions.subscription.create({
                     'plan_id': orderData.response.planId,
-                    'custom_id': orderData.data.subscription.uuid
+                    'custom_id': orderData.data.subscription.uuid,
+                    'application_context': {
+                        'shipping_preference': 'NO_SHIPPING'
+                    }
                 });
             },
             onApprove: function (data, actions) {

@@ -117,29 +117,31 @@ class ProductFilterRender
                     </div>
 
                     <div id="filter-<?php echo esc_attr($key); ?>" class="fct-shop-checkbox-group">
-                        <?php
-                        foreach ($filter['options'] as $option) :
-                            $option['parent_key'] = $key;
-                            ?>
-                            <?php if (empty($option['children'])) : ?>
-                            <?php $this->renderCheckbox($option); ?>
-                        <?php else : ?>
-                            <div class="fct-shop-checkbox-child-group"
-                                 data-fluent-cart-shop-app-filter-checkbox-child-group>
-                                <?php $this->renderCheckbox($option); ?>
+                        <div class="fct-shop-checkbox-group-inner">
+                            <?php
+                                foreach ($filter['options'] as $option) :
+                                    $option['parent_key'] = $key;
+                                ?>
 
-                                <div class="fct-shop-checkbox-child-options">
-                                    <?php foreach ($option['children'] as $childOption) :
-                                        $childOption['parent_key'] = $key;
-                                        ?>
-                                        <?php $this->renderCheckbox($childOption); ?>
-                                    <?php endforeach; ?>
-                                </div>
-                            </div>
-                        <?php endif; ?>
+                                <?php if (empty($option['children'])) : ?>
+                                    <?php $this->renderCheckbox($option); ?>
+                                <?php else : ?>
+                                    <div class="fct-shop-checkbox-child-group"
+                                         data-fluent-cart-shop-app-filter-checkbox-child-group>
+                                        <?php $this->renderCheckbox($option); ?>
 
-                        <?php endforeach; ?>
+                                        <div class="fct-shop-checkbox-child-options">
+                                            <?php foreach ($option['children'] as $childOption) :
+                                                $childOption['parent_key'] = $key;
+                                                ?>
+                                                <?php $this->renderCheckbox($childOption); ?>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
 
+                            <?php endforeach; ?>
+                        </div>
                     </div>
                 </div>
             <?php endif ?>

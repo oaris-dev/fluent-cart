@@ -162,12 +162,10 @@ const formatPercentage = (value) => {
           min-width="150"
         >
           <template #default="scope">
-            <div class="inline-flex">
-              {{
-                isCheckedPercentage
+            <div class="inline-flex" v-html="isCheckedPercentage
                   ? formatPercentage(scope.row.gross_sales)
-                  : CurrencyFormatter.scaled(scope.row.gross_sales)
-              }}
+                  : CurrencyFormatter.scaled(scope.row.gross_sales)">
+
             </div>
           </template>
         </el-table-column>
@@ -178,8 +176,8 @@ const formatPercentage = (value) => {
           min-width="150"
         >
           <template #default="scope">
-            <div class="inline-flex">
-              {{ isCheckedPercentage ? formatPercentage(scope.row.average_gross) : CurrencyFormatter.scaled(scope.row.average_gross) }}
+            <div class="inline-flex" v-html="isCheckedPercentage ? formatPercentage(scope.row.average_gross) : CurrencyFormatter.scaled(scope.row.average_gross)">
+
             </div>
           </template>
         </el-table-column>
@@ -190,12 +188,10 @@ const formatPercentage = (value) => {
           min-width="150"
         >
           <template #default="scope">
-            <div class="inline-flex">
-              {{
-                isCheckedPercentage
+            <div class="inline-flex" v-html="isCheckedPercentage
                   ? formatPercentage(scope.row.net_sales)
-                  : CurrencyFormatter.scaled(scope.row.net_sales)
-              }}
+                  : CurrencyFormatter.scaled(scope.row.net_sales)">
+
             </div>
           </template>
         </el-table-column>
@@ -206,8 +202,8 @@ const formatPercentage = (value) => {
           min-width="150"
         >
           <template #default="scope">
-            <div class="inline-flex">
-              {{ isCheckedPercentage ? formatPercentage(scope.row.average_net) : CurrencyFormatter.scaled(scope.row.average_net) }}
+            <div class="inline-flex" v-html="isCheckedPercentage ? formatPercentage(scope.row.average_net) : CurrencyFormatter.scaled(scope.row.average_net)">
+
             </div>
           </template>
         </el-table-column>

@@ -6,6 +6,7 @@ namespace FluentCart\App\Models;
 use FluentCart\App\Models\Concerns\CanSearch;
 use FluentCart\App\Models\Concerns\HasActivity;
 use FluentCart\App\Services\DateTime\DateTime;
+use FluentCart\Framework\Support\Arr;
 
 class Coupon extends Model
 {
@@ -221,6 +222,11 @@ class Coupon extends Model
                     ->orWhere('end_date', '=', '0000-00-00 00:00:00')
                     ->orWhere('end_date', '>', DateTime::gmtNow());
             });
+    }
+
+    public function isRecurringDiscount()
+    {
+        return Arr::get($this->conditions, 'is_recurring', false) === 'yes';
     }
 
 }

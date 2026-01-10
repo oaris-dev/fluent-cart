@@ -53,7 +53,7 @@
 
           <div class="flex justify-end mt-2">
             <el-button text class="underline-link-button"
-                     @click="router.push({name: 'reports_overview'})">{{ translate('See Full Report') }}
+                     @click="router.push({name: 'reports_orders'})">{{ translate('See Full Report') }}
             </el-button>
           </div>
         </div>

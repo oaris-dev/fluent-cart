@@ -5,9 +5,11 @@ namespace FluentCart\App\Helpers;
 use FluentCart\Api\Resource\CustomerResource;
 use FluentCart\Api\Resource\FrontendResource\CustomerAddressResource;
 use FluentCart\Api\Resource\FrontendResource\OrderAddressResource;
+use FluentCart\Api\Resource\FrontendResource\OrderResource;
 use FluentCart\Api\StoreSettings;
 use FluentCart\App\App;
 use FluentCart\App\Models\CustomerAddresses;
+use FluentCart\App\Models\Order;
 use FluentCart\App\Models\ShippingMethod;
 use FluentCart\App\Services\Localization\LocalizationManager;
 use FluentCart\App\Services\Renderer\CheckoutFieldsSchema;
@@ -73,7 +75,21 @@ class AddressHelper
         $addressFieldsData['order_id'] = $orderId;
 
         if (!empty($addressFieldsData)) {
-            OrderAddressResource::create($addressFieldsData);
+            if (Arr::get($addressFieldsData, 'order_id') !== null) {
+                $alreadyOrderHasAddress = OrderAddressResource::find(
+                    null,
+                    [
+                        'order_id' => $orderId,
+                        'type' => $type
+                    ]
+                );
+
+                if ($alreadyOrderHasAddress) {
+                    OrderAddressResource::update($addressFieldsData, $alreadyOrderHasAddress->id);
+                } else {
+                    OrderAddressResource::create($addressFieldsData);
+                }
+            }
         }
     }
 
@@ -112,7 +128,7 @@ class AddressHelper
             if ($clientIp) {
                 $ipAddress = $clientIp;
             } else if ($HTTP_X_FORWARDED_FOR) {
-                $ipAddress = (string)rest_is_ip_address(trim(current(preg_split('/,/', sanitize_text_field($HTTP_X_FORWARDED_FOR)))));
+                $ipAddress = (string) rest_is_ip_address(trim(current(preg_split('/,/', sanitize_text_field($HTTP_X_FORWARDED_FOR)))));
             }
         }
 
@@ -184,7 +200,8 @@ class AddressHelper
                 // $netmask is a CIDR size block
                 // fix the range argument
                 $x = explode('.', $range);
-                while (count($x) < 4) $x[] = '0';
+                while (count($x) < 4)
+                    $x[] = '0';
                 list($a, $b, $c, $d) = $x;
                 $range = sprintf("%u.%u.%u.%u", empty($a) ? '0' : $a, empty($b) ? '0' : $b, empty($c) ? '0' : $c, empty($d) ? '0' : $d);
                 $range_dec = ip2long($range);
@@ -210,9 +227,9 @@ class AddressHelper
 
             if (strpos($range, '-') !== false) { // A-B format
                 list($lower, $upper) = explode('-', $range, 2);
-                $lower_dec = (float)sprintf("%u", ip2long($lower));
-                $upper_dec = (float)sprintf("%u", ip2long($upper));
-                $ip_dec = (float)sprintf("%u", ip2long($ip));
+                $lower_dec = (float) sprintf("%u", ip2long($lower));
+                $upper_dec = (float) sprintf("%u", ip2long($upper));
+                $ip_dec = (float) sprintf("%u", ip2long($ip));
                 return (($ip_dec >= $lower_dec) && ($ip_dec <= $upper_dec));
             }
             return false;
@@ -276,7 +293,7 @@ class AddressHelper
         if (count($parts) == 1) {
             return [
                 'first_name' => trim($fullName),
-                'last_name'  => ''
+                'last_name' => ''
             ];
         }
         $lastName = array_pop($parts);
@@ -284,7 +301,7 @@ class AddressHelper
 
         return [
             'first_name' => trim($firstName),
-            'last_name'  => trim($lastName)
+            'last_name' => trim($lastName)
         ];
     }
 
@@ -302,9 +319,9 @@ class AddressHelper
 
         if (!$countryCode) {
             return [
-                'status'     => false,
+                'status' => false,
                 'error_type' => 'no_country',
-                'message'    => __('Please provide your address to view shipping options', 'fluent-cart')
+                'message' => __('Please provide your address to view shipping options', 'fluent-cart')
             ];
         }
 
@@ -325,15 +342,15 @@ class AddressHelper
             $settingView .= '</div>';
 
             return [
-                'status'       => false,
+                'status' => false,
                 'country_code' => $countryCode,
-                'view'         => $settingView
+                'view' => $settingView
             ];
         }
 
         return [
             'available_shipping_methods' => $availableShippingMethods,
-            'country_code'               => $countryCode
+            'country_code' => $countryCode
         ];
     }
 
@@ -402,9 +419,9 @@ class AddressHelper
         }
 
         $addresses = CustomerAddressResource::get([
-            'type'        => $type,
+            'type' => $type,
             'customer_id' => $customer->id,
-            'status'      => 'active'
+            'status' => 'active'
         ]);
 
         $allowedAddresses = [];
@@ -453,20 +470,34 @@ class AddressHelper
     {
         $primaryAddress = Arr::first($addresses);
         $primaryAddressId = '';
-        if ($type === 'billing' && $customer->primary_billing_address) {
-            $primaryAddressId = $customer->primary_billing_address->id;
-            if (!empty(Arr::get($config, 'billing_address_id', ''))) {
-                $primaryAddressId = Arr::get($config, 'billing_address_id');
-            }
-        } else if ($customer->primary_shipping_address) {
-            $primaryAddressId = $customer->primary_shipping_address->id;
-            if (!empty(Arr::get($config, 'shipping_address_id', ''))) {
-                $primaryAddressId = Arr::get($config, 'shipping_address_id');
-            }
-        }
 
-        if (Arr::has($addresses, $primaryAddressId)) {
-            $primaryAddress = $addresses[$primaryAddressId];
+        $orderId = Arr::get($config, 'order_id', null);
+        if ($orderId) {
+            $order = Order::find($orderId);
+
+            if ($type === 'billing') {
+                if ($order && $order->billing_address) {
+                    $primaryAddress = $order->billing_address->toArray();
+                } else if ($order && $order->shipping_address) {
+                    $primaryAddress = $order->shipping_address->toArray();
+                }
+            }
+        } else {
+            if ($type === 'billing' && $customer->primary_billing_address) {
+                $primaryAddressId = $customer->primary_billing_address->id;
+                if (!empty(Arr::get($config, 'billing_address_id', ''))) {
+                    $primaryAddressId = Arr::get($config, 'billing_address_id');
+                }
+            } else if ($customer->primary_shipping_address) {
+                $primaryAddressId = $customer->primary_shipping_address->id;
+                if (!empty(Arr::get($config, 'shipping_address_id', ''))) {
+                    $primaryAddressId = Arr::get($config, 'shipping_address_id');
+                }
+            }
+
+            if (Arr::has($addresses, $primaryAddressId)) {
+                $primaryAddress = $addresses[$primaryAddressId];
+            }
         }
 
         return $primaryAddress;
@@ -482,24 +513,34 @@ class AddressHelper
             }
 
             $addressModel = CustomerAddresses::find($data[$type . '_address_id']);
+
             if ($addressModel && $addressModel->customer_id == $currentCustomer->id) {
                 $addressData = $addressModel->getFormattedDataForCheckout($type . '_');
 
                 //  dd($addressData, $addressModel->id);
 
                 foreach ($addressData as $key => $value) {
-                    $data[$key] = $value;
+                    if (!isset($data[$key]) || $data[$key] === '' || $data[$key] !== $value) {
+                        $data[$key] = $value;
+                    }
                 }
             }
         }
-
         return $data;
     }
 
     public static function mergeBillingWithShipping($data)
     {
         $keys = [
-            'full_name', 'address_1', 'address_2', 'city', 'state', 'phone', 'postcode', 'country'
+            'full_name',
+            'address_1',
+            'address_2',
+            'city',
+            'state',
+            'phone',
+            'postcode',
+            'country',
+            'company_name'
         ];
         foreach ($keys as $key) {
             $data['shipping_' . $key] = Arr::get($data, 'billing_' . $key, '');

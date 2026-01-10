@@ -3,13 +3,13 @@
 namespace FluentCart\App\Modules\PaymentMethods\StripeGateway;
 
 use FluentCart\App\App;
+use FluentCart\App\Helpers\CurrenciesHelper;
 use FluentCart\App\Helpers\Status;
 use FluentCart\App\Helpers\StatusHelper;
 use FluentCart\App\Models\Customer;
 use FluentCart\App\Models\Order;
 use FluentCart\App\Models\OrderTransaction;
 use FluentCart\App\Models\Subscription;
-use FluentCart\App\Modules\PaymentMethods\Core\GatewayManager;
 use FluentCart\App\Modules\PaymentMethods\StripeGateway\API\API;
 use FluentCart\App\Modules\Subscriptions\Services\SubscriptionService;
 use FluentCart\App\Services\DateTime\DateTime;
@@ -31,44 +31,187 @@ class Confirmations
             return $value;
         }, 10, 2);
 
-        $stripeHosted = App::request()->get('fct_stripe_hosted');
-        $transactionHash = App::request()->get('trx_hash');
-        if ($stripeHosted && $transactionHash) {
-            $transaction = OrderTransaction::query()->where('uuid', sanitize_text_field(App::request()->get('trx_hash')))->first();
-            if ($transaction->status === Status::TRANSACTION_SUCCEEDED) {
+    
+       if (isset($_REQUEST['fct_stripe_hosted']) && isset($_REQUEST['trx_hash'])) {
+           $transaction = OrderTransaction::query()->where('uuid', sanitize_text_field(App::request()->get('trx_hash')))->first();
+           if (!$transaction || $transaction->status === Status::TRANSACTION_SUCCEEDED) {
+               return;
+           }
+
+            // Get session ID from transaction meta
+            $sessionId = Arr::get($transaction->meta, 'session_id');
+            
+            if ($sessionId) {
+                $this->confirmByCheckoutSession($sessionId, $transaction);
+            } else {
                 return;
             }
+       }
 
-            $chargeId = Arr::get($transaction, 'vendor_charge_id', false);
+    }
+  
+    private function confirmByCheckoutSession($sessionId, $transaction)
+    {
+      
+        $api = new API();
 
-            if ($chargeId && Arr::get($transaction, 'meta.ref_type') !== 'session') {
+        $session = $api->getStripeObject('checkout/sessions/' . $sessionId, [
+            'expand' => ['payment_intent', 'subscription.latest_invoice.payment_intent.latest_charge']
+        ]);
 
-                App::request()->set('intentId', $chargeId);
-                if (!empty($chargeId)) {
-                    $this->confirmStripePayment();
+
+        if (is_wp_error($session)) {
+            fluent_cart_add_log(__('Stripe Session Retrieval Failed', 'fluent-cart'), $session->get_error_message(), 'error', [
+                'module_name' => 'order',
+                'module_id'   => $transaction->order_id,
+            ]);
+            return;
+        }
+
+        $paymentStatus = Arr::get($session, 'payment_status');
+        $mode = Arr::get($session, 'mode');
+
+        if ($mode === 'subscription') {
+            $vendorSubscription = Arr::get($session, 'subscription');
+            $vendorSubscriptionId = is_array($vendorSubscription) ? Arr::get($vendorSubscription, 'id') : $vendorSubscription;
+            
+            $subscription = Subscription::query()->where('id', $transaction->subscription_id)->first();
+            
+            if ($subscription && $vendorSubscriptionId) {
+                $updateData = [
+                    'vendor_subscription_id' => $vendorSubscriptionId,
+                    'vendor_customer_id' => Arr::get($vendorSubscription, 'customer'),
+                ];
+                
+
+                if (is_array($vendorSubscription)) {
+                    if (Arr::get($vendorSubscription, 'current_period_end')) {
+                        $updateData['next_billing_date'] = gmdate('Y-m-d H:i:s', (int) Arr::get($vendorSubscription, 'current_period_end'));
+                    }
+                    
+                    if (Arr::get($vendorSubscription, 'trial_end')) {
+                        $updateData['trial_ends_at'] = gmdate('Y-m-d H:i:s', (int) Arr::get($vendorSubscription, 'trial_end'));
+                    }
                 }
-            } else {
-                $this->validateBySession(Arr::get($transaction, 'meta.id'));
+                
+                $subscription->update($updateData);
+            }
+
+            $paymentIntent = null;
+            $billingInfo = [];
+            
+
+            if (is_array($vendorSubscription)) {
+                $paymentIntent = Arr::get($vendorSubscription, 'latest_invoice.payment_intent');
+            }
+            
+
+            if (!$paymentIntent && Arr::get($session, 'invoice')) {
+                $invoiceId = Arr::get($session, 'invoice');
+                $invoice = $api->getStripeObject('invoices/' . $invoiceId, [
+                    'expand' => ['payment_intent.latest_charge']
+                ]);
+                if (!is_wp_error($invoice)) {
+                    $paymentIntent = Arr::get($invoice, 'payment_intent.latest_charge');
+                }
+            }
+
+            if (!is_array($paymentIntent)) {
+                $paymentIntent = $api->getStripeObject('payment_intents/' . $paymentIntent, [
+                    'expand' => ['latest_charge']
+                ]);
+            }
+
+
+            $charge = Arr::get($paymentIntent, 'latest_charge', []);
+
+            if ($charge) {
+                $billingInfo = $this->extractBillingInfoFromCharge($charge);
+                $this->processPaymentIntentConfirmation($paymentIntent, $transaction);
+            }   else {
+                if ($paymentStatus === 'paid' || $transaction->total <= 0) {
+                    // Try to get payment method from setup intent
+                    $setupIntent = Arr::get($session, 'setup_intent');
+                    if ($setupIntent) {
+                        $setupIntentData = $api->getStripeObject('setup_intents/' . $setupIntent);
+                        if (!is_wp_error($setupIntentData)) {
+                            $paymentMethodId = Arr::get($setupIntentData, 'payment_method');
+                            if ($paymentMethodId) {
+                                $billingInfo = $this->getPaymentMethodDetails($paymentMethodId);
+                            }
+                        }
+                    }
+                    
+                    $transaction->status = Status::TRANSACTION_SUCCEEDED;
+                    $transaction->save();
+                }
+            }
+
+            if ($subscription && !in_array($subscription->status, Status::getValidableSubscriptionStatuses())) {
+                (new SubscriptionsManager())->confirmSubscriptionAfterChargeSucceeded($subscription, $billingInfo);
+            }
+
+            (new StatusHelper($transaction->order))->syncOrderStatuses($transaction);
+            
+        } else {
+            if ($paymentStatus === 'paid') {
+                $paymentIntent = Arr::get($session, 'payment_intent');
+                if (is_array($paymentIntent)) {
+                    $paymentIntent = $api->getStripeObject('payment_intents/' . $paymentIntent['id'], [
+                        'expand' => ['latest_charge']
+                    ]);
+                    $this->processPaymentIntentConfirmation($paymentIntent, $transaction);
+                } elseif ($paymentIntent) {
+                    $intentData = $api->getStripeObject('payment_intents/' . $paymentIntent, [
+                        'expand' => ['latest_charge']
+                    ]);
+                    if (!is_wp_error($intentData)) {
+                        $this->processPaymentIntentConfirmation($intentData, $transaction);
+                    }
+                }
             }
         }
-//        if (isset($_REQUEST['fct_stripe_hosted']) && isset($_REQUEST['trx_hash'])) {
-//            $transaction = OrderTransaction::query()->where('uuid', sanitize_text_field(App::request()->get('trx_hash')))->first();
-//            if ($transaction->status === Status::TRANSACTION_SUCCEEDED) {
-//                return;
-//            }
-//
-//            $chargeId = Arr::get($transaction, 'vendor_charge_id', false);
-//
-//            if ($chargeId && Arr::get($transaction, 'meta.ref_type') !== 'session') {
-//                $_REQUEST['intentId'] = sanitize_text_field($chargeId);
-//                if (!empty($_REQUEST['intentId'])) {
-//                    $this->confirmStripePayment();
-//                }
-//            } else {
-//                $this->validateBySession(Arr::get($transaction, 'meta.id'));
-//            }
-//        }
+    }
 
+
+    /**
+     * Process payment intent confirmation
+     */
+    private function processPaymentIntentConfirmation($intent, $transaction)
+    {
+        $charge = Arr::get($intent, 'latest_charge', []);
+        $intentId = Arr::get($intent, 'id');
+
+        if ($charge && $intentId) {
+            $this->confirmPaymentSuccessByCharge($transaction, [
+                'charge'    => $charge,
+                'intent_id' => $intentId
+            ]);
+        }
+    }
+
+    /**
+     * Extract billing info from charge for subscription confirmation
+     */
+    private function extractBillingInfoFromCharge($charge)
+    {
+        $billingDetails = Arr::get($charge, 'billing_details', []);
+        $paymentMethodDetails = Arr::get($charge, 'payment_method_details', []);
+        
+        return [
+            'method'           => 'stripe',
+            'vendor_method_id' => Arr::get($charge, 'payment_method', ''),
+            'payment_type'     => Arr::get($paymentMethodDetails, 'type'),
+            'details'          => array_filter([
+                'brand'       => Arr::get($paymentMethodDetails, 'card.brand'),
+                'last_4'      => Arr::get($paymentMethodDetails, 'card.last4'),
+                'exp_month'   => Arr::get($paymentMethodDetails, 'card.exp_month'),
+                'exp_year'    => Arr::get($paymentMethodDetails, 'card.exp_year'),
+                'country'     => Arr::get($paymentMethodDetails, 'card.country'),
+                'postal_code' => Arr::get($billingDetails, 'address.postal_code', ''),
+                'name'        => Arr::get($billingDetails, 'name', '')
+            ])
+        ];
     }
 
     /*
@@ -304,54 +447,6 @@ class Confirmations
         return $billingInfo;
     }
 
-    /*
-     * To validate by session, id
-     *
-      */
-    public function validateBySession($id)
-    {
-        $apiKey = GatewayManager::getInstance('stripe')->settings->getApiKey();
-
-        $session = (new API())->makeRequest('checkout/sessions/' . $id, [], $apiKey, 'GET');
-
-        if (!$session || is_wp_error($session)) {
-            return;
-        }
-
-        $subscriptionId = Arr::get($session, 'subscription');
-        $isPaid = Arr::get($session, 'payment_status') === 'paid';
-
-        if ($isPaid
-            &&
-            $order = Order::query()
-                ->where('uuid', Arr::get($session, 'client_reference_id'))
-                ->first()
-        ) {
-            $order->payment_status = Status::PAYMENT_PAID;
-            $order->status = Status::ORDER_PROCESSING;
-            $order->save();
-
-            OrderTransaction::query()
-                ->where('order_id', $order->id)
-                ->where('vendor_charge_id', $id)
-                ->where('order_type', 'subscription')
-                ->where('transaction_type', Status::TRANSACTION_TYPE_CHARGE)
-                ->update(['status' => 'active', 'vendor_charge_id' => $subscriptionId]);
-
-            OrderTransaction::query()
-                ->where('order_id', $order->id)
-                ->where('vendor_charge_id', $id)
-                ->where('order_type', 'subscription')
-                ->where('transaction_type', '!=', Status::TRANSACTION_TYPE_CHARGE)
-                ->update(['status' => Status::TRANSACTION_SUCCEEDED]);
-
-            Subscription::query()->where('parent_order_id', $order->id)
-                ->update([
-                    'vendor_subscription_id' => $subscriptionId
-                ]);
-        }
-    }
-
 
     /**
      * Confirm payment success by charge.
@@ -379,11 +474,26 @@ class Confirmations
             return $order; // already confirmed
         }
 
+        $chargeCurrency = Arr::get($charge, 'currency', $transaction->currency);
         $status = Arr::get($charge, 'status') === 'succeeded' ? Status::TRANSACTION_SUCCEEDED : Status::TRANSACTION_PENDING;
+
+        if ($status === Status::TRANSACTION_PENDING) {
+            if (!$transaction->vendor_charge_id && !empty($intentId)) {
+                $transaction->update(['vendor_charge_id' => $intentId]);
+            }
+            return $order; // already pending, 
+        }
+
+        $normalizedAmount = (int)Arr::get($charge, 'amount', 0);
+
+        if ($chargeCurrency && CurrenciesHelper::isZeroDecimal($chargeCurrency)) {
+            $normalizedAmount = $normalizedAmount * 100;
+        }
+
         $transactionUpdateData = array_filter([
             'order_id'            => $order->id,
-            'total'               => (int)Arr::get($charge, 'amount'),
-            'currency'            => Arr::get($charge, 'currency'),
+            'total'               => $normalizedAmount,
+            'currency'            => $chargeCurrency,
             'status'              => $status,
             'payment_method'      => 'stripe',
             'card_last_4'         => Arr::get($charge, 'payment_method_details.card.last4', ''),
@@ -490,3 +600,4 @@ class Confirmations
     }
 
 }
+

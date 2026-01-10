@@ -23,6 +23,13 @@
       />
 
       <MaterialInput
+          :label="translate('Company Name')"
+          required
+          :class="validationErrors.hasOwnProperty('company_name') ? 'is-error' : ''"
+          v-model="editableAddress.company_name"
+      />
+
+      <MaterialInput
           :label="translate('Phone')"
           required
           :class="validationErrors.hasOwnProperty('phone') ? 'is-error' : ''"

@@ -1280,10 +1280,10 @@
             if (index === 0) {
                 mainObj = el;
                 if (getData(mainObj, 'xzoom')) return getData(mainObj, 'xzoom');
-                mainObj.x = new XObject(mainObj, options);
-            } else if (mainObj && mainObj.x) {
+                mainObj.xob = new XObject(mainObj, options);
+            } else if (mainObj && mainObj.xob) {
                 secObj = el;
-                mainObj.x.xappend(secObj);
+                mainObj.xob.xappend(secObj);
             }
         });
 
@@ -1291,7 +1291,7 @@
 
         setData(mainObj, 'xzoom', mainObj.x);
         triggerEvent(mainObj, 'xzoom_ready');
-        return mainObj.x;
+        return mainObj.xob;
     };
 
 })();

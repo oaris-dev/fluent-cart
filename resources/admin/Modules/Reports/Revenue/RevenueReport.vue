@@ -8,6 +8,7 @@ import revenueReport from "@/Models/Reports/RevenueReportModel";
 import UserCan from "@/Bits/Components/Permission/UserCan.vue";
 import Comparison from "./Comparison.vue";
 import translate from "@/utils/translator/Translator";
+import PageHeading from "@/Bits/Components/Layout/PageHeading.vue";
 
 const props = defineProps({
   reportFilter: {
@@ -81,11 +82,7 @@ onUnmounted(() => {
 <template>
   <UserCan :permission="'reports/view'">
     <div class="fct-revenue-report-page">
-      <div class="page-heading-wrap flex items-center justify-between">
-        <h1 class="page-title">
-          {{ translate('Revenue') }}
-        </h1>
-      </div>
+      <PageHeading :title="translate('Revenue')"></PageHeading>
 
       <RevenueReportSummary :reportFilter="reportFilter" />
 

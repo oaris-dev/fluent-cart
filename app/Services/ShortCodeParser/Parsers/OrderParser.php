@@ -79,7 +79,15 @@ class OrderParser extends BaseParser
 
         if (in_array($accessor, ['updated_at', 'created_at'])) {
             $date = Arr::get($this->data, $this->attributeMap[$accessor]);
-            return DateTime::gmtToTimezone($date, $this->orderTz)->format('M d, Y');
+            $timestamp = DateTime::anyTimeToGmt($date)->getTimestamp();
+
+            $date = wp_date(
+                get_option('date_format'),
+                $timestamp,
+                new \DateTimeZone($this->orderTz)
+            );
+            
+            return Helper::translateNumber($date);
         }
 
         if (in_array($accessor, $this->centColumns)) {

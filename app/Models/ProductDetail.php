@@ -185,4 +185,13 @@ class ProductDetail extends Model
             'variation_id' => $variationId
         ]);
     }
+    public function getMinPriceAttribute()
+    {
+        return $this->variants()->min('item_price');
+    }
+
+    public function getMaxPriceAttribute()
+    {
+        return $this->variants()->max('item_price');
+    }
 }

@@ -56,7 +56,7 @@ const handleStatusChange = (value) => {
 };
 
 const getStatusTooltip = () => {
-  return translate('Status controls the product\'s visibility on the public page and its purchasability. \'Publish\' indicates that it is live and can be purchased, \'Draft\' signifies that it is in private editing, and \'Schedule\' means it will be publish on a specified date. The status can only be changed once pricing is set.');
+  return translate('Status controls the product\'s visibility on the public page and its purchasability. \'Publish\' indicates that it is live and can be purchased, \'Draft\' signifies that it is in private editing, and \'Schedule\' means it will be publish on a specified date. \'Private\' means,  Only visible to adminstrators but can be purchased via direct purchase link. The status can only be changed once pricing is set.');
 }
 
 const defaultOtherInfo = {
@@ -96,11 +96,12 @@ onMounted(() => {
                          :content="getStatusTooltip()"></LabelHint>
             </span>
             <div class="fct-product-status-chosen-wrap" id="fct-product-status-chosen-wrap">
-              <el-popover v-if="hasVariations()" trigger="click" placement="bottom-end" width="250" popper-class="filter-popover">
+              <el-popover v-if="hasVariations()" trigger="click" placement="bottom-end" width="300" popper-class="filter-popover">
                 <div id="fct-product-status-chosen-dropdown" class="fct-product-status-chosen-dropdown">
                   <el-radio-group class="fct-radios-blocks" v-model="product.post_status" @change="handleStatusChange">
                     <el-radio value="draft">{{ translate('Draft') }}</el-radio>
                     <el-radio value="future">{{ translate('Scheduled') }}</el-radio>
+                    <el-radio value="private">{{ translate('Private (Invisible except Admin)') }}</el-radio>
                     <el-radio value="publish">{{ translate('Publish') }}</el-radio>
                   </el-radio-group>
                   <div v-if="product.post_status === 'future'" style="margin-top: 20px;">
@@ -114,6 +115,11 @@ onMounted(() => {
                         @change="value => {productEditModel.onChangeInputField('post_date',value)}"
                     />
                   </div>
+                    <div v-else-if="product.post_status === 'private'">
+                        <p class="text-sm text-gray-500 mt-4">
+                            {{ translate('Note: Private products are only visible to administrators but can be purchased via direct purchase link.') }}
+                        </p>
+                    </div>
                 </div>
                 <template #reference>
                   <el-button id="fct-product-status-toggle" type="primary" class="is-tertiary el-button--x-small"
@@ -132,7 +138,7 @@ onMounted(() => {
 
             </div><!-- .fct-product-status-chosen-wrap -->
           </li>
-          <li class="fct-admin-summary-item" v-if="product.post_status === 'publish'">
+          <li class="fct-admin-summary-item">
             <span class="fct-admin-summary-item-title flex items-center gap-1">{{ translate('URL Slug') }} <a :href="product.view_url" class="focus:outline-none focus:shadow-none" target="_blank"><DynamicIcon name="Redirect" class="w-3 h-3 text-primary-500 dark:text-gray-200" /></a></span>
             <div class="fct-product-url-slug-container">
 

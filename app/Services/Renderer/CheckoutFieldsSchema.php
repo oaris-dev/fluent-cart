@@ -33,31 +33,31 @@ class CheckoutFieldsSchema
 
         $nameFields = [
             'billing_full_name' => [
-                'id'           => 'billing_full_name',
-                'name'         => 'billing_full_name',
-                'type'         => 'text',
-                'data-type'    => 'text',
-                'label'        => '',
-                'is_core'      => 'yes',
-                'required'     => 'yes',
+                'id' => 'billing_full_name',
+                'name' => 'billing_full_name',
+                'type' => 'text',
+                'data-type' => 'text',
+                'label' => '',
+                'is_core' => 'yes',
+                'required' => 'yes',
                 'autocomplete' => 'given-name',
-                'value'        => $customerName,
-                'placeholder'  => esc_attr__('Full Name', 'fluent-cart'),
-                'aria-label'   => esc_attr__('Your Full Name', 'fluent-cart'),
+                'value' => $customerName,
+                'placeholder' => esc_attr__('Full Name *', 'fluent-cart'),
+                'aria-label' => esc_attr__('Your Full Name', 'fluent-cart'),
             ],
-            'billing_email'     => [
-                'id'           => 'billing_email',
-                'name'         => 'billing_email',
-                'type'         => 'text',
-                'data-type'    => 'email',
-                'required'     => 'yes',
-                'label'        => '',
-                'is_core'      => 'yes',
+            'billing_email' => [
+                'id' => 'billing_email',
+                'name' => 'billing_email',
+                'type' => 'text',
+                'data-type' => 'email',
+                'required' => 'yes',
+                'label' => '',
+                'is_core' => 'yes',
                 'autocomplete' => 'email',
-                'value'        => $customerEmail,
-                'disabled'     => is_user_logged_in(),
-                'placeholder'  => esc_attr__('Email address *', 'fluent-cart'),
-                'aria-label'   => esc_attr__('Email address', 'fluent-cart'),
+                'value' => $customerEmail,
+                'disabled' => is_user_logged_in(),
+                'placeholder' => esc_attr__('Email address *', 'fluent-cart'),
+                'aria-label' => esc_attr__('Email address', 'fluent-cart'),
             ]
         ];
 
@@ -70,28 +70,28 @@ class CheckoutFieldsSchema
             $isRequired = Arr::get($companyField, 'required', 'no') === 'yes' ? 'yes' : '';
 
             $nameFields['billing_company_name'] = [
-                'name'         => 'billing_company_name',
-                'id'           => 'billing_company_name',
-                'type'         => 'text',
-                'data-type'    => 'text',
-                'required'     => $isRequired,
-                'label'        => '',
-                'aria-label'   => esc_attr__('Company name', 'fluent-cart'),
-                'placeholder'  => esc_attr__('Company name', 'fluent-cart') . ($isRequired ? ' *' : ''),
+                'name' => 'billing_company_name',
+                'id' => 'billing_company_name',
+                'type' => 'text',
+                'data-type' => 'text',
+                'required' => $isRequired,
+                'label' => '',
+                'aria-label' => esc_attr__('Company name', 'fluent-cart'),
+                'placeholder' => esc_attr__('Company name', 'fluent-cart') . ($isRequired ? ' *' : ''),
                 'autocomplete' => 'organization',
-                'value'        => $companyName,
+                'value' => $companyName,
             ];
         }
 
         $nameFields = apply_filters('fluent_cart/checkout_page_name_fields_schema', $nameFields, [
-            'cart'  => $cart,
+            'cart' => $cart,
             'scope' => $scope
         ]);
 
         return [
-            'type'   => 'section',
-            'title'  => '',
-            'id'     => 'billing_personal_information_section',
+            'type' => 'section',
+            'title' => '',
+            'id' => 'billing_personal_information_section',
             'fields' => $nameFields,
         ];
     }
@@ -100,25 +100,25 @@ class CheckoutFieldsSchema
     {
 
         $configDefaults = [
-            'type'          => 'billing', // billing or shipping
-            'product_type'  => 'digital', // digital or physical
+            'type' => 'billing', // billing or shipping
+            'product_type' => 'digital', // digital or physical
             'with_shipping' => false, // only for billing type, if true and type is billing, then shipping fields will be returned without full_name field
-            'full_name'     => '',
-            'country'       => '',
-            'address_1'     => '',
-            'address_2'     => '',
-            'state'         => '',
-            'city'          => '',
-            'postcode'      => '',
-            'company_name'  => '',
-            'phone'         => '',
+            'full_name' => '',
+            'country' => '',
+            'address_1' => '',
+            'address_2' => '',
+            'state' => '',
+            'city' => '',
+            'postcode' => '',
+            'company_name' => '',
+            'phone' => '',
         ];
 
         $config = wp_parse_args($config, $configDefaults);
 
         $selectedCountry = Arr::get($config, 'country');
         if (empty($selectedCountry)) {
-            $HTTP_CF_IP_COUNTRY = Arr::get( App::request()->server(), 'HTTP_CF_IPCOUNTRY');
+            $HTTP_CF_IP_COUNTRY = Arr::get(App::request()->server(), 'HTTP_CF_IPCOUNTRY');
             $selectedCountry = $HTTP_CF_IP_COUNTRY ?? $selectedCountry;
         }
 
@@ -126,7 +126,7 @@ class CheckoutFieldsSchema
         if (empty($config['state']) || empty($selectedCountry)) {
             $states = [
                 [
-                    'name'  => __('Select an option', 'fluent-cart'),
+                    'name' => __('Select an option', 'fluent-cart'),
                     'value' => ''
                 ]
             ];
@@ -141,7 +141,7 @@ class CheckoutFieldsSchema
         $stateLabel = Arr::get($addressLocale, 'state.label', __('State', 'fluent-cart'));
         $countries = [
             [
-                'name'  => __('Select a Country', 'fluent-cart'),
+                'name' => __('Select a Country', 'fluent-cart'),
                 'value' => ''
             ]
         ];
@@ -157,33 +157,33 @@ class CheckoutFieldsSchema
 
         if (empty($states) && !Arr::get($addressLocale, 'state.hidden')) {
             $stateInput = [
-                'name'         => $type . '_state',
-                'id'           => $type . '_state',
-                'type'         => 'text',
-                'data-type'    => 'text',
-                'label'        => '',
-                'required'     => 'yes',
+                'name' => $type . '_state',
+                'id' => $type . '_state',
+                'type' => 'text',
+                'data-type' => 'text',
+                'label' => '',
+                'required' => 'yes',
                 'autocomplete' => 'address-level2',
-                'placeholder'  => $stateLabel,
-                'aria-label'   => $stateLabel,
-                'value'        => $config['state'],
+                'placeholder' => $stateLabel,
+                'aria-label' => $stateLabel,
+                'value' => $config['state'],
                 'wrapper_atts' => [
                     'id' => $type . '_state_wrapper'
                 ]
             ];
         } else {
             $stateInput = [
-                'name'         => $type . '_state',
-                'id'           => $type . '_state',
-                'type'         => 'select',
-                'data-type'    => 'select',
-                'label'        => '',
-                'options'      => $states,
-                'required'     => 'yes',
+                'name' => $type . '_state',
+                'id' => $type . '_state',
+                'type' => 'select',
+                'data-type' => 'select',
+                'label' => '',
+                'options' => $states,
+                'required' => 'yes',
                 'autocomplete' => 'address-level2',
-                'placeholder'  => $stateLabel,
-                'aria-label'   => $stateLabel,
-                'value'        => $config['state'],
+                'placeholder' => $stateLabel,
+                'aria-label' => $stateLabel,
+                'value' => $config['state'],
                 'wrapper_atts' => [
                     'id' => $type . '_state_wrapper'
                 ]
@@ -191,104 +191,104 @@ class CheckoutFieldsSchema
         }
 
         $fields = [
-            'full_name'    => [
-                'id'           => $type . '_full_name',
-                'name'         => $type . '_full_name',
-                'type'         => 'text',
-                'data-type'    => 'text',
-                'label'        => '',
-                'is_core'      => 'yes',
-                'required'     => 'yes',
+            'full_name' => [
+                'id' => $type . '_full_name',
+                'name' => $type . '_full_name',
+                'type' => 'text',
+                'data-type' => 'text',
+                'label' => '',
+                'is_core' => 'yes',
+                'required' => 'yes',
                 'autocomplete' => 'given-name',
-                'value'        => $config['full_name'],
-                'placeholder'  => esc_attr__('Full Name', 'fluent-cart'),
-                'aria-label'   => esc_attr__('Your Full Name', 'fluent-cart'),
+                'value' => $config['full_name'],
+                'placeholder' => esc_attr__('Full Name', 'fluent-cart'),
+                'aria-label' => esc_attr__('Your Full Name', 'fluent-cart'),
             ],
-            'country'      => [
-                'name'         => $type . '_country',
-                'id'           => $type . '_country',
-                'type'         => 'select',
-                'options'      => $countries,
-                'data-type'    => 'text',
-                'label'        => '',
-                'aria-label'   => esc_attr__('Country / Region', 'fluent-cart'),
-                'required'     => 'yes',
+            'country' => [
+                'name' => $type . '_country',
+                'id' => $type . '_country',
+                'type' => 'select',
+                'options' => $countries,
+                'data-type' => 'text',
+                'label' => '',
+                'aria-label' => esc_attr__('Country / Region', 'fluent-cart'),
+                'required' => 'yes',
                 'autocomplete' => 'country',
-                'placeholder'  => esc_attr__('Country / Region', 'fluent-cart'),
-                'value'        => $selectedCountry,
+                'placeholder' => esc_attr__('Country / Region', 'fluent-cart'),
+                'value' => $selectedCountry,
             ],
-            'address_1'    => [
-                'name'         => $type . '_address_1',
-                'id'           => $type . '_address_1',
-                'type'         => 'text',
-                'data-type'    => 'text',
-                'label'        => '',
-                'aria-label'   => esc_attr__('Street Address', 'fluent-cart'),
+            'address_1' => [
+                'name' => $type . '_address_1',
+                'id' => $type . '_address_1',
+                'type' => 'text',
+                'data-type' => 'text',
+                'label' => '',
+                'aria-label' => esc_attr__('Street Address', 'fluent-cart'),
                 /* translators: use local order of street name and house number. */
-                'placeholder'  => esc_attr__('Street Address', 'fluent-cart'),
-                'required'     => 'yes',
+                'placeholder' => esc_attr__('Street Address', 'fluent-cart'),
+                'required' => 'yes',
                 'autocomplete' => 'address-line1',
-                'value'        => $config['address_1'],
+                'value' => $config['address_1'],
             ],
-            'address_2'    => [
-                'name'         => $type . '_address_2',
-                'id'           => $type . '_address_2',
-                'type'         => 'text',
-                'data-type'    => 'text',
-                'label'        => '',
-                'aria-label'   => esc_attr__('Apt, suite, unit', 'fluent-cart'),
-                'label_class'  => array(''),
-                'placeholder'  => esc_attr__('Apt, suite, unit', 'fluent-cart'),
+            'address_2' => [
+                'name' => $type . '_address_2',
+                'id' => $type . '_address_2',
+                'type' => 'text',
+                'data-type' => 'text',
+                'label' => '',
+                'aria-label' => esc_attr__('Apt, suite, unit', 'fluent-cart'),
+                'label_class' => array(''),
+                'placeholder' => esc_attr__('Apt, suite, unit', 'fluent-cart'),
                 'autocomplete' => 'address-line2',
-                'value'        => $config['address_2'],
+                'value' => $config['address_2'],
             ],
-            'state'        => $stateInput,
-            'city'         => [
-                'name'         => $type . '_city',
-                'id'           => $type . '_city',
-                'type'         => 'text',
-                'data-type'    => 'text',
-                'label'        => '',
-                'aria-label'   => esc_attr__('Town / City', 'fluent-cart'),
-                'required'     => 'yes',
+            'state' => $stateInput,
+            'city' => [
+                'name' => $type . '_city',
+                'id' => $type . '_city',
+                'type' => 'text',
+                'data-type' => 'text',
+                'label' => '',
+                'aria-label' => esc_attr__('Town / City', 'fluent-cart'),
+                'required' => 'yes',
                 'autocomplete' => 'address-level2',
-                'placeholder'  => esc_attr__('Town / City', 'fluent-cart'),
-                'value'        => $config['city'],
+                'placeholder' => esc_attr__('Town / City', 'fluent-cart'),
+                'value' => $config['city'],
             ],
-            'postcode'     => [
-                'name'         => $type . '_postcode',
-                'id'           => $type . '_postcode',
-                'type'         => 'text',
-                'data-type'    => 'text',
-                'label'        => '',
-                'aria-label'   => esc_attr__('Postal / ZIP Code', 'fluent-cart'),
-                'required'     => 'yes',
-                'validate'     => array('postcode'),
+            'postcode' => [
+                'name' => $type . '_postcode',
+                'id' => $type . '_postcode',
+                'type' => 'text',
+                'data-type' => 'text',
+                'label' => '',
+                'aria-label' => esc_attr__('Postal / ZIP Code', 'fluent-cart'),
+                'required' => 'yes',
+                'validate' => array('postcode'),
                 'autocomplete' => 'postal-code',
-                'placeholder'  => esc_attr__('Postcode / ZIP', 'fluent-cart'),
-                'value'        => $config['postcode'],
+                'placeholder' => esc_attr__('Postcode / ZIP', 'fluent-cart'),
+                'value' => $config['postcode'],
             ],
-            'phone'        => [
-                'name'         => $type . '_phone',
-                'id'           => $type . '_phone',
-                'type'         => 'tel',
-                'data-type'    => 'text',
-                'label'        => '',
-                'aria-label'   => esc_attr__('Phone number', 'fluent-cart'),
-                'placeholder'  => esc_attr__('Phone number', 'fluent-cart'),
+            'phone' => [
+                'name' => $type . '_phone',
+                'id' => $type . '_phone',
+                'type' => 'tel',
+                'data-type' => 'text',
+                'label' => '',
+                'aria-label' => esc_attr__('Phone number', 'fluent-cart'),
+                'placeholder' => esc_attr__('Phone number', 'fluent-cart'),
                 'autocomplete' => 'tel',
-                'value'        => $config['phone'],
+                'value' => $config['phone'],
             ],
             'company_name' => [
-                'name'         => $type . '_company_name',
-                'id'           => $type . '_company_name',
-                'type'         => 'text',
-                'data-type'    => 'text',
-                'label'        => '',
-                'aria-label'   => esc_attr__('Company name', 'fluent-cart'),
-                'placeholder'  => esc_attr__('Company name', 'fluent-cart'),
+                'name' => $type . '_company_name',
+                'id' => $type . '_company_name',
+                'type' => 'text',
+                'data-type' => 'text',
+                'label' => '',
+                'aria-label' => esc_attr__('Company name', 'fluent-cart'),
+                'placeholder' => esc_attr__('Company name', 'fluent-cart'),
                 'autocomplete' => 'organization',
-                'value'        => $config['company_name'],
+                'value' => $config['company_name'],
             ],
         ];
 
@@ -318,8 +318,8 @@ class CheckoutFieldsSchema
         }
 
         return apply_filters('fluent_cart/fields/address_base_fields', $fields, [
-            'config'       => $config,
-            'scope'        => $scope,
+            'config' => $config,
+            'scope' => $scope,
             'requirements' => $requirementsFields
         ]);
     }
@@ -348,40 +348,40 @@ class CheckoutFieldsSchema
         $billingConfig = Arr::get($fieldsConfig, 'billing_address', []);
 
         $dataConfig = [
-            'full_name'    => [
-                'billing'  => '',
+            'full_name' => [
+                'billing' => '',
                 'shipping' => 'required'
             ],
-            'country'      => [
-                'billing'  => self::getRequirementType($billingConfig, 'country'),
+            'country' => [
+                'billing' => self::getRequirementType($billingConfig, 'country'),
                 'shipping' => self::getRequirementType($shippingConfig, 'country')
             ],
-            'address_1'    => [
-                'billing'  => self::getRequirementType($billingConfig, 'address_1'),
+            'address_1' => [
+                'billing' => self::getRequirementType($billingConfig, 'address_1'),
                 'shipping' => self::getRequirementType($shippingConfig, 'address_1')
             ],
-            'address_2'    => [
-                'billing'  => self::getRequirementType($billingConfig, 'address_2'),
+            'address_2' => [
+                'billing' => self::getRequirementType($billingConfig, 'address_2'),
                 'shipping' => self::getRequirementType($shippingConfig, 'address_2')
             ],
-            'state'        => [
-                'billing'  => self::getRequirementType($billingConfig, 'state'),
+            'state' => [
+                'billing' => self::getRequirementType($billingConfig, 'state'),
                 'shipping' => self::getRequirementType($shippingConfig, 'state')
             ],
-            'city'         => [
-                'billing'  => self::getRequirementType($billingConfig, 'city'),
+            'city' => [
+                'billing' => self::getRequirementType($billingConfig, 'city'),
                 'shipping' => self::getRequirementType($shippingConfig, 'city')
             ],
-            'postcode'     => [
-                'billing'  => self::getRequirementType($billingConfig, 'postcode'),
+            'postcode' => [
+                'billing' => self::getRequirementType($billingConfig, 'postcode'),
                 'shipping' => self::getRequirementType($shippingConfig, 'postcode')
             ],
             'company_name' => [
-                'billing'  => self::getRequirementType($billingConfig, 'company_name'),
+                'billing' => self::getRequirementType($billingConfig, 'company_name'),
                 'shipping' => self::getRequirementType($shippingConfig, 'company_name')
             ],
-            'phone'        => [
-                'billing'  => self::getRequirementType($billingConfig, 'phone'),
+            'phone' => [
+                'billing' => self::getRequirementType($billingConfig, 'phone'),
                 'shipping' => self::getRequirementType($shippingConfig, 'phone')
             ]
         ];
@@ -413,105 +413,105 @@ class CheckoutFieldsSchema
     public static function getFieldsSchemaConfig()
     {
         return [
-            'basic_info'       => [
-                'full_name'    => [
-                    'label'     => __('Full Name', 'fluent-cart'),
-                    'type'      => 'text',
+            'basic_info' => [
+                'full_name' => [
+                    'label' => __('Full Name', 'fluent-cart'),
+                    'type' => 'text',
                     'can_alter' => 'no',
                 ],
-                'email'        => [
-                    'label'     => __('Email Address', 'fluent-cart'),
-                    'type'      => 'email',
+                'email' => [
+                    'label' => __('Email Address', 'fluent-cart'),
+                    'type' => 'email',
                     'can_alter' => 'no',
                 ],
                 'company_name' => [
-                    'label'     => __('Company', 'fluent-cart'),
-                    'type'      => 'text',
+                    'label' => __('Company', 'fluent-cart'),
+                    'type' => 'text',
                     'can_alter' => 'yes',
                 ]
             ],
-            'billing_address'  => [
-                'country'   => [
-                    'label'     => __('Country', 'fluent-cart'),
-                    'type'      => 'text',
+            'billing_address' => [
+                'country' => [
+                    'label' => __('Country', 'fluent-cart'),
+                    'type' => 'text',
                     'can_alter' => 'yes',
                 ],
-                'state'     => [
-                    'label'     => __('State', 'fluent-cart'),
-                    'type'      => 'text',
+                'state' => [
+                    'label' => __('State', 'fluent-cart'),
+                    'type' => 'text',
                     'can_alter' => 'yes',
                 ],
                 'address_1' => [
-                    'label'     => __('Street Address', 'fluent-cart'),
-                    'type'      => 'text',
+                    'label' => __('Street Address', 'fluent-cart'),
+                    'type' => 'text',
                     'can_alter' => 'yes',
                 ],
                 'address_2' => [
-                    'label'     => __('Apt, suite, unit', 'fluent-cart'),
-                    'type'      => 'text',
+                    'label' => __('Apt, suite, unit', 'fluent-cart'),
+                    'type' => 'text',
                     'can_alter' => 'yes',
                 ],
-                'city'      => [
-                    'label'     => __('City', 'fluent-cart'),
-                    'type'      => 'text',
+                'city' => [
+                    'label' => __('City', 'fluent-cart'),
+                    'type' => 'text',
                     'can_alter' => 'yes',
                 ],
-                'postcode'  => [
-                    'label'     => __('Post Code', 'fluent-cart'),
-                    'type'      => 'text',
+                'postcode' => [
+                    'label' => __('Post Code', 'fluent-cart'),
+                    'type' => 'text',
                     'can_alter' => 'yes',
                 ],
-                'phone'     => [
-                    'label'     => __('Phone', 'fluent-cart'),
-                    'type'      => 'text',
+                'phone' => [
+                    'label' => __('Phone', 'fluent-cart'),
+                    'type' => 'text',
                     'can_alter' => 'yes',
                 ]
             ],
             'shipping_address' => [
                 'full_name' => [
-                    'label'     => __('Full Name', 'fluent-cart'),
-                    'type'      => 'text',
+                    'label' => __('Full Name', 'fluent-cart'),
+                    'type' => 'text',
                     'can_alter' => 'no',
                 ],
-                'country'   => [
-                    'label'     => __('Country', 'fluent-cart'),
-                    'type'      => 'text',
+                'country' => [
+                    'label' => __('Country', 'fluent-cart'),
+                    'type' => 'text',
                     'can_alter' => 'yes',
                 ],
-                'state'     => [
-                    'label'     => __('State', 'fluent-cart'),
-                    'type'      => 'text',
+                'state' => [
+                    'label' => __('State', 'fluent-cart'),
+                    'type' => 'text',
                     'can_alter' => 'yes',
                 ],
                 'address_1' => [
-                    'label'     => __('Street Address', 'fluent-cart'),
-                    'type'      => 'text',
+                    'label' => __('Street Address', 'fluent-cart'),
+                    'type' => 'text',
                     'can_alter' => 'yes',
                 ],
                 'address_2' => [
-                    'label'     => __('Apt, suite, unit', 'fluent-cart'),
-                    'type'      => 'text',
+                    'label' => __('Apt, suite, unit', 'fluent-cart'),
+                    'type' => 'text',
                     'can_alter' => 'yes',
                 ],
-                'city'      => [
-                    'label'     => __('City', 'fluent-cart'),
-                    'type'      => 'text',
+                'city' => [
+                    'label' => __('City', 'fluent-cart'),
+                    'type' => 'text',
                     'can_alter' => 'yes',
                 ],
-                'postcode'  => [
-                    'label'     => __('Post Code', 'fluent-cart'),
-                    'type'      => 'text',
+                'postcode' => [
+                    'label' => __('Post Code', 'fluent-cart'),
+                    'type' => 'text',
                     'can_alter' => 'yes',
                 ],
-                'phone'     => [
-                    'label'     => __('Phone', 'fluent-cart'),
-                    'type'      => 'text',
+                'phone' => [
+                    'label' => __('Phone', 'fluent-cart'),
+                    'type' => 'text',
                     'can_alter' => 'yes',
                 ]
             ],
-            'agree_terms'      => [
-                'label'     => __('Agree Terms and Conditions', 'fluent-cart'),
-                'type'      => 'checkbox',
+            'agree_terms' => [
+                'label' => __('Agree Terms and Conditions', 'fluent-cart'),
+                'type' => 'checkbox',
                 'can_alter' => 'yes',
             ]
         ];
@@ -520,88 +520,96 @@ class CheckoutFieldsSchema
     public static function getFieldsSettings()
     {
         $defaults = [
-            'basic_info'       => [
-                'full_name'    => [
+            'basic_info' => [
+                'full_name' => [
                     'required' => 'yes',
-                    'enabled'  => 'yes'
+                    'enabled' => 'yes'
                 ],
-                'email'        => [
+                'email' => [
                     'required' => 'yes',
-                    'enabled'  => 'yes'
+                    'enabled' => 'yes'
                 ],
                 'company_name' => [
                     'required' => 'no',
-                    'enabled'  => 'no'
+                    'enabled' => 'no'
                 ]
             ],
-            'billing_address'  => [
-                'country'   => [
+            'billing_address' => [
+                'country' => [
                     'required' => 'yes',
-                    'enabled'  => 'yes'
+                    'enabled' => 'yes'
                 ],
-                'state'     => [
+                'state' => [
                     'required' => 'yes',
-                    'enabled'  => 'yes'
+                    'enabled' => 'yes'
                 ],
                 'address_1' => [
                     'required' => 'yes',
-                    'enabled'  => 'yes'
+                    'enabled' => 'yes'
                 ],
                 'address_2' => [
                     'required' => 'no',
-                    'enabled'  => 'yes'
+                    'enabled' => 'yes'
                 ],
-                'city'      => [
+                'city' => [
                     'required' => 'yes',
-                    'enabled'  => 'yes'
+                    'enabled' => 'yes'
                 ],
-                'postcode'  => [
+                'postcode' => [
                     'required' => 'yes',
-                    'enabled'  => 'yes'
+                    'enabled' => 'yes'
                 ],
-                'phone'     => [
+                'phone' => [
                     'required' => 'no',
-                    'enabled'  => 'no'
+                    'enabled' => 'no'
+                ],
+                'company_name' => [
+                    'required' => 'no',
+                    'enabled' => 'no'
                 ]
             ],
             'shipping_address' => [
                 'full_name' => [
                     'required' => 'yes',
-                    'enabled'  => 'yes',
+                    'enabled' => 'yes',
                 ],
-                'country'   => [
+                'country' => [
                     'required' => 'yes',
-                    'enabled'  => 'yes'
+                    'enabled' => 'yes'
                 ],
-                'state'     => [
+                'state' => [
                     'required' => 'yes',
-                    'enabled'  => 'yes'
+                    'enabled' => 'yes'
                 ],
                 'address_1' => [
                     'required' => 'yes',
-                    'enabled'  => 'yes'
+                    'enabled' => 'yes'
                 ],
                 'address_2' => [
                     'required' => 'no',
-                    'enabled'  => 'yes'
+                    'enabled' => 'yes'
                 ],
-                'city'      => [
+                'city' => [
                     'required' => 'yes',
-                    'enabled'  => 'yes'
+                    'enabled' => 'yes'
                 ],
-                'postcode'  => [
+                'postcode' => [
                     'required' => 'yes',
-                    'enabled'  => 'yes'
+                    'enabled' => 'yes'
                 ],
-                'phone'     => [
+                'phone' => [
                     'required' => 'no',
-                    'enabled'  => 'no'
+                    'enabled' => 'no'
+                ],
+                'company_name' => [
+                    'required' => 'no',
+                    'enabled' => 'no'
                 ]
             ],
-            'agree_terms'      => [
+            'agree_terms' => [
                 'required' => 'no',
-                'enabled'  => 'no',
-                'text'     => __('I agree to the terms and conditions.', 'fluent-cart')
+                'enabled' => 'no',
+                'text' => ''
             ]
         ];
 
@@ -641,5 +649,4 @@ class CheckoutFieldsSchema
 
         return $text;
     }
-
 }

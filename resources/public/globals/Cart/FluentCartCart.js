@@ -165,6 +165,17 @@ export default class FluentCartCart {
                         if (xhr.status >= 200 && xhr.status < 300) {
                             const response = JSON.parse(xhr.responseText);
 
+
+                            const cartData = response.data?.cart?.cart_data;
+                            let cartItemCount = 0;
+                            if(Array.isArray(cartData)) {
+                                cartItemCount = cartData.length;
+                                //to all element that have data-cart-badge-count attr set the text as cartItemCount
+                                document.querySelectorAll('[data-cart-badge-count]').forEach(el => {
+                                    el.textContent = cartItemCount.toString();
+                                });
+                            }
+
                             if (response && response?.fragments) {
                                 if (response.fragments) {
                                     // check if array response.fragments

@@ -16,7 +16,7 @@ use FluentCart\Framework\Support\Arr;
 
 class Cod extends AbstractPaymentGateway
 {
-    public array $supportedFeatures = ['payment', 'refund'];
+    public array $supportedFeatures = ['payment', 'refund', 'subscriptions'];
 
     public BaseGatewaySettings $settings;
 
@@ -102,7 +102,7 @@ class Cod extends AbstractPaymentGateway
                 )
             ];
 
-            (new OrderStatusUpdated($order, $orderStatus, 'completed', true, $actionActivity, 'order_status'))->dispatch();
+            (new OrderStatusUpdated($order, $orderStatus, Status::ORDER_COMPLETED, (bool) true, $actionActivity, 'order_status'))->dispatch();
 
             $this->maybeUpdateSubscription($params);
 
@@ -199,7 +199,7 @@ class Cod extends AbstractPaymentGateway
             'status' => Status::PAYMENT_PENDING
         ];
         $order = OrderResource::getOrderByHash($orderHash);
-        $this->updateOrderDataByOrder($order, $updateData);
+        $this->updateOrderDataByOrder($order, $updateData, null);
     }
 
     public function refund($refundInfo, $orderData, $transaction)

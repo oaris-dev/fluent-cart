@@ -9,6 +9,7 @@ import dayjs from "dayjs";
 import Rest from "@/utils/http/Rest";
 import Confirmation from "@/utils/Confirmation";
 import AppConfig from "@/utils/Config/AppConfig";
+import Arr from "@/utils/support/Arr";
 
 class ProductEditModel extends ProductBaseModel {
 
@@ -27,12 +28,22 @@ class ProductEditModel extends ProductBaseModel {
         metaValue: null,
         hasChangeLongDescEditor: false,
         reloader: () => {
-        }
+        },
+        onProductUpdatedListener: {},
     };
 
     //productDownloadableModel = null;
 
-    router = useRouter()
+    router = useRouter();
+
+    addOnProductUpdatedListener(name, callback) {
+        this.data.onProductUpdatedListener[name] = callback;
+    }
+
+
+    addOnProductUpdatedListener(name, callback) {
+        this.data.onProductUpdatedListener[name] = callback;
+    }
 
     setProductDownloadableModel(model) {
         this.data.productDownloadableModel = model;
@@ -330,6 +341,11 @@ class ProductEditModel extends ProductBaseModel {
 
         return req.then(response => {
             Notify.success(response.message);
+            Object.values(this.data.onProductUpdatedListener).forEach(callback => {
+                if(typeof callback === 'function'){
+                    callback(this.product);
+                }
+            })
             //this.saveSnapshot();
             return response;
         })
@@ -362,6 +378,16 @@ class ProductEditModel extends ProductBaseModel {
             this.onChangePricingPayment(variant, value, index)
         }
 
+        if (name === 'fulfillment_type') {
+            // check if fulfillment_type exist in product_changes.details
+            if (!this.data.product_changes.detail) {
+                this.data.product_changes.detail = {};
+            }
+
+            this.data.product_changes.detail.fulfillment_type = value;
+            this.data.product_changes.variants[index]['fulfillment_type'] = value;
+        }
+
         // if(name === 'compare_price') {
         //   variant['compare_price'] = ( value <= 0 )? 1 : value
         // }
@@ -382,7 +408,19 @@ class ProductEditModel extends ProductBaseModel {
         this.data.product_changes.variants[index]['id'] = variant.id;
         this.data.product_changes.detail['id'] = this.product.detail.id;
 
+
         if (this.product.detail.variation_type === 'simple') {
+
+            if (name === 'fulfillment_type') {
+                // check if fulfillment_type exist in product_changes.details
+                if (!this.data.product_changes.detail) {
+                    this.data.product_changes.detail = {};
+                }
+
+                this.data.product_changes.detail.fulfillment_type = value;
+                this.data.product_changes.variants[index]['fulfillment_type'] = value;
+            }
+
             this.product.variants[0] = variant;
             this.setHasChange(true)
         }
@@ -858,8 +896,16 @@ class ProductEditModel extends ProductBaseModel {
 
             this.data.product_changes = {};
 
+
+            Object.values(this.data.onProductUpdatedListener).forEach(callback => {
+                if(typeof callback === 'function'){
+                    callback(this.product);
+                }
+            })
+
             //this.saveSnapshot();
         }).catch((errors) => {
+            console.log(errors)
             if (errors.status_code.toString() === '422') {
                 Notify.validationErrors(errors);
                 this.setValidationErrors(errors)
@@ -908,8 +954,9 @@ class ProductEditModel extends ProductBaseModel {
         this.product.detail[name] = value
 
         let data = {
-            'variation_type': value,
-            'variation_ids': [this.product?.variants[0]?.id]
+            'variation_type' : value,
+            'variation_ids'  : [this.product?.variants[0]?.id],
+            'action'         : 'change_variation_type'
         };
 
 
@@ -986,8 +1033,12 @@ class ProductEditModel extends ProductBaseModel {
         return this.product.variants.every(variant => variant.fulfillment_type === 'physical');
     }
 
-    shippingSettingsUrl = () => {
+    shippingSettingsUrl () {
         return AppConfig.get('admin_url') + 'settings/shipping';
+    }
+
+    isBundleProduct = () =>{
+        return Arr.get(this.data.product, 'detail.other_info.is_bundle_product') === 'yes';
     }
 
 

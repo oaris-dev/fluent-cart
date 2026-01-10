@@ -16,6 +16,13 @@ class EmailNotificationMailer
     public function register()
     {
         // $this->registerAsyncMails();
+        add_action('fluent_cart/order_placed_offline', function ($data) {
+            $this->mailEmailsOfEvent(
+                'order_placed_offline',
+                $data
+            );
+
+        }, 999, 1);
         // To Customer
         add_action('fluent_cart/order_paid', function ($data) {
             $this->mailEmailsOfEvent(
@@ -58,6 +65,10 @@ class EmailNotificationMailer
     {
         //For Async Actions
         add_action('fluent_cart/async_mail/order_created', function ($orderId, $mailName = '') {
+            (new static())->sendAsyncOrderMail($mailName, $orderId);
+        }, 10, 2);
+
+        add_action('fluent_cart/async_mail/order_placed_offline', function ($orderId, $mailName = '') {
             (new static())->sendAsyncOrderMail($mailName, $orderId);
         }, 10, 2);
 

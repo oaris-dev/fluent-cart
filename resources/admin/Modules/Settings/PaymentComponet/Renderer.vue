@@ -1,5 +1,5 @@
 <script setup>
-import {getCurrentInstance, onMounted, ref, nextTick, computed} from "vue";
+import {getCurrentInstance, onMounted, onUnmounted, ref, nextTick, computed} from "vue";
 import ConnectAccount from "@/Modules/Settings/Parts/_connect_account.vue";
 import Tabs from "@/Modules/Settings/PaymentComponet/Tabs.vue";
 import ColorPicker   from "@/Bits/Components/Form/Components/Base/Inputs/ColorPicker.vue";
@@ -10,6 +10,7 @@ import ContentCard from "@/Bits/Components/Card/ContentCard.vue";
 import PayPalWebhookSetup from "@/Modules/Settings/PaymentComponet/PayPalWebhookSetup.vue";
 import translate from "@/utils/translator/Translator";
 import AppConfig from "@/utils/Config/AppConfig";
+import Notify from "@/utils/Notify";
 
 const selfRef = getCurrentInstance().ctx;
 const connect_config = ref({});
@@ -76,9 +77,124 @@ const getConnectConfig = () => {
       })
 }
 
+// Handle addon install and activate button clicks, for addons gateways
+const handleAddonButtonClick = (event) => {
+  const target = event.target;
+  
+  // Check if clicked element is install button
+  if (target.classList.contains('fct-install-addon-btn') || target.closest('.fct-install-addon-btn')) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const button = target.classList.contains('fct-install-addon-btn') ? target : target.closest('.fct-install-addon-btn');
+    const addonSlug = button.getAttribute('data-addon-slug');
+    const addonFile = button.getAttribute('data-addon-file');
+    const sourceType = button.getAttribute('data-source-type');
+    const sourceLink = button.getAttribute('data-source-link');
+    
+    if (addonSlug && addonFile) {
+      installAndActivateAddon({
+        slug: addonSlug,
+        file: addonFile,
+        source_type: sourceType || 'github',
+        source_link: sourceLink || ''
+      });
+    }
+    return;
+  }
+  
+  if (target.classList.contains('fct-activate-addon-btn') || target.closest('.fct-activate-addon-btn')) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const button = target.classList.contains('fct-activate-addon-btn') ? target : target.closest('.fct-activate-addon-btn');
+    const addonFile = button.getAttribute('data-addon-file');
+    
+    if (addonFile) {
+      activateAddon({
+        file: addonFile
+      });
+    }
+  }
+};
+
+const installAndActivateAddon = (gateway) => {
+  const button = document.querySelector(`[data-addon-slug="${gateway.slug}"]`);
+  if (button) {
+    button.disabled = true;
+    button.innerHTML = '<span class="el-icon-loading"></span> ' + translate('Installing...');
+  }
+  
+  selfRef.$post('settings/payment-methods/install-addon', {
+    plugin_slug: gateway.slug,
+    source_type: gateway.source_type,
+    source_link: gateway.source_link
+  })
+  .then(response => {
+    Notify.success({
+      message: response.message || translate('Addon installed and activated successfully!')
+    });
+    
+    // Reload the page to show updated gateway list
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+  })
+  .catch(error => {
+    Notify.error({
+      message: error?.message || translate('Failed to install addon')
+    });
+    
+    if (button) {
+      button.disabled = false;
+      button.innerHTML = '<svg style="width: 18px; height: 18px; margin-right: 8px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13 10H18L12 16L6 10H11V3H13V10M4 19H20V12H22V20C22 20.5304 21.7893 21.0391 21.4142 21.4142C21.0391 21.7893 20.5304 22 20 22H4C3.46957 22 2.96086 21.7893 2.58579 21.4142C2.21071 21.0391 2 20.5304 2 20V12H4V19Z"/></svg>' + translate('Install Addon');
+    }
+  });
+};
+
+const activateAddon = (gateway) => {
+  const button = document.querySelector(`[data-addon-file="${gateway.file}"]`);
+  if (button) {
+    button.disabled = true;
+    button.innerHTML = '<span class="el-icon-loading"></span> ' + translate('Activating...');
+  }
+  
+  selfRef.$post('settings/payment-methods/activate-addon', {
+    plugin_file: gateway.file
+  })
+  .then(response => {
+    Notify.success({
+      message: response.message || translate('Addon activated successfully!')
+    });
+    
+    // Reload the page to show updated gateway list
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+  })
+  .catch(error => {
+    Notify.error({
+      message: error?.message || translate('Failed to activate addon')
+    });
+    
+    if (button) {
+      button.disabled = false;
+      button.innerHTML = '<svg style="width: 18px; height: 18px; margin-right: 8px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>' + translate('Activate Addon');
+    }
+  });
+};
+
 onMounted(() => {
   getConnectConfig();
-})
+  
+  // Add event listener for addon buttons
+  document.addEventListener('click', handleAddonButtonClick);
+});
+
+onUnmounted(() => {
+  // Cleanup event listener
+  document.removeEventListener('click', handleAddonButtonClick);
+});
 
 </script>
 

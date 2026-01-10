@@ -349,8 +349,8 @@ class CustomerController extends Controller
 
         $errors = [];
 
-        if ($rule === 'required' && empty($value)) {
-            if (!in_array($value, array_column($states, 'value'))) {
+        if ($rule === 'required') {
+            if (empty($value)) {
                 if (!isset($errors[$key])) {
                     $errors = [];
                 }
@@ -359,15 +359,15 @@ class CustomerController extends Controller
                     __('%s is required.', 'fluent-cart'),
                     $titledKey
                 );
+            } else {
+                if ( !in_array($value, array_column($states, 'value'))) {
+                    $errors['invalid'] = sprintf(
+                    /* translators: 1: attribute name */
+                        __('%s is invalid.', 'fluent-cart'),
+                        $titledKey
+                    );
+                }
             }
-        }
-
-        if ( !in_array($value, array_column($states, 'value'))) {
-            $errors['invalid'] = sprintf(
-                /* translators: 1: attribute name */
-                __('%s is invalid.', 'fluent-cart'),
-                $titledKey
-            );
         }
 
         return $errors;

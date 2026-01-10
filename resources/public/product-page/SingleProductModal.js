@@ -68,10 +68,10 @@ export default class SingleProductModal {
         modalBodyElement.className = 'fluent-cart-shop-app-single-product-modal-body';
 
         const loaderElement = document.createElement('div');
-        loaderElement.className = 'fct-cart-drawer-loader show';
+        loaderElement.className = 'fct-loader-wrap show';
         loaderElement.setAttribute('data-fluent-cart-cart-drawer-loader', '');
         const loaderSpinWrap = document.createElement('div');
-        loaderSpinWrap.className = 'fct-cart-drawer-loader-spin-wrap';
+        loaderSpinWrap.className = 'fct-loader-spinner';
         loaderElement.appendChild(loaderSpinWrap);
 
         modalBodyElement.appendChild(loaderElement);

@@ -28,37 +28,8 @@ class CartSummaryRender
             <div class="fct_summary_box" data-fluent-cart-checkout-page-cart-items-wrapper>
         <?php endif; ?>
                 <div class="fct_checkout_form_section">
-                    <div class="fct_form_section_header" role="heading" aria-level="2">
-                        <div
-                            data-fluent-cart-checkout-cart-items-toggle
-                            class="fct_toggle_content"
-                            aria-expanded="true"
-                            aria-controls="order_summary_panel"
-                        >
-                            <h4 id="order_summary_label"><?php echo esc_html__('Order summary', 'fluent-cart'); ?></h4>
-                            <div class="fct_toggle_icon" aria-hidden="true">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6"
-                                        fill="none">
-                                    <path
-                                        d="M1 1L4.29289 4.29289C4.62623 4.62623 4.79289 4.79289 5 4.79289C5.20711 4.79289 5.37377 4.62623 5.70711 4.29289L9 1"
-                                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                                        stroke-linejoin="round"></path>
-                                </svg>
-                            </div>
-                        </div><!-- .fct_toggle_content -->
+                    <?php $this->renderOrderSummarySectionHeading(); ?>
 
-                        <div class="fct_summary_toggle_total">
-                            <span
-                                id="order_summary_total"
-                                class="value"
-                                data-fluent-cart-checkout-estimated-total
-                                aria-labelledby="order_summary_label"
-                            >
-                                <?php 
-                                echo esc_html(Helper::toDecimal($this->cart->getEstimatedTotal())); ?>
-                            </span>
-                        </div>
-                    </div><!-- .fct_form_section_header -->
 
                     <div class="fct_form_section_body" id="order_summary_panel" role="region" aria-labelledby="order_summary_label">
                         <div class="fct_form_section_body_inner">
@@ -72,6 +43,43 @@ class CartSummaryRender
         <?php if($withWrapper): ?>
             </div>
         <?php endif; ?>
+        <?php
+    }
+
+    public function renderOrderSummarySectionHeading()
+    {
+        ?>
+        <div class="fct_form_section_header" role="heading" aria-level="2">
+            <div
+                data-fluent-cart-checkout-cart-items-toggle
+                class="fct_toggle_content"
+                aria-expanded="true"
+                aria-controls="order_summary_panel"
+            >
+                <h4 id="order_summary_label"><?php echo __('Order summary', 'fluent-cart'); ?></h4>
+                <div class="fct_toggle_icon" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6"
+                            fill="none">
+                        <path
+                            d="M1 1L4.29289 4.29289C4.62623 4.62623 4.79289 4.79289 5 4.79289C5.20711 4.79289 5.37377 4.62623 5.70711 4.29289L9 1"
+                            stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round"></path>
+                    </svg>
+                </div>
+            </div><!-- .fct_toggle_content -->
+
+            <div class="fct_summary_toggle_total">
+                <span
+                    id="order_summary_total"
+                    class="value"
+                    data-fluent-cart-checkout-estimated-total
+                    aria-labelledby="order_summary_label"
+                >
+                    <?php
+                    echo esc_html(Helper::toDecimal($this->cart->getEstimatedTotal())); ?>
+                </span>
+            </div>
+        </div><!-- .fct_form_section_header -->
         <?php
     }
 
@@ -98,24 +106,15 @@ class CartSummaryRender
         ?>
         <div class="fct_summary_items">
             <ul class="fct_summary_items_list">
-                <li>
-                    <span class="fct_summary_label"> <?php esc_html_e('Subtotal', 'fluent-cart'); ?></span>
-                    <span class="fct_summary_value" data-fluent-cart-checkout-subtotal>
-                         <?php echo esc_html(Helper::toDecimal($this->cart->getItemsSubtotal())); ?>
-                    </span>
-                </li>
+                <?php
+                    $this->renderSubtotal();
+                ?>
 
                 <?php $this->maybeShowCustomCartSummaries(); ?>
 
-                <?php if ($this->cart->requireShipping()): ?>
-                    <li class="<?php echo $this->cart->getShippingTotal() === 0 ? 'shipping-charge-hidden' : ''; ?>" data-fluent-cart-checkout-shipping-amount-wrapper>
-                        <span class="fct_summary_label"><?php esc_html_e('Shipping', 'fluent-cart'); ?></span>
-                        <span class="fct_summary_value" data-fluent-cart-checkout-shipping-amount data-shipping-method-id="">
-                            <?php
-                            echo esc_html(Helper::toDecimal($this->cart->getShippingTotal()));
-                            ?>
-                        </span>
-                    </li>
+                <?php if ($this->cart->requireShipping()):
+                    $this->renderShipping();
+                    ?>
                 <?php endif ?>
 
                 <li data-fluent-cart-checkout-page-applied-coupon>
@@ -132,17 +131,55 @@ class CartSummaryRender
                     </li>
                 <?php endif ?>
 
-                <li class="fct_summary_items_total"
-                    data-fluent-cart-checkout-page-current-total>
-                    <span class="fct_summary_label"><?php echo esc_html__('Total','fluent-cart'); ?></span>
-                    <span class="fct_summary_value" data-fluent-cart-checkout-estimated-total>
-                        <?php
-                        echo esc_html(Helper::toDecimal($this->cart->getEstimatedTotal()));
-                        ?>
-                    </span>
-                </li>
+                <?php
+                    $this->renderTotal();
+                ?>
             </ul>
         </div>
+        <?php
+    }
+
+    public function renderSubtotal($atts = '')
+    {
+        ?>
+        <li <?php echo $atts; ?>>
+            <span class="fct_summary_label"> <?php esc_html_e('Subtotal', 'fluent-cart'); ?></span>
+            <span class="fct_summary_value" data-fluent-cart-checkout-subtotal>
+                 <?php echo esc_html(Helper::toDecimal($this->cart->getItemsSubtotal())); ?>
+            </span>
+        </li>
+        <?php
+    }
+
+    public function renderShipping($atts = '')
+    {
+        if ($atts) {
+            echo '<li ' . $atts . '>';
+        } else {
+            echo '<li class="' . ($this->cart->getShippingTotal() === 0 ? 'shipping-charge-hidden' : '') . '" data-fluent-cart-checkout-shipping-amount-wrapper>';
+        }
+        ?>
+            <span class="fct_summary_label"><?php esc_html_e('Shipping', 'fluent-cart'); ?></span>
+            <span class="fct_summary_value" data-fluent-cart-checkout-shipping-amount data-shipping-method-id="">
+                <?php
+                echo esc_html(Helper::toDecimal($this->cart->getShippingTotal()));
+                ?>
+            </span>
+        <?php
+        echo '</li>';
+    }
+
+    public function renderTotal($atts = '')
+    {
+        ?>
+        <li <?php echo empty($atts) ? ' class="fct_summary_items_total" data-fluent-cart-checkout-page-current-total' : $atts; ?>>
+            <span class="fct_summary_label"><?php _e('Total','fluent-cart'); ?></span>
+            <span class="fct_summary_value" data-fluent-cart-checkout-estimated-total>
+                <?php
+                echo esc_html(Helper::toDecimal($this->cart->getEstimatedTotal()));
+                ?>
+            </span>
+        </li>
         <?php
     }
 
@@ -163,23 +200,39 @@ class CartSummaryRender
         $shippingCharge = Arr::get($checkoutShippingData, 'shipping_charge', 0); // checking if shipping charge is again set from checkout
 
         ?>
-        <?php if ($customerDiscountAmount): ?>
+        <?php if ($customerDiscountAmount) {
+            $this->renderDiscountDetailRow();
+        }
+        if ($customShippingAmount && !$shippingCharge){
+            $this->renderShippingDetailRow();
+        }
+    }
+
+    public function renderDiscountDetailRow()
+    {
+        $customerDiscountAmount = Arr::get($this->cart->checkout_data, 'custom_checkout_data.discount_total', 0);
+        $formattedCustomDiscountAmount = Helper::toDecimal($customerDiscountAmount);
+        ?>
         <li>
             <span class="fct_summary_label"> <?php esc_html_e('Discount', 'fluent-cart'); ?></span>
             <span class="fct_summary_value" data-fluent-cart-checkout-subtotal>
                  -<?php echo esc_html($formattedCustomDiscountAmount); ?>
             </span>
         </li>
-        <?php endif ?>
-        <?php if ($customShippingAmount && !$shippingCharge): ?>
-            <li>
-                <span class="fct_summary_label"> <?php esc_html_e('Shipping
-                ', 'fluent-cart'); ?></span>
-                <span class="fct_summary_value" data-fluent-cart-checkout-subtotal>
-                    <?php echo esc_html($formattedCustomShippingAmount); ?>
-                </span>
-            </li>
-        <?php endif ?>
+        <?php
+    }
+
+    public function renderShippingDetailRow()
+    {
+        $customShippingAmount = Arr::get($this->cart->checkout_data, 'custom_checkout_data.shipping_total', 0);
+        $formattedCustomShippingAmount = Helper::toDecimal($customShippingAmount);
+        ?>
+        <li>
+            <span class="fct_summary_label"> <?php esc_html_e('Shipping', 'fluent-cart'); ?></span>
+            <span class="fct_summary_value" data-fluent-cart-checkout-subtotal>
+                <?php echo esc_html($formattedCustomShippingAmount); ?>
+            </span>
+        </li>
         <?php
     }
 
@@ -229,7 +282,7 @@ class CartSummaryRender
         <?php
     }
 
-    public function showManualDiscount()
+    public function showManualDiscount($atts = '')
     {
         $manualDiscount = Arr::get($this->cart->checkout_data, 'manual_discount', []);
       

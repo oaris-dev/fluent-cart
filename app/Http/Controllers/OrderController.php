@@ -17,7 +17,6 @@ use FluentCart\App\Helpers\Helper;
 use FluentCart\App\Helpers\OrderItemHelper;
 use FluentCart\App\Helpers\Status;
 use FluentCart\App\Http\Requests\CustomerRequest;
-use FluentCart\App\Http\Requests\OrderEditRequest;
 use FluentCart\App\Http\Requests\OrderRequest;
 use FluentCart\App\Models\Customer;
 use FluentCart\App\Models\CustomerAddresses;
@@ -110,7 +109,7 @@ class OrderController extends Controller
         return false;
     }
 
-    public function updateOrder(OrderEditRequest $request, $order_id)
+    public function updateOrder(OrderRequest $request, $order_id)
     {
         $order = Order::query()->find($order_id);
 
@@ -262,7 +261,7 @@ class OrderController extends Controller
             ],
             'gateway_refund'     => [
                 'status'  => is_wp_error($vendorRefundId) ? 'failed' : 'success',
-                'message' => !is_wp_error($vendorRefundId) ? 'Refund processed on ' . ucfirst($transaction->payment_method) : 'ERROR: ' . $vendorRefundId->get_error_message()
+                'message' => !is_wp_error($vendorRefundId) ? 'Refund processed on ' . ucfirst($transaction->payment_method) : 'ERROR processing refund on ' . ucfirst($transaction->payment_method) . ': ' . $vendorRefundId->get_error_message()
             ]
         ];
 
@@ -700,22 +699,6 @@ class OrderController extends Controller
 
             (new OrderStatusUpdated($order, Status::ORDER_PROCESSING, $order->status, true, $actionActivity, 'order_status'))->dispatch();
         }
-
-
-        $eventData = [
-            'order'       => $order,
-            'transaction' => $transaction,
-            'customer'    => $order->customer
-        ];
-
-        if ($order->type === 'subscription' || $order->type === 'renewal') {
-            $subscription = \FluentCart\App\Models\Subscription::query()->where('parent_order_id', $order->id)->first();
-            if ($subscription) {
-                $eventData['subscription'] = $subscription;
-            }
-        }
-
-        do_action('fluent_cart/order_paid_done', $eventData);
 
         return $this->response->sendSuccess([
             'message' => __('Order has been marked as paid', 'fluent-cart')

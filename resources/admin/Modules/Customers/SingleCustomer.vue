@@ -80,7 +80,7 @@
             </CardContainer>
 
             <CardContainer v-if="customer.subscriptions" class="overflow-hidden">
-              <CardHeader :title="translate('Subscriptions') + ' ('+customer.subscriptions.length+')'"
+              <CardHeader :title="translate('Subscriptions') + ' ('+translateNumber(customer.subscriptions.length)+')'"
                           title_size="small"></CardHeader>
               <CardBody class="px-0 pb-0">
                 <subscriptions-table class="hide-on-mobile" :subscriptions="customer.subscriptions"
@@ -135,7 +135,7 @@
 
 <script setup>
 import NotFound from "@/Pages/NotFound.vue";
-import translateNumber from "@/utils/translator/Translator";
+import {translateNumber} from "@/utils/translator/Translator";
 import Pagination from "@/Bits/Components/Pagination.vue";
 import CustomerOrdersLoader from "@/Modules/Customers/CustomerOrdersLoader.vue";
 import translate from "@/utils/translator/Translator";

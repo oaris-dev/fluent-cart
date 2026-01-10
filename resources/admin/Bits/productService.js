@@ -72,6 +72,7 @@ function prepareProductList($raw, $orderId) {
                         item.cost = variant.item_cost;
                         item.other_info = variant.other_info;
                         item.payment_type = variant.other_info.payment_type;
+                        item.bundle_items = variant.bundle_children;
                     }
 
                     if ($elm.detail.variants && $elm.detail.variation_type === 'simple_variations') {
@@ -102,6 +103,7 @@ function prepareProductList($raw, $orderId) {
                         createVariant.disable = canSelectRow(createVariant);
                         createVariant.other_info = variant.other_info;
                         createVariant.payment_type = variant.other_info.payment_type;
+                        createVariant.bundle_items = variant.bundle_children;
 
                         item.children.push(createVariant);
                     }

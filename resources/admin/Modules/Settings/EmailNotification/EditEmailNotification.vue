@@ -120,13 +120,18 @@ onMounted(() => {
                     </el-breadcrumb-item>
                 </el-breadcrumb>
 
-                <div class="setting-switcher">
+                <!-- Only show enable/disable switch for notifications that are not order_placed_admin or order_placed_customer -->
+                <div v-if="notificationData?.manage_toggle !== 'no'" class="setting-switcher">
                     <el-switch
                         v-model="notificationData.settings.active"
                         active-value="yes"
                         inactive-value="no"
                         :active-text="translate('Enable this email notification!')"
                     ></el-switch>
+                </div>
+                <!-- Show a text indicator for order_placed notifications -->
+                <div v-else class="setting-switcher text-gray-500 text-sm">
+                    {{ translate('Auto-enabled for offline payments') }}
                 </div>
             </div>
 

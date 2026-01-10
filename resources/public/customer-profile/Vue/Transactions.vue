@@ -25,9 +25,9 @@
 
               <time 
                 datetime="{{ transaction.created_at }}" 
-                :aria-label="$t('Transaction date') + ': ' + formatDate(transaction.created_at)"
+                :aria-label="$t('Transaction date') + ': ' + dateTimeI18(transaction.created_at)"
               >
-                on {{ formatDate(transaction.created_at) }}
+                on {{ dateTimeI18(transaction.created_at) }}
               </time>
 
               <span v-if="transaction.status === 'succeeded'" class="mr-1">{{$t('using')}}</span>
@@ -55,7 +55,7 @@
                 target="_blank" 
                 class="print-order-receipt text-primary-500 text-sm p-1 inline-flex items-center gap-1 ml-auto font-semibold text-system-dark"
                 rel="noopener noreferrer"
-                :aria-label="$t('Download receipt for transaction on') + ' ' + formatDate(transaction.created_at)"
+                :aria-label="$t('Download receipt for transaction on') + ' ' + dateTimeI18(transaction.created_at)"
               >
                 {{ translate('Receipt') }}
                 <DynamicIcon name="Download" class="w-4 h-4" aria-hidden="true"/>
@@ -80,9 +80,9 @@
 
                 <time 
                   datetime="{{ firstTxn.created_at }}" 
-                  :aria-label="$t('Transaction date') + ': ' + formatDate(firstTxn.created_at)"
+                  :aria-label="$t('Transaction date') + ': ' + dateTimeI18(firstTxn.created_at)"
                 >
-                  on {{ formatDate(firstTxn.created_at) }}
+                  on {{ dateTimeI18(firstTxn.created_at) }}
                 </time>
 
                 <span v-if="firstTxn.status === 'succeeded'">
@@ -113,7 +113,7 @@
                     :href="receiptUrl(transaction?.uuid)" target="_blank"
                     class="print-order-receipt text-primary-500 text-sm p-1 inline-flex items-center gap-1 ml-auto font-semibold text-system-dark"
                     rel="noopener noreferrer"
-                    :aria-label="$t('Download receipt for transaction on') + ' ' + formatDate(firstTxn.created_at)"
+                    :aria-label="$t('Download receipt for transaction on') + ' ' + dateTimeI18(firstTxn.created_at)"
                 >
                    {{ translate('Receipt') }} <DynamicIcon name="Download" class="w-4 h-4" aria-hidden="true"/>
                 </a>
@@ -130,11 +130,11 @@
 </template>
 
 <script setup>
-import {formatDate} from "@/Bits/common";
 import translate from "../translator/Translator";
 import DynamicIcon from "@/Bits/Components/Icons/DynamicIcon.vue";
 import Badge from "@/Bits/Components/Badge.vue";
 import {computed} from "vue";
+import {dateTimeI18} from "../../translator/Translator";
 
 const props = defineProps({
   transactions: Object,

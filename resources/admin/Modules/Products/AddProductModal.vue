@@ -2,11 +2,11 @@
   <div class="fct-product-create">
     <div class="fct-product-step">
       <el-form label-position="top" :model="product" require-asterisk-position="right">
-        <el-form-item :label="translate('Product Title')" required>
+        <el-form-item :label="product.detail.other_info.is_bundle_product === 'yes' ? translate('Bundle Title') : translate('Product Title')" required>
           <el-input
               type="text"
               v-model="product.post_title"
-              placeholder="Product Title"
+              :placeholder="product.detail.other_info.is_bundle_product === 'yes'? translate('Bundle Title') : translate('Product Title')"
               minlength="3"
               maxlength="200"
               show-word-limit
@@ -33,6 +33,17 @@
               </div>
             </li>
           </ul>
+        </el-form-item>
+
+        <el-form-item>
+          <div class="fct-bundle-product-condition">
+            <el-checkbox v-model="product.detail.other_info.is_bundle_product" true-value="yes" false-value="no">
+              {{ translate('Add as a Bundle') }}
+            </el-checkbox>
+            <span class="condition-text">
+              {{ translate('Combine multiple items into one package') }}
+            </span>
+          </div>
         </el-form-item>
       </el-form>
     </div>
@@ -100,6 +111,7 @@ const handleSelectProductType = (type) => {
 
 const createProduct = () => {
   creatingProduct.value = true;
+
 
   // Replace with your actual POST method (use axios or injected method)
   Rest.post('products', {...product.value})

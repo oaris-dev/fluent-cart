@@ -85,6 +85,7 @@ $router->prefix('customer-profile')->withPolicy('CustomerFrontendPolicy')->group
     // subscriptions
     $router->get('subscriptions', [CustomerSubscriptionController::class, 'getSubscriptions']);
     $router->get('subscriptions/{subscription_uuid}', [CustomerSubscriptionController::class, 'getSubscription'])->alphaNumDash('subscription_uuid');
+    $router->get('subscriptions/{subscription_uuid}/setup-intent-attempts', [CustomerSubscriptionController::class, 'getSetupIntentRemainingAttempts'])->alphaNumDash('subscription_uuid');
     $router->post('subscriptions/{subscription_uuid}/update-payment-method', [CustomerSubscriptionController::class, 'updatePaymentMethod'])->alphaNumDash('subscription_uuid');
     $router->post('subscriptions/{subscription_uuid}/get-or-create-plan', [CustomerSubscriptionController::class, 'getOrCreatePlan'])->alphaNumDash('subscription_uuid');
     $router->post('subscriptions/{subscription_uuid}/switch-payment-method', [CustomerSubscriptionController::class, 'switchPaymentMethod'])->alphaNumDash('subscription_uuid');

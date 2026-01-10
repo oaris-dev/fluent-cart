@@ -3,6 +3,7 @@
 namespace FluentCart\Api;
 
 use FluentCart\App\Helpers\CurrenciesHelper;
+use FluentCart\App\Helpers\Helper;
 use FluentCart\Framework\Support\Arr;
 
 class CurrencySettings
@@ -103,39 +104,46 @@ class CurrencySettings
         return $formatted;
     }
 
-    public static function getPriceHtml($amount, $currencyCode = null, $showDecimal = true)
+    public static function getPriceHtml($amount, $currencyCode = null, $showDecimal = true, $withTranslatedDigit = false)
     {
-        return static::getFormattedPrice($amount, $currencyCode, false, $showDecimal);
+        return static::getFormattedPrice($amount, $currencyCode, false, $showDecimal, $withTranslatedDigit);
     }
 
-    public static function getFormattedPrice($amount, $currencyCode = null, $asList = false, $showDecimal = true)
+    public static function getFormattedPrice($amount, $currencyCode = null, $asList = false, $showDecimal = true, $withTranslatedDigit = false)
     {
         $settings = static::get();
-        $decimal = $showDecimal ? 2 : 0;
-        $decimalSeparatorSetting = Arr::get($settings, 'decimal_separator', 'dot');
-        $decimeter = $decimalSeparatorSetting === 'dot' ? '.' : ',';
-        // Thousand separator is the opposite of decimal separator
-        $separator = $decimalSeparatorSetting === 'dot' ? ',' : '.';
-        $position = Arr::get($settings, 'currency_position', 'before');
 
         if (!$currencyCode) {
             $currencyCode = Arr::get($settings, 'currency');
         }
 
+        $sign     = CurrenciesHelper::getCurrencySign($currencyCode);
+        $position = Arr::get($settings, 'currency_position', 'before');
 
-        $sign = CurrenciesHelper::getCurrencySign($currencyCode);
-        $amount = is_numeric($amount) ? $amount : 0;
+        // Decimal configuration
+        $decimal = $showDecimal ? 2 : 0;
 
-        if (!CurrenciesHelper::isZeroDecimal($sign)) {
-            $amount = $amount / 100;
-        };
-
-        if ($settings['is_zero_decimal']) {
+        if (!empty($settings['is_zero_decimal'])) {
             $decimal = 0;
         }
 
-        $price = number_format($amount, $decimal, $decimeter, $separator);
+        // Separator configuration
+        $decimalSeparatorSetting = Arr::get($settings, 'decimal_separator', 'dot');
+        $decimalSeparator = $decimalSeparatorSetting === 'comma' ? ',' : '.';
+        $thousandSeparator = $decimalSeparator === ',' ? '.' : ',';
 
+        // Sanitize amount
+        $amount = is_numeric($amount) ? $amount : 0;
+        $amount = floatval($amount / 100);
+
+        // Format number
+        $price = number_format($amount, $decimal, $decimalSeparator, $thousandSeparator);
+
+        if($withTranslatedDigit) {
+            $price = Helper::translateNumber($price);
+        }
+
+        // If array output is requested
         if ($asList) {
             return [
                 'price'          => $price,
@@ -146,6 +154,25 @@ class CurrencySettings
             ];
         }
 
-        return $position === 'after' ? $price . $sign : $sign . $price;
+        // Apply full currency position logic (same as toDecimal)
+        switch ($position) {
+            case 'before':
+                return $sign . $price;
+            case 'after':
+                return $price . $sign;
+            case 'iso_before':
+                return $currencyCode . ' ' . $price;
+            case 'iso_after':
+                return $price . ' ' . $currencyCode;
+            case 'symbool_before_iso':
+                return $sign . $price . ' ' . $currencyCode;
+            case 'symbool_after_iso':
+                return $currencyCode . ' ' . $price . $sign;
+            case 'symbool_and_iso':
+                return $currencyCode . ' ' . $sign . $price;
+            default:
+                return $sign . $price;
+        }
     }
+
 }

@@ -6,11 +6,11 @@ import { ref, computed, watch, onMounted, nextTick } from "vue";
 import UserCan from "@/Bits/Components/Permission/UserCan.vue";
 import CurrencyFormatter from '@/utils/support/CurrencyFormatter';
 import { formatNumber } from "../Utils/formatNumber";
-import * as Card from "@/Bits/Components/Card/Card.js";
 import Empty from "@/Bits/Components/Table/Empty.vue";
 import IconButton from "@/Bits/Components/Buttons/IconButton.vue";
 import DynamicIcon from "@/Bits/Components/Icons/DynamicIcon.vue";
 import { ElLink } from "element-plus";
+import PageHeading from "@/Bits/Components/Layout/PageHeading.vue";
 
 /**
  * ----------------------------------------------------------------------------
@@ -101,11 +101,7 @@ onMounted(() => {
 <template>
     <UserCan :permission="'reports/view'">
         <div class="fct-revenue-report-page">
-            <div class="page-heading-wrap flex items-center justify-between">
-                <h1 class="page-title">
-                    {{ translate('Order Sources') }}
-                </h1>
-            </div>
+            <PageHeading :title="translate('Order Sources')"></PageHeading>
 
             <div class="fct-revenue-comparison fct-table-wrapper">
                 <div class="fct-card">

@@ -1,35 +1,37 @@
+@use "./element-plus/base.scss";
+@use "./element-plus/pagination.scss" as pagination1;
+@use "./element-plus/inputs.scss";
+
+@use "./element-plus/dropdown.scss";
+@use "./element-plus/table.scss";
+@use "./element-plus/breadcrumb.scss";
+@use "./element-plus/alert.scss";
+@use "./element-plus/tag.scss";
+@use "./element-plus/modal.scss";
+@use "./element-plus/message-box.scss";
+@use "./element-plus/popover";
+@use "./scss/font.scss";
+@use "./scss/badge.scss";
+@use "./scss/card.scss";
+@use "./scss/list.scss";
+@use "./scss/heading.scss";
+@use "./scss/pagination.scss";
+@use "./scss/media.scss";
+@use "./scss/license.scss";
+@use "./scss/copy.scss";
+@use "./scss/form.scss";
+@use "./scss/file-upload.scss";
+@use "./scss/icon-button.scss";
+@use "./scss/copy-to-clipboard.scss";
+@use "./scss/address";
+@use "./scss/order";
+@use "./scss/responsive";
+
 .fluent-cart-customer-profile-app {
-    @import "./element-plus/button.scss";
+  @import "./element-plus/button.scss";
 }
 
-@import "./element-plus/base.scss";
-@import "./element-plus/pagination.scss";
-@import "./element-plus/inputs.scss";
 
-@import "./element-plus/dropdown.scss";
-@import "./element-plus/table.scss";
-@import "./element-plus/breadcrumb.scss";
-@import "./element-plus/alert.scss";
-@import "./element-plus/tag.scss";
-@import "./element-plus/modal.scss";
-@import "./element-plus/message-box.scss";
-@import "./element-plus/popover";
-@import "./scss/font.scss";
-@import "./scss/badge.scss";
-@import "./scss/card.scss";
-@import "./scss/list.scss";
-@import "./scss/heading.scss";
-@import "./scss/pagination.scss";
-@import "./scss/media.scss";
-@import "./scss/license.scss";
-@import "./scss/copy.scss";
-@import "./scss/form.scss";
-@import "./scss/file-upload.scss";
-@import "./scss/icon-button.scss";
-@import "./scss/copy-to-clipboard.scss";
-@import "./scss/address";
-@import "./scss/order";
-@import "./scss/responsive";
 @config "./customer-profile.config.js";
 
 
@@ -194,10 +196,12 @@ div[data-fluent-cart-customer-profile-app] {
     .fct-customer-dashboard-title {
       @apply leading-none text-base font-semibold text-[var(--fct-customer-dashboard-title-color)] my-0;
     }
+
     .is-link {
       @apply font-medium underline text-sm text-[var(--fct-customer-dashboard-title-color)] focus:bg-transparent focus:shadow-none #{!important};
     }
   }
+
   &-customer-info-content {
     p {
       overflow-wrap: anywhere;
@@ -210,6 +214,7 @@ div[data-fluent-cart-customer-profile-app] {
   a {
     @apply no-underline text-[var(--fct-customer-dashboard-title-color)] focus:outline-none hover:underline #{!important};
   }
+
   &-title {
     @apply inline-block text-[var(--fct-customer-dashboard-title-color)];
     span {
@@ -248,10 +253,11 @@ div[data-fluent-cart-customer-profile-app] {
 
 .fct-card-info {
   @apply flex items-center gap-2;
-  .text{
+  .text {
     @apply text-sm text-[var(--fct-customer-dashboard-text-color)];
   }
-  img{
+
+  img {
     @apply w-[22px];
   }
 }
@@ -259,6 +265,7 @@ div[data-fluent-cart-customer-profile-app] {
 .fct-customer-payment-info {
   @apply text-sm leading-[20px] text-[var(--fct-customer-dashboard-text-color)];
 }
+
 .fct-customer-payment-meta-info {
   .text-meta {
     @apply font-medium text-[var(--fct-customer-dashboard-text-color)];
@@ -346,7 +353,8 @@ div[data-fluent-cart-customer-profile-app] {
       @apply text-red-500 uppercase font-semibold;
     }
   }
-  a.title{
+
+  a.title {
     @apply hover:underline;
   }
 
@@ -362,20 +370,24 @@ div[data-fluent-cart-customer-profile-app] {
   }
 }
 
-.fct-upgrade-variation-table{
-  table{
+.fct-upgrade-variation-table {
+  table {
     @apply m-0;
   }
-  .el-table .cell{
+
+  .el-table .cell {
     @apply px-4;
   }
-  .el-table td.el-table__cell{
+
+  .el-table td.el-table__cell {
     @apply py-3 !important;
   }
-  .el-table td.el-table__cell, .el-table th.el-table__cell.is-leaf{
+
+  .el-table td.el-table__cell, .el-table th.el-table__cell.is-leaf {
     @apply border-gray-divider !important;
   }
-  .upgrade-title{
+
+  .upgrade-title {
     @apply flex items-center gap-1;
   }
 }
@@ -413,7 +425,7 @@ div[data-fluent-cart-customer-profile-app] {
     }
   }
 
-  .el-radio__input.is-checked+.el-radio__label {
+  .el-radio__input.is-checked + .el-radio__label {
     @apply text-system-dark;
   }
 
@@ -460,9 +472,10 @@ div[data-fluent-cart-customer-profile-app] {
 }
 
 .fct-customer-downloads-file-info {
-  .text{
+  .text {
     @apply text-[13px] leading-5 font-normal text-[var(--fct-customer-dashboard-text-color)] opacity-70;
   }
+
   .filename {
     @apply font-medium leading-5 text-sm text-[var(--fct-customer-dashboard-title-color)] mb-1;
   }
@@ -477,6 +490,7 @@ div[data-fluent-cart-customer-profile-app] {
     &:last-child {
       @apply mb-0;
     }
+
     .transaction-lists {
       @apply pl-0;
       li {
@@ -484,6 +498,7 @@ div[data-fluent-cart-customer-profile-app] {
         + li {
           @apply mt-3;
         }
+
         span {
           @apply font-normal;
         }
@@ -491,6 +506,7 @@ div[data-fluent-cart-customer-profile-app] {
     }
   }
 }
+
 .fct-order-transaction-lists {
   .fct-plain-order-box {
     &:last-child {
@@ -509,9 +525,11 @@ div[data-fluent-cart-customer-profile-app] {
   + a {
     @apply mt-[5px];
   }
+
   .file-name {
     @apply inline-block text-sm leading-5 font-medium;
   }
+
   .icon {
     svg {
       @apply block;
@@ -525,12 +543,15 @@ div[data-fluent-cart-customer-profile-app] {
   .tr {
     @apply flex items-center justify-between;
   }
+
   .fct-order-summary-header {
     @apply flex items-center justify-between py-2.5 px-5 border-0 border-b-[1px] border-solid border-[var(--fct-customer-dashboard-border-color)];
   }
+
   .fct-order-summary-header-title {
     @apply m-0 text-[15px] text-[var(--fct-customer-dashboard-title-color)] font-semibold leading-6;
   }
+
   .fct-order-summary-header-action {
     @apply text-[13px] leading-5 text-system-mid flex items-center gap-[6px] cursor-pointer;
     .icon {
@@ -539,26 +560,31 @@ div[data-fluent-cart-customer-profile-app] {
       }
     }
   }
+
   .fct-order-summary-body {
     @apply p-5;
     .fct-order-summary-item {
       @apply pb-2 gap-4 flex items-start justify-between;
     }
+
     .fct-order-summary-order-calculation {
       @apply pt-5;
       .tr {
         + .tr {
           @apply mt-2.5;
         }
+
         @apply font-normal text-sm leading-6 text-system-mid;
       }
     }
   }
+
   .fct-order-summary-footer {
     @apply px-5;
     .tr {
       @apply font-semibold text-lg leading-7 text-[var(--fct-customer-dashboard-title-color)];
     }
+
     &-inner {
       @apply py-5 border-0 border-t-[1px] border-solid border-[var(--fct-customer-dashboard-divider-color)];
     }
@@ -571,10 +597,12 @@ div[data-fluent-cart-customer-profile-app] {
   .el-input {
     @apply w-[220px];
   }
+
   .el-input__inner {
     @apply text-[13px];
   }
 }
+
 .fade-slide-enter-active,
 .fade-slide-leave-active {
   transition: all 0.3s ease;
@@ -595,9 +623,11 @@ div[data-fluent-cart-customer-profile-app] {
 .simple-link-btn {
   @apply transition duration-100 text-xs text-system-mid hover:text-system-dark hover:underline;
 }
+
 .simple-icon-btn {
   @apply border-transparent bg-transparent transition duration-100 !important;
 }
+
 .fct-customer-dashboard-single-subscription,
 .fct-single-order-header,
 .fct-license-keys-wrap {
@@ -605,6 +635,7 @@ div[data-fluent-cart-customer-profile-app] {
     @apply opacity-0;
   }
 }
+
 .fct-customer-dashboard-single-subscription {
   &:hover {
     .simple-link-btn {
@@ -624,32 +655,37 @@ div[data-fluent-cart-customer-profile-app] {
     }
   }
 }
-.el-alert__description{
+
+.el-alert__description {
   @apply text-system-dark !important;
 }
 
 .el-alert__content {
   @apply w-full;
 }
+
 .transaction-lists {
-  .print-order-receipt{
+  .print-order-receipt {
     @apply opacity-0;
   }
+
   li:hover {
     @apply bg-gray-50;
-    .print-order-receipt{
+    .print-order-receipt {
       @apply opacity-100;
     }
   }
 }
+
 .fct-customer-dashboard-single-order-item {
   @apply mb-6 pb-6 border border-solid border-x-0 border-t-0 border-gray-divider last:mb-0 last:pb-0 last:border-b-0;
 }
 
-.underline-link-button{
+.underline-link-button {
   @apply p-0 text-sm shadow-none font-medium leading-[24px] inline-flex items-center gap-1.5 text-primary-500 underline focus:outline-none focus:shadow-none hover:text-primary-300 !important;
 }
-.el-button.is-text.underline-link-button{
+
+.el-button.is-text.underline-link-button {
   @apply p-0 m-0 underline text-sm shadow-none hover:text-primary-300 !important;
 }
 
@@ -665,9 +701,11 @@ div[data-fluent-cart-customer-profile-app] {
   .fct-empty-icon-box {
     @apply w-[72px] h-[72px] flex items-center justify-center mx-auto bg-gray-50 rounded-[12px] mb-4;
   }
+
   h4 {
     @apply text-[22px] leading-[32px] font-semibold mb-1 text-system-dark;
   }
+
   p {
     @apply text-base leading-[24px] text-system-mid mb-4;
   }

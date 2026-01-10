@@ -40,7 +40,8 @@ class EmailNotifications
     {
 
         /**
-         * Order Placed -> fluent_cart/order_paid (customer + admin)
+         * Order Placed (Offline Payment) -> fluent_cart/order_placed_offline (customer + admin)
+         * Order Paid -> fluent_cart/order_paid (customer + admin)
          * Order Renewal -> fluent_cart/subscription_renewed (customer + admin)
          * Order Refunded -> fluent_cart/order_fully_refunded (customer + admin)
          * Order Shipping Status Changed => fluent_cart/shipping_status_changed (customer + admin)
@@ -169,6 +170,37 @@ class EmailNotifications
                     'email_body'      => '',
                 ]
             ],
+            'order_placed_admin'            => [
+                'event'            => 'order_placed_offline',
+                'title'            => __('Send mail to admin after New Order Placed (Offline Payment)', 'fluent-cart'),
+                'description'      => __('This email will be sent to the admin when an order is placed using offline payment method.', 'fluent-cart'),
+                'recipient'        => 'admin',
+                'smartcode_groups' => [],
+                'template_path'    => 'order.placed.admin',
+                'is_async'         => false,
+                'manage_toggle'    => 'no',
+                'pre_header'       => 'You have a new order on your shop placed with offline payment. Please review the order details in this email. You can also go to FluentCart Dashboard to view the order details and manage it. Thank you for using FluentCart.',
+                'settings'         => [
+                    'subject'         => __('New Order on {{settings.store_name}} (Offline Payment)', 'fluent-cart'),
+                    'is_default_body' => 'yes',
+                    'email_body'      => '',
+                ]
+            ],
+            'order_placed_customer'         => [
+                'event'            => 'order_placed_offline',
+                'title'            => __('Order confirmation to customer (Offline Payment)', 'fluent-cart'),
+                'description'      => __('This email will be sent to the customer when an order is placed using offline payment method.', 'fluent-cart'),
+                'recipient'        => 'customer',
+                'smartcode_groups' => [],
+                'template_path'    => 'order.placed.customer',
+                'is_async'         => false,
+                'manage_toggle'    => 'no',
+                'settings'         => [
+                    'subject'         => __('Order Confirmation #{{order.invoice_no}} (Offline Payment)', 'fluent-cart'),
+                    'is_default_body' => 'yes',
+                    'email_body'      => '',
+                ]
+            ],
         ];
 
     }
@@ -191,7 +223,10 @@ class EmailNotifications
 
             $settings = Arr::get($notification, 'settings');
 
-            if (Arr::get($settings, 'active') !== 'yes') {
+            // Skip active check for order_placed notifications - they should always be active for offline payments
+            if (in_array($notification['event'], ['order_placed_offline']) || Arr::get($settings, 'active') === 'yes') {
+                // Continue with normal flow
+            } else {
                 continue;
             }
             $recipient = Arr::get($notification, 'recipient');

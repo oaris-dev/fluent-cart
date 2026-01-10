@@ -61,7 +61,7 @@ class ProductInfoBlockEditor extends BlockEditor
         } else {
             $productId = Arr::get($shortCodeAttribute, 'product_id', false);
             if ($productId) {
-                $product = Product::query()->with(['variants'])->find($productId);
+                $product = Product::query()->with(['detail', 'variants'])->find($productId);
                 if ($product) {
                     setup_postdata($product->ID);
                 }

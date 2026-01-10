@@ -1,8 +1,16 @@
 const { useBlockProps } = wp.blockEditor;
 const ProductPaginatorNumberBlock = {
+    usesContext: [
+        'fluent-cart/paginator'
+    ],
     edit: (props) => {
+        const { context } = props;
+
+        const paginator = context['fluent-cart/paginator'];
+        let isShown = paginator === 'numbers' ? 'show' : '';
+
         const blockProps = useBlockProps({
-            className: 'fct-product-paginator-number-wrap',
+            className: 'fct-product-paginator-number-wrap' + ' ' + isShown,
         });
 
         return <div {...props} {...blockProps}>
@@ -15,7 +23,7 @@ const ProductPaginatorNumberBlock = {
                 </li>
                 <li className="fct-product-paginator-number-item">4
                 </li>
-                <li className="fct-product-paginator-number-item arrow">
+                <li className="fct-product-paginator-number-item">
                     --
                 </li>
             </ul>

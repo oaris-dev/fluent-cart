@@ -94,10 +94,19 @@ class CouponsController extends Controller
             $data['end_date'] = DateTime::anyTimeToGmt($data['end_date']);
         }
 
+        // @todo: we will remove this, stopping 100% recurring for now
+        // if (Arr::get($data, 'conditions.is_recurring') === 'yes') {
+        //     if ((Arr::get($data, 'type') === 'percentage') && Arr::get($data, 'amount') >= 100) {
+        //         return $this->response->sendError(
+        //             [
+        //                 'code' => 400,
+        //                 'message' => __('Recurring is not supported for 100% discount.', 'fluent-cart')
+        //             ]
+        //         );
+        //     }
+        // }
 
         $isUpdated = CouponResource::update($data, $id);
-
-
         if (is_wp_error($isUpdated)) {
             return $isUpdated;
         }

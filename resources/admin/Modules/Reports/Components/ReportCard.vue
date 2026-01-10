@@ -36,7 +36,7 @@ const props = defineProps({
         <slot name="action"/>
       </div>
     </div>
-    <div class="fct-report-card-body flex h-full items-center">
+    <div class="fct-report-card-body flex h-full">
       <div class="w-full">
         <slot/>
       </div>

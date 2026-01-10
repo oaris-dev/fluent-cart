@@ -203,6 +203,12 @@ class ProductUpdateRequest extends RequestGuard
 
             // 'variants' => 'required_if:post_status,publish,future',
             'variants.*.variation_title'          => 'required|sanitizeText|maxLength:200',
+            'variants.*.fulfillment_type'         => ['sanitizeText', function ($attribute, $value) {
+                if (!in_array($value, ['physical', 'digital'])) {
+                    return __('Invalid fulfillment type.', 'fluent-cart');
+                }
+                return null;
+            }],
             'variants.*.post_id'                  => 'required|numeric',
             'variants.*.item_price'               => 'nullable|numeric|min:0',
             'variants.*.compare_price'            => [
@@ -413,6 +419,7 @@ class ProductUpdateRequest extends RequestGuard
                     "variants.$index.stock_status"     => 'sanitize_key',
                     "variants.$index.serial_index"     => 'intval',
                     "variants.$index.downloadable"     => 'sanitize_text_field',
+                    "variants.$index.fulfillment_type"  => 'sanitize_text_field',
                 ];
 
                 foreach ($variantFieldMap as $field => $sanitizer) {

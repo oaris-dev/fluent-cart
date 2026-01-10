@@ -2,18 +2,19 @@ import Model from "@/utils/model/Model";
 import Arr from "@/utils/support/Arr";
 import Condition from "@/utils/model/form/Condition/Condition";
 import SchemaBuilder from "@/utils/model/form/utils/SchemaBuilder";
-import {callback} from "chart.js/helpers";
 
 class FormModel extends Model {
     data = {
         schema: {},
         defaults: {},
+        _originalDefaults: {},
         values: {},
         initialized: false,
         hasChange: false,
         validationErrors: {},
         onChangeCallback: [],
     }
+
     nestedFormLayouts = ['section', 'tab', 'tab-pane', 'grid'];
     ignorableFormLayouts = ['grid'];
 
@@ -22,14 +23,15 @@ class FormModel extends Model {
     }
 
     setSchema(schema) {
-        this.data.schema = {};
         this.data.schema = SchemaBuilder.build(schema ?? {});
         this.initForm();
         return this;
     }
 
     setDefaults(defaults) {
-        this.data.defaults = defaults;
+        this.data.defaults = defaults || {};
+        // keep a deep copy of first defaults for reset
+        this.data._originalDefaults = JSON.parse(JSON.stringify(this.data.defaults));
         this.initForm();
         return this;
     }
@@ -47,11 +49,10 @@ class FormModel extends Model {
     }
 
     initForm() {
-
         if (typeof this.data.schema !== 'object' || typeof this.data.defaults !== 'object') {
             throw new Error('You need to set Schema and Defaults First');
         }
-        this.setValues()
+        this.setValues();
         this.data.initialized = true;
     }
 
@@ -64,9 +65,8 @@ class FormModel extends Model {
     }
 
     setValidationErrors(errors) {
-        this.data.validationErrors = errors;
+        this.data.validationErrors = errors || {};
     }
-
 
     hasValidationError(errorKey) {
         return (this.data.validationErrors ?? {}).hasOwnProperty(errorKey);
@@ -77,38 +77,29 @@ class FormModel extends Model {
     }
 
     ensureNestedDataProperties(schema, value = {}) {
-
-        //console.log(schema, value);
         return Object.keys(schema).reduce((data, key) => {
-
-
             const field = schema[key];
+
             if (field.type === 'html') {
                 return data;
-            }
-            if (this.ignorableFormLayouts.includes(field.type)) {
-
-                //return this.ensureNestedDataProperties(field.schema ?? {}, value);
             }
 
             if (this.nestedFormLayouts.includes(field.type ?? '')) {
                 if (field.disable_nesting === true) {
                     const updatedValue = this.ensureNestedDataProperties(field.schema ?? {}, value ?? {});
-                    data = {...data, ...updatedValue};
+                    data = { ...data, ...updatedValue };
                 } else {
-                    data[key] = this.ensureNestedDataProperties(field.schema ?? {}, value[key] ?? {})
+                    data[key] = this.ensureNestedDataProperties(field.schema ?? {}, value[key] ?? {});
                 }
             } else {
-                data[key] = value[key] || field.value || '';
+                data[key] = value[key] ?? field.value ?? '';
             }
 
             return data;
         }, {});
     }
 
-
     isVisible(field, stateKey) {
-
         if (field.hasOwnProperty('conditions')) {
             return new Condition(stateKey, this.values).evaluate(
                 Arr.get(field, 'conditions'),
@@ -120,13 +111,48 @@ class FormModel extends Model {
 
     triggerChange(data) {
         for (let callback of this.data.onChangeCallback) {
-            callback(data)
+            callback(data);
         }
-
     }
 
     onDataChanged(callback) {
         this.data.onChangeCallback.push(callback);
+    }
+
+    /**
+     * Set a value and mark form dirty
+     */
+    setValue(path, value) {
+        Arr.set(this.data.values, path, value);
+        this.data.hasChange = true;
+        this.triggerChange(this.data.values);
+    }
+
+    /**
+     * Reset form to defaults
+     * @param {Boolean} toOriginal - true = first defaults, false = last setDefaults()
+     */
+    reset(toOriginal = true) {
+        if (!this.data.schema || !this.data._originalDefaults) {
+            throw new Error('Form is not initialized');
+        }
+
+        const base = toOriginal
+            ? this.data._originalDefaults
+            : this.data.defaults;
+
+        this.data.values = this.ensureNestedDataProperties(
+            this.data.schema,
+            JSON.parse(JSON.stringify(base))
+        );
+
+        this.data.validationErrors = {};
+        this.data.hasChange = false;
+        this.data.initialized = true;
+
+        //this.triggerChange(this.data.values);
+
+        return this;
     }
 }
 

@@ -22,6 +22,20 @@
 
             <div id="card-errors" class="sr-only" role="alert" aria-live="assertive"></div>
         </div>
+
+        <!-- Rate limit notice -->
+        <div v-if="showRateLimitNote && remainingAttempts >= 0" class="rate-limit-notice" :class="{ 'rate-limit-notice-warning': remainingAttempts === 0 }" role="note">
+            <p class="rate-limit-text" v-if="remainingAttempts > 0">
+                {{ translate('You can update your card') }} 
+                <strong>{{ remainingAttempts }}</strong> 
+                {{ translate('more time') }}{{ remainingAttempts !== 1 ? 's' : '' }} 
+                {{ translate('today') }}.
+            </p>
+            <p class="rate-limit-text" v-else>
+                {{ translate('You have reached your 24 hours limit for updating card. Please try again tomorrow.') }}
+            </p>
+        </div>
+
         <div class="fct-update-payment-form-item">
             <h3 class="form-heading">{{ translate('Billing Address') }}</h3>
             <div class="form-input-container">
@@ -153,7 +167,9 @@ export default {
             stripePubKey: window.fluentcart_customer_profile_vars?.stripe_pub_key,// Ensure countryList is included in data
             loading: false,
             errorMessage: '',
-            successMessage: ''
+            successMessage: '',
+            remainingAttempts: 0,
+            showRateLimitNote: false
         };
     },
     computed: {
@@ -376,6 +392,22 @@ export default {
         closeUpdatePaymentModal() {
             this.resetData();
             this.$emit('close');
+        },
+        async fetchRemainingAttempts() {
+            // Only fetch if current payment method is stripe
+            if (this.currentPaymentMethod === 'stripe') {
+                try {
+                    const response = await this.$get(`customer-profile/subscriptions/${this.subscription.uuid}/setup-intent-attempts`);
+                    // Response structure: { remaining: 3 } (direct key from sendSuccess)
+                    if (response?.remaining !== undefined && response?.remaining !== null) {
+                        this.remainingAttempts = response.remaining;
+                        this.showRateLimitNote = true;
+                    }
+                } catch (error) {
+                    // Silently fail if we can't fetch rate limit info
+                    console.error('Failed to fetch rate limit info', error);
+                }
+            }
         }
     },
     mounted() {
@@ -389,6 +421,8 @@ export default {
         if (primary) {
             this.selectedAddress = primary.id;
         }
+        // Fetch remaining attempts if applicable
+        this.fetchRemainingAttempts();
     }
 };
 </script>
@@ -429,6 +463,33 @@ export default {
 .success-message {
     color: #67c23a;
     margin-top: 10px;
+}
+
+.rate-limit-notice {
+    background-color: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 4px;
+    padding: 12px 15px;
+    margin-bottom: 20px;
+}
+
+.rate-limit-notice-warning {
+    background-color: #fef3c7;
+    border: 1px solid #fcd34d;
+}
+
+.rate-limit-text {
+    margin: 0;
+    color: #0369a1;
+    font-size: 14px;
+}
+
+.rate-limit-notice-warning .rate-limit-text {
+    color: #92400e;
+}
+
+.rate-limit-text strong {
+    font-weight: 600;
 }
 </style>
   

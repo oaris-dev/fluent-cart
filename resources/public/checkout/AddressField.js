@@ -18,7 +18,18 @@ export default class AddressField {
     #checkoutHandler = null;
     isAllDigital;
     translate = window.fluentcart.$t;
-    #nonce = ''
+    #nonce = '';
+    #errorConfig = {
+        '.fct_error_billing_address_section_section': [
+            'billing_address_1',
+            'billing_address_2',
+            'billing_city',
+            'billing_postcode',
+            'billing_country',
+            'billing_state',
+            'billing_phone'
+        ],
+    };
 
     constructor(checkoutHandler) {
         this.checkoutInfo = window.fluentcart_checkout_info;
@@ -44,6 +55,7 @@ export default class AddressField {
         AddressField.#instance = this;
 
         this.initialSetup();
+        this.bindErrorCleanupListeners();
 
         return this;
     }
@@ -581,67 +593,106 @@ export default class AddressField {
     }
 
     showValidationErrors(errors) {
-        if (errors?.errors) {
-            errors = errors.errors;
-        }
-        if (!errors || Object.keys(errors).length < 1) return;
-        let errorMessage = "";
-        this.form.querySelectorAll('.fct-errors').forEach(el => el.remove());
+        const formSections = document.querySelectorAll('.fct_checkout_form_section');
+        const fieldErrors = errors?.errors || {};
 
-        for (const fieldId in errors) {
-            //console.log(errors, fieldId);
-            const containers = this.form.querySelectorAll("[data-fluent-cart-checkout-page-form-section]");
-            const input = this.form.querySelector('#' + fieldId);
+        formSections.forEach(section => {
+            // Loop through each error configuration
+            Object.entries(this.#errorConfig).forEach(([selector, fieldKeys]) => {
+                const errorElement = section.querySelector(selector);
 
-            if (input) {
-                input.closest("[data-fluent-cart-checkout-page-form-input-wrapper]").classList.add("has-error");
-                containers.forEach(container => container.classList.add("has-error"));
+                if (!errorElement) return;
 
-                const errorMessages = errors[fieldId];
-                if (typeof errorMessages === "object") {
-                    let index = 0;
-                    const errorCount = Object.entries(errorMessages).length;
+                const sectionErrors = {};
 
-                    for (const messageId in errorMessages) {
-                        errorMessage += errorMessages[messageId];
-
-                        const selector = `[data-fluent-cart-checkout-page-form-error][for="${input.name}"]`;
-                        if (this.form.querySelector(selector)) {
-                            this.form.querySelector(selector).innerHTML = errorMessages[messageId];
-                        }
-
-                        if (index !== errorCount) {
-                            errorMessage += "<br>";
-                        }
-                        index++;
-                        break;
+                fieldKeys.forEach(field => {
+                    if (fieldErrors[field]) {
+                        sectionErrors[field] = fieldErrors[field];
                     }
+                });
+
+                if (Object.keys(sectionErrors).length) {
+                    errorElement.classList.add('show_error');
+                    errorElement.innerHTML = Object.entries(sectionErrors)
+                        .flatMap(([field, errorObj]) =>
+                            Object.values(errorObj).map(
+                                message => `<span data-fct-error-field="${field}">${message}</span>`
+                            )
+                        )
+                        .join('');
+                }else {
+                    errorElement.classList.remove('show_error');
+                    errorElement.innerHTML = '';
                 }
-            } else if (fieldId === 'shipping_method') { // shipping method element structure is different from other input fields
-                const shippingMethodsWrapper = document.querySelector("[data-fluent-cart-checkout-page-shipping-methods-wrapper]");
-                if (shippingMethodsWrapper) {
-                    shippingMethodsWrapper.classList.add("has-error");
-                    shippingMethodsWrapper.querySelector("[data-fluent-cart-checkout-page-form-error]").innerHTML = errors[fieldId];
-                }
-            }
+            });
+        });
+
+        const messages = Object.values(fieldErrors)
+            .flatMap(errorObj => Object.values(errorObj));
+
+        if (messages.length) {
+            new Toastify({
+                text: messages.join('<br>') || 'Validation Error!',
+                className: "warning",
+                escapeMarkup: false,
+                duration: 3000,
+                style: {
+                    color: "#000",
+                    background: "#ffffff",
+                },
+            }).showToast();
         }
+    }
 
+    clearFieldError(fieldName) {
+        Object.entries(this.#errorConfig).forEach(([selector, fields]) => {
 
-        new Toastify({
-            text: errorMessage || '<span class="warn warning"></span>Validation Error! Please fill required fields!',
-            className: "warning",
-            escapeMarkup: false,
-            duration: 1300,
-            style: {
-                color: "#000",
-                background: "#ffffff",
-            },
-        }).showToast();
+            if (!fields.includes(fieldName)) return;
+
+            if(!this.form) return;
+
+            const errorEl = this.form.querySelector(selector);
+            if (!errorEl) return;
+
+            const fieldError = errorEl.querySelector(
+                `[data-fct-error-field="${fieldName}"]`
+            );
+
+            if (!fieldError) return;
+
+            fieldError.classList.add('fct-error-leave');
+
+            fieldError.addEventListener(
+                'transitionend',
+                () => {
+                    fieldError.remove();
+
+                    // hide container if empty
+                    if (!errorEl.querySelector('span')) {
+                        errorEl.classList.remove('show_error');
+                    }
+                },
+                { once: true }
+            );
+        });
+    }
+
+    bindErrorCleanupListeners() {
+        const handler = (e) => {
+            const field = e.target;
+            if (!field.name) return;
+            if (!field.value?.trim()) return;
+
+            this.clearFieldError(field.name);
+        };
+
+        document.addEventListener('input', handler);
+
+        document.addEventListener('change', handler);
     }
 
 
     saveCustomerData(column, value) {
-
 
         const formData = this.#checkoutHandler.prepareFormData();
 
@@ -666,6 +717,9 @@ export default class AddressField {
                 data_value: value
             });
 
+
+        window.fluent_cart_checkout_ui_service.setLoading('shippingMethodsWrapper');
+
         fetch(url, {
             method: "POST",
             headers: {
@@ -678,13 +732,35 @@ export default class AddressField {
         }).then((response) => {
             return response.json();
         }).then(data => {
+            if (data?.changes) {
+                if(data?.changes?.billing_address_id) {
+                    const addressId = document.querySelector('#billing_address_id');
+                    if (addressId) {
+                        addressId.value = data?.changes?.billing_address_id;
+                    }
+                }
+                if(data?.changes?.billing_company_name) {
+                    const companyName = document.querySelector('#billing_company_name');
+                    if (companyName) {
+                        companyName.value = data?.changes?.billing_company_name;
+                    }
+                }
+                if(data?.changes?.billing_full_name) {
+                    const fullName = document.querySelector('#billing_full_name');
+                    if (fullName) {
+                        fullName.value = data?.changes?.billing_full_name;
+                    }
+                }
+            }
             if (data?.fragments) {
                 CheckoutHelper.handleFragments(data.fragments);
             }
             if (data?.shipping_charge_changes || data?.tax_total_Changes) {
                 this.checkoutHandler.handleCheckoutAmountChanges();
             }
-        })
+        }).finally(() => {
+            window.fluent_cart_checkout_ui_service.finishLoading('shippingMethodsWrapper');
+        });
 
     }
 }

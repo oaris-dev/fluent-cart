@@ -1,6 +1,6 @@
 <script setup>
 
-import translateNumber from "@/utils/translator/Translator";
+import {translateNumber} from "@/utils/translator/Translator";
 import CurrencyFormatter from "@/utils/support/CurrencyFormatter";
 import ConvertedTime from "@/Bits/Components/ConvertedTime.vue";
 import Empty from "@/Bits/Components/Table/Empty.vue";
@@ -40,7 +40,7 @@ const props = defineProps({
             <div class="fct-customer-details">
               <div class="fct-customer-name">
                 {{ scope.row?.full_name || translate("No Name") }}
-                <span class="fct-customer-id">#{{ scope.row?.id }}</span>
+                <span class="fct-customer-id">#{{ translateNumber(scope.row?.id) }}</span>
               </div>
               <div class="fct-customer-email">
                 {{ scope.row?.email }}
@@ -108,7 +108,10 @@ const props = defineProps({
                     params: { customer_id: scope.row?.id },
                   }"
         >
-          <ConvertedTime :date-time="scope.row.last_purchase_date"/>
+          <template v-if="scope.row.last_purchase_date">
+            <ConvertedTime :date-time="scope.row.last_purchase_date" />
+          </template>
+          <span v-else>---</span>
         </RouteCell>
       </template>
     </el-table-column>

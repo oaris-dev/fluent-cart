@@ -5,6 +5,8 @@ import Summary from "./Summary.vue";
 import CustomerReportChart from "@/Modules/Reports/Customer/CustomerReportChart.vue";
 import Comparison from "@/Modules/Reports/Customer/Comparison.vue";
 import Rest from "@/utils/http/Rest";
+import PageHeading from "@/Bits/Components/Layout/PageHeading.vue";
+import translate from "@/utils/translator/Translator";
 
 const props = defineProps({
   reportFilter: {
@@ -63,11 +65,7 @@ onMounted(() => {
 <template>
   <UserCan :permission="'reports/view'">
     <div class="fct-customer-report-page">
-      <div class="page-heading-wrap flex items-center justify-between">
-        <h1 class="page-title">
-          {{ $t('Customers') }}
-        </h1>
-      </div>
+      <PageHeading :title="translate('Customers')"></PageHeading>
 
       <Summary :reportFilter="reportFilter" :customerReport="customerReport" />
 

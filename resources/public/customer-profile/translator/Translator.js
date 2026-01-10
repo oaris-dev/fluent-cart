@@ -1,7 +1,6 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc.js';
 import timezone from 'dayjs/plugin/timezone.js';
-import AppConfig from "@/utils/Config/AppConfig";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -62,6 +61,13 @@ export function translateNumber(number) {
 }
 
 export function dateTimeI18(dateTime, format = 'MMM DD') {
+
+    if (format === 'MMM DD') {
+        const dateObject = new Date(dateTime);
+        if(dateObject.getFullYear() !== new Date().getFullYear()) {
+            format = 'MMM DD, YYYY';
+        }
+    }
 
     const datei18 = window.fluentcart_customer_profile_vars.datei18;
     const date = dayjs(dateTime).locale({

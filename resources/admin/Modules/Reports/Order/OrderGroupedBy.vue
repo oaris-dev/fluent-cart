@@ -120,8 +120,8 @@ onMounted(() => {
 
         <el-table-column prop="gross_sale" :label="translate('Gross Sales')" min-width="150">
           <template #default="scope">
-            <div class="inline-flex">
-              {{ CurrencyFormatter.scaled(scope.row.gross_sale) }}
+            <div class="inline-flex" v-html="CurrencyFormatter.scaled(scope.row.gross_sale)">
+
             </div>
           </template>
         </el-table-column>
@@ -132,16 +132,16 @@ onMounted(() => {
           min-width="150"
         >
           <template #default="scope">
-            <div class="inline-flex">
-              {{ CurrencyFormatter.scaled(scope.row.average_order_gross) }}
+            <div class="inline-flex" v-html="CurrencyFormatter.scaled(scope.row.average_order_gross)">
+
             </div>
           </template>
         </el-table-column>
 
         <el-table-column prop="net_sale" :label="translate('Revenue')" min-width="150">
           <template #default="scope">
-            <div class="inline-flex">
-            {{ CurrencyFormatter.scaled(scope.row.net_sale) }}
+            <div class="inline-flex" v-html="CurrencyFormatter.scaled(scope.row.net_sale)">
+
             </div>
           </template>
         </el-table-column>
@@ -152,8 +152,8 @@ onMounted(() => {
           min-width="150"
         >
           <template #default="scope">
-            <div class="inline-flex">
-              {{ CurrencyFormatter.scaled(scope.row.average_order_net) }}
+            <div class="inline-flex" v-html="CurrencyFormatter.scaled(scope.row.average_order_net)">
+              
             </div>
           </template>
         </el-table-column>

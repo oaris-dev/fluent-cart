@@ -88,6 +88,16 @@ const navLinks = [
     url: '/reports/subscriptions',
     child: [
       {
+        route: 'subscriptions-retention',
+        label: translate('Retention'),
+        url: '/reports/subscriptions/subscriptions-retention'
+      },
+      {
+        route: 'subscriptions-cohorts',
+        label: translate('Cohorts'),
+        url: '/reports/subscriptions/subscriptions-cohorts'
+      },
+      {
         route: 'future_renewals',
         label: translate('Future Renewals'),
         url: '/reports/subscriptions/future-renewals'

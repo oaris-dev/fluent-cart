@@ -1,5 +1,6 @@
 import {useProductData} from "@/BlockEditor/ShopApp/Context/ProductContext";
 import {SingleProductDataProvider} from "@/BlockEditor/ShopApp/Context/SingleProductContext";
+import { ProductContainerContext } from "@/BlockEditor/ShopApp/Context/ProductContainerContext";
 
 const {
     InnerBlocks,
@@ -100,11 +101,18 @@ const ProductLoopBlock = {
         }
     },
     edit: (props) => {
+        const {attributes, setAttributes, clientId, context} = props;
+        const { simulateLoading, simulateNoResults } = useContext(ProductContainerContext);
+
+        let isHidden = simulateLoading || simulateNoResults ? 'hide' : '';
+        const enableFilter = context['fluent-cart/enable_filter'];
+        let isEnableFilter = enableFilter ? '' : 'not-enable-filter';
+
         const blockProps = useBlockProps({
-            className: 'fct-shop-app-preview-wrap',
+            className: 'fct-shop-app-preview-wrap' + ' ' + isHidden + ' ' + isEnableFilter,
         });
 
-        const {attributes, setAttributes, clientId, context} = props;
+
 
         useEffect(() => {
             setAttributes({last_changed: new Date().toISOString()});

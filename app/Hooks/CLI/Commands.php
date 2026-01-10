@@ -1102,4 +1102,29 @@ class Commands
         $cloner = new OrderCloneCommand();
         $cloner->clone_orders($args, $assoc_args);
     }
+
+    /**
+     * Generate retention snapshots for cohort analysis
+     *
+     * This command processes all subscriptions and generates monthly retention
+     * snapshots that track true customer retention (not subscription retention).
+     * Customers who "recycle" (cancel and re-subscribe) are correctly tracked
+     * as retained, not churned.
+     *
+     * ## OPTIONS
+     *
+     * [--product_id=<id>]
+     * : Only process a specific product (optional)
+     *
+     * ## EXAMPLES
+     *
+     *     wp fluent_cart generate_retention_snapshots --product_id=123
+     *
+     * @when after_wp_load
+     */
+    public function generate_retention_snapshots($args, $assoc_args)
+    {
+        $command = new RetentionSnapshotCommand();
+        $command->generate($args, $assoc_args);
+    }
 }

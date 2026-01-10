@@ -10,7 +10,19 @@
         </el-breadcrumb-item>
       </el-breadcrumb>
 
-      <div class="setting-switcher">
+      <div class="setting-switcher flex items-center gap-3">
+        <el-button 
+          v-if="addonInfo && addonInfo.addon_source?.type && addonInfo.addon_source?.is_installed" 
+          @click="checkForUpdate"
+          :loading="checkingUpdate || updating"
+          :disabled="updating"
+          :type="updateInfo?.has_update ? 'primary' : 'default'"
+          size="small"
+        >
+          <span v-if="updating">{{ $t('Updating...') }}</span>
+          <span v-else-if="checkingUpdate">{{ $t('Checking...') }}</span>
+          <span v-else>{{ $t('Check Update') }}</span>
+        </el-button>
         <el-switch
             v-model="settings.is_active"
             active-value="yes"
@@ -48,27 +60,6 @@
       </el-button>
     </div>
   </div><!-- .setting-wrap -->
-  <el-dialog v-model="editDesignModal" :title="$t('Edit Gateway Label')" width="50%">
-    <div class="edit-design-modal">
-       <el-form label-position="left">
-        <el-form-item :label="$t('Checkout Label')">
-          <el-input type="text" v-model="checkout_label"/>
-        </el-form-item>
-        <el-form-item :label="$t('Checkout Logo')">
-          <MediaInput v-model="mediaSelection" icon="Upload" :title="$t('Upload Logo')"/>
-        </el-form-item>
-        <el-form-item :label="$t('Checkout Instructions')" label-position="top">
-          <wp-editor
-              v-model="checkout_instructions"
-              @update="(val) => { checkout_instructions = val; }"
-          ></wp-editor>
-        </el-form-item>
-        <el-form-item class="float-right">
-          <el-button type="primary" @click="savePaymentDesign">{{ $t('Update') }}</el-button>
-        </el-form-item>
-       </el-form>
-    </div>
-  </el-dialog>
 </template>
 
 <script setup>
@@ -119,6 +110,11 @@ export default {
       checkout_label: '',
       checkout_logo: '',
       checkout_instructions: '',
+      addonInfo: null,
+      checkingUpdate: false,
+      updateInfo: null,
+      updating: false,
+      thank_you_page_instructions: '',
     }
   },
   watch: {
@@ -130,7 +126,12 @@ export default {
   },
   methods: {
     editDesign() {
-      this.editDesignModal = true;
+      this.$router.push({
+        name: 'payment-design',
+        params: {
+          method: this.route_name
+        }
+      });
     },
     savePaymentDesign() {
       this.editDesignModal = false;
@@ -143,6 +144,7 @@ export default {
         checkout_label: this.checkout_label,
         checkout_logo: this.checkout_logo,
         checkout_instructions: this.checkout_instructions,
+        thank_you_page_instructions: this.thank_you_page_instructions,
         method: this.route_name
       })
           .then(response => {
@@ -167,11 +169,13 @@ export default {
             this.fetching = false;
             this.fields = response.fields;
             this.settings = response.settings;
+            this.addonInfo = response.addon_info || null;
             this.registerCopyAction()
             //set checkout label and logo from settings
             this.checkout_label = this.settings?.checkout_label ? this.settings?.checkout_label : this.methodTitle;
             this.checkout_logo = this.settings?.checkout_logo;
             this.checkout_instructions = this.settings?.checkout_instructions || '';
+            this.thank_you_page_instructions = this.settings?.thank_you_page_instructions || '';
             this.mediaSelection = this.settings?.checkout_logo ? {url: this.settings?.checkout_logo, id: 0, title: 'Checkout Logo'} : '';
           })
     },
@@ -212,6 +216,77 @@ export default {
         pageName = this.$route.name.charAt(0).toUpperCase() + this.$route.name.slice(1).toLowerCase() + ' Settings';
       }
       return pageName;
+    },
+    checkForUpdate() {
+      if (!this.addonInfo || !this.addonInfo.addon_source) {
+        return;
+      }
+
+
+      this.checkingUpdate = true;
+      this.$post('settings/payment-methods/check-addon-update', {
+        source_type: this.addonInfo.addon_source.type,
+        source_link: this.addonInfo.addon_source.link,
+        plugin_file: this.addonInfo.addon_source.file,
+        plugin_slug: this.addonInfo.addon_source.slug
+      })
+          .then(response => {
+            this.checkingUpdate = false;
+            this.updateInfo = response.update_info;
+            
+            if (this.updateInfo.has_update) {
+              this.$confirm(
+                  this.$t(`A new version (${this.updateInfo.latest_version}) is available. Current version: ${this.updateInfo.current_version}. Do you want to update now?`, {
+                    version: this.updateInfo.latest_version,
+                    current: this.updateInfo.current_version
+                  }),
+                  this.$t('Update Available'),
+                  {
+                    confirmButtonText: this.$t('Update Now'),
+                    cancelButtonText: this.$t('Later'),
+                    type: 'info'
+                  }
+              ).then(() => {
+                this.performUpdate();
+              }).catch(() => {
+                // User cancelled
+              });
+            } else {
+              handleSuccess(this.$t('You are using the latest version', {
+                version: this.updateInfo.current_version
+              }));
+            }
+          })
+          .catch(error => {
+            this.checkingUpdate = false;
+            handleError(error?.data?.message || this.$t('Failed to check for updates'))
+          })
+    },
+    performUpdate() {
+      if (!this.addonInfo || !this.addonInfo.addon_source) {
+        return;
+      }
+
+      this.updating = true;
+      this.$post('settings/payment-methods/update-addon', {
+        source_type: this.addonInfo.addon_source.type,
+        source_link: this.addonInfo.addon_source.link,
+        plugin_slug: this.addonInfo.addon_source.slug,
+        plugin_file: this.addonInfo.addon_source.file
+      })
+          .then(response => {
+            this.updating = false;
+            handleSuccess(response.message || this.$t('Plugin updated successfully!'));
+            
+            // Reload page after successful update
+            setTimeout(() => {
+              window.location.reload();
+            }, 1500);
+          })
+          .catch(error => {
+            this.updating = false;
+            handleError(error?.data?.message || this.$t('Failed to update plugin'))
+          })
     }
   },
   mounted() {

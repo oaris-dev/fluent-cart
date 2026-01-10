@@ -96,6 +96,7 @@ export default {
         label: '',
         name: '',
         email: '',
+        company_name: '',
         phone: '',
         address_1: '',
         address_2: '',
@@ -125,6 +126,11 @@ export default {
           key: 'email',
           label: translate('Email'),
           required: true
+        },
+        {
+          key: 'company_name',
+          label: translate('Company Name'),
+          required: false
         },
         {
           key: 'phone',
@@ -190,7 +196,8 @@ export default {
           address_1: completeAddress.address_1,
           address_2: completeAddress.address_2,
           city: completeAddress.city,
-          postcode: completeAddress.postcode
+          postcode: completeAddress.postcode,
+          company_name: completeAddress.company_name
         }).then(response => {
           Notify.success(response);
           this.closeModal();
@@ -229,7 +236,8 @@ export default {
           address_2: completeAddress.address_2,
           city: completeAddress.city,
           postcode: completeAddress.postcode,
-          type: completeAddress.type
+          type: completeAddress.type,
+          company_name: completeAddress.company_name
         }).then(response => {
           Notify.success(response);
           this.closeModal();

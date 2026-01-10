@@ -204,7 +204,7 @@ registerBlockType(blockEditorData.slug + '/' + blockEditorData.name, {
                                 <div className="fct-product-card-footer">
                                     <button className="fluent-cart-shop-app-view-product-button">
                                         <span>
-                                            { blocktranslate(isSimpleVariations() ? 'View Options' : 'Add to Cart') }
+                                            { blocktranslate(isSimpleVariations() ? 'View Options' : 'Add To Cart') }
                                         </span>
                                     </button>
                                 </div>

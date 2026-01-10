@@ -69,14 +69,11 @@
 .fct-order-processing {
   @apply fixed top-0 left-0 w-full h-full z-[999999] items-center justify-center flex flex-col transition-all duration-700;
   background: rgba(0, 0, 0, 0.7);
-
-  .loader {
-    width: 17px;
-    aspect-ratio: 1;
-    border-radius: 50%;
-    background: #fff;
-    display: grid;
-    animation: l22-0 2s infinite linear;
+  .fct-loader-spinner {
+    &::after,
+    &::before {
+      @apply border-b-white border-l-white;
+    }
   }
 
   .fct-browser-notify {
@@ -96,23 +93,8 @@
     border-radius: 7px;
   }
 
-  .loader:before,
-  .loader:after {
-    content: "";
-    grid-area: 1/1;
-    margin: 15%;
-    border-radius: 50%;
-    background: inherit;
-    transform: rotate(0deg) translate(150%);
-    animation: l22 1s infinite;
-  }
-
-  .loader:after {
-    animation-delay: -.5s
-  }
-
-  &.hidden {
-    @apply opacity-0 invisible;
+  &.fct-loader-hidden {
+    @apply hidden;
   }
 }
 
@@ -129,16 +111,30 @@
 }
 
 
-.fct_checkout_form,.fct_checkout_summary {
-  padding-top: 24px;
+.fct_checkout_form {
+  //padding-top: 24px;
   padding-bottom: 24px;
 }
 
 /*==== has error ====*/
 .fct_form_error {
-  @apply pt-1 hidden text-red-500 text-sm;
+  @apply pt-1.5 hidden text-red-500 text-sm overflow-hidden;
   &.show_error {
-    @apply block;
+    @apply grid;
+  }
+  span {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 50px;
+    transition: opacity 0.25s ease, transform 0.25s ease, max-height 0.25s ease, margin 0.25s ease;
+  }
+
+  .fct-error-leave {
+    opacity: 0;
+    transform: translateY(-4px);
+    max-height: 0;
+    margin: 0;
   }
 }
 
@@ -147,10 +143,6 @@
   a {
     @apply font-medium underline text-system-dark focus:shadow-none focus:outline-none;
   }
-}
-
-.error-message {
-  @apply text-sm text-system-mid;
 }
 
 // empty cart
@@ -202,11 +194,11 @@
 
 /*====== fct checkout  =======*/
 .fct-checkout {
-  @apply block;
+  @apply block w-full;
 }
 
 .fct_checkout {
-
+  width: 100%;
   max-width: 100%;
   @apply mx-auto;
   container-type: inline-size;
@@ -264,7 +256,7 @@
   }
 
   input[type=checkbox] {
-    @apply p-0 min-h-[auto] appearance-none bg-[var(--fct-checkout-checkbox-bg)] m-0 w-4 h-4 border border-solid border-[var(--fct-checkout-border-color)] rounded-xs flex items-center justify-center relative hover:checked:bg-[var(--fct-checkout-primary-bg-color)];
+    @apply flex-shrink-0 self-center mt-0 p-0 min-h-[auto] appearance-none bg-[var(--fct-checkout-checkbox-bg)] m-0 w-4 h-4 border border-solid border-[var(--fct-checkout-border-color)] rounded-xs flex items-center justify-center relative hover:checked:bg-[var(--fct-checkout-primary-bg-color)];
     &::before {
       @apply w-[5px] h-[9px] border border-solid border-white border-t-0 border-l-0 border-r-[1.5px] border-b-[1.5px] opacity-0 absolute top-[1px] left-[4.5px] m-0;
       content: "";
@@ -287,6 +279,21 @@
     &:disabled {
       @apply opacity-50 pointer-events-none;
     }
+  }
+
+  .has-error{
+    .fct-input {
+      @apply border-red-500;
+    }
+  }
+}
+
+#fct_wrapper_allow_create_account,
+.fct_checkout_agree_terms,
+#fct_wrapper_ship_to_different{
+  label {
+    color: inherit;
+    font-size: inherit;
   }
 }
 
@@ -316,7 +323,6 @@
 }
 
 .fct_checkout_billing_and_shipping {
-  @apply grid gap-5;
   &.no-shipping {
     @apply mb-0;
   }
@@ -331,7 +337,8 @@
     }
   }
   h4 {
-    @apply my-0 text-[var(--fct-checkout-primary-text-color)] font-semibold text-base leading-[22px];
+    color: inherit;
+    @apply my-0 font-semibold text-base leading-[22px];
   }
 }
 
@@ -422,7 +429,7 @@
 }
 
 .fct_address_selector {
-  @apply border border-solid border-[var(--fct-checkout-border-color)] rounded cursor-pointer p-5 flex flex-col gap-2 text-sm text-[var(--fct-checkout-secondary-text-color)] font-medium relative hover:border-gray-300;
+  @apply border border-solid border-[var(--fct-checkout-border-color)] rounded cursor-pointer px-[18px] py-2.5 flex flex-col gap-2 text-sm text-[var(--fct-checkout-secondary-text-color)] font-medium relative hover:border-gray-300;
   span {
     @apply leading-5;
   }
@@ -697,7 +704,9 @@
 
 .fct_line_item {
   @apply border border-solid border-[var(--fct-checkout-border-color)] border-t-0 border-l-0 border-r-0 py-5 flex justify-between last:border-b-0 last:pb-0 first:mt-0 first:pt-0;
-
+  .fct-bundle-products {
+    @apply mt-2.5;
+  }
   .fct_line_item_info {
     @apply flex max-w-[400px] gap-[15px];
   }
@@ -725,7 +734,7 @@
   }
 
   .fct_item_variant_title {
-    @apply text-[13px] text-[var(--fct-checkout-secondary-text-color)] leading-[20px] mb-1.5;
+    @apply font-normal text-[13px] text-[var(--fct-checkout-secondary-text-color)] leading-[20px] mb-1.5;
   }
 
   .fct_item_payment_info {
@@ -1076,7 +1085,7 @@ ul.fct_summary_items_list {
     }
   }
 
-  input {
+  input[name='_fct_pay_method'] {
     @apply absolute opacity-0 cursor-pointer;
     &:checked ~ label {
       @apply text-system-dark;
@@ -1095,16 +1104,9 @@ ul.fct_summary_items_list {
   @apply relative;
 
   .fct-payment-method-loader {
-    width: 24px;
-    height: 24px;
-    border: 2.5px solid #ddd;
-    border-bottom-color: transparent;
-    border-radius: 50%;
-    box-sizing: border-box;
-    animation: rotation 1s linear infinite;
     position: absolute;
-    right: 16px;
-    top: 12px;
+    right: 14px;
+    top: 14px;
     display: none;
   }
 
@@ -1225,6 +1227,22 @@ ul.fct_summary_items_list {
 }
 
 
+.wp-block-fluent-cart-checkout-name-fields {
+  border-radius: 8px;
+  &.has-background {
+    .fct_checkout_input_group {
+      input {
+        background: none;
+        &::disabled {
+          @apply bg-transparent;
+        }
+      }
+    }
+  }
+}
+
+
+
 
 @container checkout-page (max-width: 767px) {
   .fct_checkout_inner {
@@ -1238,24 +1256,15 @@ ul.fct_summary_items_list {
 
 @container checkout-page (min-width: 768px) {
   .fct_checkout_summary {
-    position: sticky;
-    top: 0;
-    height: max-content;
+    //position: sticky;
+    //top: 0;
+    //height: max-content;
   }
 }
 
 /*==== has error ====*/
 .fluent-cart-checkout-page-form-error{
   @apply pt-1 hidden text-red-500 text-sm;
-}
-
-.has-error{
-  .fluent-cart-checkout-page-form-error {
-    @apply block;
-    &:empty {
-      @apply hidden;
-    }
-  }
 }
 
 .fluent-cart-checkout-page-form-input-wrapper {
@@ -1265,7 +1274,6 @@ ul.fct_summary_items_list {
     }
   }
 }
-
 
 #billing_personal_information {
   @apply mb-6;
@@ -1318,7 +1326,62 @@ ul.fct_summary_items_list {
   }
 }
 
-
-.fct_checkout_form_items {
-  @apply grid gap-6;
+/*====== shipping method  =======*/
+.fct_shipping_methods_list {
+  @apply relative;
 }
+
+.fct_shipping_methods_loader {
+  @apply absolute top-1/2 left-1/2 z-[99] hidden;
+  transform: translate(-50%, -50%);
+}
+
+.fct_shipping_methods.fct-loading {
+  .fct_shipping_methods_list {
+    @apply pointer-events-none relative overflow-hidden;
+    &::after {
+      content: '';
+      @apply absolute top-0 left-0 w-full h-full bg-white opacity-[0.6];
+    }
+  }
+  .fct_shipping_methods_loader {
+    @apply block;
+  }
+}
+
+/*== block checkout ==*/
+.fct_checkout {
+  .fct_checkout_form_section,
+  .fct_checkout_agree_terms {
+    @apply mb-6;
+  }
+  #fct_wrapper_ship_to_different {
+    @apply mb-4;
+  }
+  /*== Agree Terms & Conditions Override ==*/
+  .fct_checkout_agree_terms {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+
+    input[type="checkbox"] {
+      display: inline-block; // override default flex
+      margin-top: 0;
+      margin-right: 6px;
+      flex-shrink: 0;
+      position: relative;
+      top: 2px;
+    }
+
+    label {
+      display: inline;
+      line-height: 1.6;
+      color: inherit;
+      a {
+        display: inline;
+        white-space: nowrap;
+      }
+    }
+  }
+} 
+

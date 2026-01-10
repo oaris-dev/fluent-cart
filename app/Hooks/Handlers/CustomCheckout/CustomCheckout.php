@@ -20,13 +20,13 @@ class CustomCheckout
     }
 
     /*
-  * 1. validation
-  * 2. create cart
-  *      - subscription
-  *          discount, signup etc.
-  *      - onetime
-  * 3. redirect to the checkout with cart
-  */
+     * 1. validation
+     * 2. create cart
+     *      - subscription
+     *          discount, signup etc.
+     *      - onetime
+     * 3. redirect to the checkout with cart
+     */
     public function handleCustomCheckoutRedirect($data)
     {
         $orderHash = sanitize_text_field(Arr::get($data, 'order_hash', ''));
@@ -80,7 +80,7 @@ class CustomCheckout
 
                 $isTrialDaysSimulated = Arr::get($subscriptionModel, 'config.is_trial_days_simulated', ) == 'yes' ? true : false;
                 Arr::set($subscriptionItem, 'other_info.is_trial_days_simulated', $isTrialDaysSimulated ? 'yes' : 'no');
-                
+
             }
 
             $instantCart = CartHelper::generateCartFromCustomVariation($subscriptionItem, 1);
@@ -89,7 +89,7 @@ class CustomCheckout
             $items = [];
             foreach ($order->order_items as $orderItem) {
                 $item = ProductVariation::query()->where('id', $orderItem['object_id'])->first()->toArray();
-                Arr::set($item, 'discount_total', (string)($orderItem->discount_total));
+                Arr::set($item, 'discount_total', (string) ($orderItem->discount_total));
                 Arr::set($item, 'tax_amount', $orderItem->tax_amount);
                 Arr::set($item, 'post_title', $orderItem->post_title);
 
@@ -106,7 +106,11 @@ class CustomCheckout
             $instantCart->cart_data = $items;
         }
 
-
+        $primaryBillingAddress = [];
+        if ($order->billing_address) {
+            $primaryBillingAddress = $order->billing_address
+                ->getFormattedDataForCheckout('billing_');
+        }
         $instantCart->cart_group = 'instant';
         $instantCart->first_name = $order->customer->first_name;
         $instantCart->last_name = $order->customer->last_name;
@@ -120,6 +124,7 @@ class CustomCheckout
             'is_locked' => 'yes',
             'disable_coupons' => 'yes',
             'custom_checkout' => 'yes',
+            'form_data' => $primaryBillingAddress,
             'custom_checkout_data' => [
                 'coupon_discount_total' => $order->coupon_discount_total,
                 'manual_discount_total' => $order->manual_discount_total,

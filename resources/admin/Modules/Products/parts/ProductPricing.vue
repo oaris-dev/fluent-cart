@@ -95,7 +95,7 @@ const updateVariationType = (newType) => {
 
         <CopyToClipboard
             class="fct-copy-wrap-inline"
-            v-if="product?.detail?.variation_type === 'simple' && product?.post_status === 'publish' && product?.variants[0]?.id"
+            v-if="product?.detail?.variation_type === 'simple' && (product?.post_status === 'publish' || product?.post_status === 'private') && product?.variants[0]?.id"
             :text="appVars?.frontend_url +'=instant_checkout&item_id=' + product.variants[0].id + '&quantity=1'"
             showMode="icon_with_text"
             placement="top"

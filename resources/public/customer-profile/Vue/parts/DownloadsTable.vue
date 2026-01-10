@@ -1,6 +1,6 @@
 <template>
   <div class="fct-customer-dashboard-table">
-    <el-table :data="downloads" :show-header="showTableHeader" role="grid"
+    <el-table :data="Object.values(downloads)" :show-header="showTableHeader" role="grid"
       :aria-label="$t('Downloads table')">
       <el-table-column :label="$t('File Name')">
         <template #default="scope">

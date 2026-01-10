@@ -5,6 +5,7 @@ namespace FluentCart\App\Models;
 use FluentCart\App\Helpers\AddressHelper;
 use FluentCart\App\Services\Localization\LocalizationManager;
 use FluentCart\Framework\Support\Collection;
+use FluentCart\Framework\Support\Arr;
 
 /**
  *  OrderItem Model - DB Model for Order Items
@@ -25,6 +26,7 @@ class OrderAddress extends Model
      * @var array
      */
     protected $fillable = [
+        'id',
         'order_id',
         'type',
         'name',
@@ -34,10 +36,17 @@ class OrderAddress extends Model
         'state',
         'postcode',
         'country',
-        'meta'
+        'meta',
     ];
     protected $appends = [
-        'email', 'first_name', 'last_name', 'full_name', 'formatted_address'
+        'email',
+        'first_name',
+        'last_name',
+        'full_name',
+        'formatted_address',
+        'company_name',
+        'phone',
+        'label'
     ];
 
     public function setMetaAttribute($value)
@@ -101,23 +110,39 @@ class OrderAddress extends Model
     public function getFormattedAddress($filtered = false): array
     {
         $address = [
-            'country'    => AddressHelper::getCountryNameByCode($this->country),
-            'state'      => AddressHelper::getStateNameByCode($this->state, $this->country),
-            'city'       => $this->city,
-            'postcode'   => $this->postcode,
-            'address_1'  => $this->address_1,
-            'address_2'  => $this->address_2,
-            'type'       => $this->type,
-            'name'       => $this->name,
+            'country' => AddressHelper::getCountryNameByCode($this->country),
+            'state' => AddressHelper::getStateNameByCode($this->state, $this->country),
+            'city' => $this->city,
+            'postcode' => $this->postcode,
+            'address_1' => $this->address_1,
+            'address_2' => $this->address_2,
+            'type' => $this->type,
+            'name' => $this->name,
             'first_name' => $this->first_name,
-            'last_name'  => $this->last_name,
-            'full_name'  => $this->full_name,
-            'email'      => $this->email
+            'last_name' => $this->last_name,
+            'full_name' => $this->full_name,
+            'email' => $this->email,
+            'company_name' => $this->company_name,
+            'label' => $this->label
         ];
 
         if ($filtered) {
             $address = array_filter($address);
         }
+
+        $addressParts = [
+            trim(Arr::get($address, 'address_1') ?? ''),
+            trim(Arr::get($address, 'address_2') ?? ''),
+            trim(Arr::get($address, 'city') ?? ''),
+            trim(Arr::get($address, 'state') ?? ''),
+            trim(Arr::get($address, 'country') ?? ''),
+        ];
+
+        $addressParts = array_filter($addressParts, function ($part) {
+            return $part !== '';
+        });
+        $address['full_address'] = implode(', ', $addressParts);
+
 
         return $address;
     }
@@ -138,6 +163,94 @@ class OrderAddress extends Model
         ]);
 
         return implode($separator, $formatted);
+    }
+
+    public function getFormattedDataForCheckout($prefix = 'billing_')
+    {
+        $data = [
+            '' . $prefix . 'address_id' => $this->id,
+            '' . $prefix . 'full_name' => $this->name,
+            '' . $prefix . 'address_1' => $this->address_1,
+            '' . $prefix . 'address_2' => $this->address_2,
+            '' . $prefix . 'city' => $this->city,
+            '' . $prefix . 'state' => $this->state,
+            '' . $prefix . 'phone' => $this->phone,
+            '' . $prefix . 'postcode' => $this->postcode,
+            '' . $prefix . 'country' => $this->country,
+            '' . $prefix . 'company_name' => $this->company_name,
+        ];
+
+        if ($prefix === 'billing_') {
+            unset($data['billing_full_name']);
+        }
+
+        return $data;
+    }
+
+    public function setCompanyNameAttribute($value)
+    {
+        if (!$value) {
+            return;
+        }
+
+        $meta = $this->meta;
+
+        if (!is_array($meta)) {
+            $meta = [];
+        }
+
+        Arr::set($meta, 'other_data.company_name', $value);
+
+        $this->attributes['meta'] = json_encode($meta);
+    }
+
+    public function getCompanyNameAttribute()
+    {
+        return Arr::get($this->meta, 'other_data.company_name', '');
+    }
+
+    public function setLabelAttribute($value)
+    {
+        if (!$value) {
+            return;
+        }
+
+        $meta = $this->meta;
+
+        if (!is_array($meta)) {
+            $meta = [];
+        }
+
+        Arr::set($meta, 'other_data.label', $value);
+
+        $this->attributes['meta'] = json_encode($meta);
+    }
+
+    public function getLabelAttribute()
+    {
+        return Arr::get($this->meta, 'other_data.label', '');
+    }
+
+    public function setPhoneAttribute($value)
+    {
+        if (!$value) {
+            return;
+        }
+
+        $meta = $this->meta;
+
+        if (!is_array($meta)) {
+            $meta = [];
+        }
+
+        Arr::set($meta, 'other_data.phone', $value);
+
+        $this->attributes['meta'] = json_encode($meta);
+    }
+
+    public function getPhoneAttribute()
+    {
+        return Arr::get($this->meta, 'other_data.phone', '');
     }
 
 }

@@ -11,7 +11,7 @@ function buildWithSpawn(includeFaker = false) {
 
         const child = spawn(scriptPath, args, {
             stdio: 'inherit', // This pipes stdout/stderr to parent process
-            shell: true
+            shell: false
         });
 
         child.on('close', (code) => {

@@ -7,6 +7,7 @@ use FluentCart\Api\Orders;
 use FluentCart\Api\StoreSettings;
 use FluentCart\App\Helpers\CartCheckoutHelper;
 use FluentCart\App\Helpers\CartHelper;
+use FluentCart\App\Helpers\CurrenciesHelper;
 use FluentCart\App\Helpers\Helper;
 use FluentCart\App\Hooks\Cart\WebCheckoutHandler;
 use FluentCart\App\Modules\PaymentMethods\Core\AbstractPaymentGateway;
@@ -26,7 +27,9 @@ class Stripe extends AbstractPaymentGateway
 
     private $methodSlug = 'stripe';
 
-    public array $supportedFeatures = ['payment', 'refund', 'webhook', 'custom_payment', 'card_update', 'switch_payment_method', 'dispute_handler', 'subscriptions'];
+    public array $supportedFeatures = ['payment', 'refund', 'webhook', 'custom_payment', 'card_update', 'switch_payment_method' => [
+        'supported_gateways' => ['stripe', 'paypal'],
+    ], 'dispute_handler', 'subscriptions', 'zero_recurring'];
 
     public BaseGatewaySettings $settings;
 
@@ -74,10 +77,17 @@ class Stripe extends AbstractPaymentGateway
 
         $storeName = (new StoreSettings())->get('store_name');
 
+        $transactionCurrency = $paymentInstance->transaction->currency;
+        $chargeAmount = (int)$paymentInstance->transaction->total;
+
+        if ($transactionCurrency && CurrenciesHelper::isZeroDecimal($transactionCurrency)) {
+            $chargeAmount = (int)round($chargeAmount / 100);
+        }
+
         $paymentArgs = array(
             'client_reference_id' => $order->uuid,
-            'amount'              => (int)$paymentInstance->transaction->total,
-            'currency'            => strtolower($paymentInstance->transaction->currency),
+            'amount'              => $chargeAmount,
+            'currency'            => strtolower($transactionCurrency),
             'description'         => $storeName . ' #' . $order->invoice_no, // @todo: We will replace with order summary with item names later
             'customer_email'      => $paymentInstance->order->email,
             'success_url'         => $this->getSuccessUrl($paymentInstance->transaction),
@@ -115,10 +125,18 @@ class Stripe extends AbstractPaymentGateway
 
     public function getEnqueueScriptSrc($hasSubscription = 'no'): array
     {
-        if (($this->settings->get('checkout_mode') ?? '') == 'hosted') {
-            return [];
-        };
+        $checkoutMode = $this->settings->get('checkout_mode') ?? 'onsite';
+        
+        if ($checkoutMode == 'hosted') {
+            return [
+                [
+                    'handle' => 'fluent-cart-checkout-handler-stripe-hosted',
+                    'src'    => Vite::getEnqueuePath('public/payment-methods/stripe-hosted-checkout.js'),
+                ]
+            ];
+        }
 
+        // For embedded/onsite mode, load Stripe SDK and full handler
         return [
             [
                 'handle' => 'fluent-cart-checkout-sdk-stripe',
@@ -144,8 +162,11 @@ class Stripe extends AbstractPaymentGateway
                     'Card details are not valid!' => __('Card details are not valid!', 'fluent-cart'),
                     'Total amount is not valid, please add some items to cart!' => __('Total amount is not valid, please add some items to cart!', 'fluent-cart'),
                     'An error occurred while parsing the response.' => __('An error occurred while parsing the response.', 'fluent-cart'),
+                    'An error occurred while loading the payment method.' => __('An error occurred while loading the payment method.', 'fluent-cart'),
                     'Loading Payment Processor...' => __('Loading Payment Processor...', 'fluent-cart'),
                     'redirecting for action' => __('redirecting for action', 'fluent-cart'),
+                    'You will be redirected to Stripe to complete your payment securely.' => __('You will be redirected to Stripe to complete your payment securely.', 'fluent-cart'),
+                    'Something went wrong' => __('Something went wrong', 'fluent-cart'),
                 ]
             ]
         ];
@@ -274,6 +295,17 @@ class Stripe extends AbstractPaymentGateway
                 'type'    => 'html_attr',
                 'visible' => 'no'
             ),
+            'checkout_mode'       => array(
+                'value'   => 'onsite',
+                'label'   => __('Checkout Mode', 'fluent-cart'),
+                'type'    => 'radio',
+                'options' => [
+                    'onsite' => __('Embedded checkout (Recommended)', 'fluent-cart'),
+                    'hosted' => __('Stripe Hosted checkout', 'fluent-cart')
+                ],
+                'tooltip' => __('Choose between Embedded and Hosted checkout modes. Embedded mode is recommended for most use cases. For Bank transfers, use Hosted mode. (checkout.session.completed webhook event will be triggered only for hosted mode)', 'fluent-cart'),
+                'description' => __("Embedded checkout is recommended for most use cases. For Bank transfers , or if any payment methods are not showing up on embedded checkout, try Hosted checkout. ('checkout.session.completed' webhook event will be triggered only for hosted checkout)", 'fluent-cart')
+            ),
             'webhook_desc'        => array(
                 'value' => Webhook::webhookInstruction(),
                 'label' => __('Webhook URL', 'fluent-cart'),
@@ -319,6 +351,48 @@ class Stripe extends AbstractPaymentGateway
 
     public function getOrderInfo($data)
     {
+        // For hosted mode, we don't need to return intent data as checkout session is created on order placement
+        
+        /*
+         * Filter the Stripe Elements appearance configuration
+         * 
+         * This filter allows developers to customize the appearance of Stripe Elements.
+         * For example:
+         * 
+         * function stripe_appearance($appearance) {
+         *     return array(
+         *         'theme'  => 'night',
+         *         'labels' => 'floating',
+         *         'variables' => array(
+         *             'colorPrimary' => '#0570de',
+         *             'colorBackground' => '#ffffff',
+         *             'colorText' => '#30313d',
+         *             'colorDanger' => '#df1b41',
+         *             'fontFamily' => 'Ideal Sans, system-ui, sans-serif',
+         *             'spacingUnit' => '2px',
+         *             'borderRadius' => '4px',
+         *         )
+         *     );
+         * }
+         * add_filter('fluent_cart_stripe_appearance', 'stripe_appearance', 10, 1);
+         * 
+         * @see https://docs.stripe.com/elements/appearance-api for all available options
+         * @param array $appearance The appearance configuration
+         * @return array The modified appearance configuration
+         */
+        if (($this->settings->get('checkout_mode') ?? 'onsite') == 'hosted') {
+            wp_send_json(
+                [
+                    'status'       => 'success',
+                    'message'      => __('Order info retrieved!', 'fluent-cart'),
+                    'data'         => [],
+                    'payment_args' => [
+                        'checkout_mode' => 'hosted'
+                    ],
+                ],
+                200
+            );
+        }
 
         $cart = CartHelper::getCart();
         $checkOutHelper = CartCheckoutHelper::make();
@@ -349,10 +423,22 @@ class Stripe extends AbstractPaymentGateway
 
         $paymentArgs['public_key'] = $publicKey;
 
+        // Allow filtering the appearance configuration for Stripe Elements
+        $appearance = apply_filters('fluent_cart_stripe_appearance', [
+            'theme' => 'stripe'
+        ]);
+
+        $storeCurrency = CurrencySettings::get('currency');
+        $intentAmount = (int)$totalPrice;
+
+        if ($storeCurrency && CurrenciesHelper::isZeroDecimal($storeCurrency)) {
+            $intentAmount = (int)($intentAmount / 100);
+        }
+
         $intentData = [
             'mode'               => 'payment',
-            'amount'             => $totalPrice,
-            'currency'           => strtolower(CurrencySettings::get('currency')),
+            'amount'             => $intentAmount,
+            'currency'           => strtolower($storeCurrency),
             'automatic_payment_methods' => ['enabled' => true]
         ];
 
@@ -370,6 +456,7 @@ class Stripe extends AbstractPaymentGateway
                 'data'         => [],
                 'payment_args' => $paymentArgs,
                 'intent'       => $intentData,
+                'appearance'   => $appearance,
             ],
             200
         );

@@ -10,7 +10,7 @@
       <el-table-column :label="$t('Date')" :width="120">
         <template #default="scope">
           <time class="text truncate" :datetime="scope.row.created_at">
-            {{ formatDate(scope.row.created_at) }}
+            {{ dateTimeI18(scope.row.created_at) }}
           </time>
         </template>
       </el-table-column>
@@ -130,6 +130,7 @@ import translate from "../../translator/Translator";
 import MaterialInput from "@/Bits/Components/MaterialInput.vue";
 import Str from "@/utils/support/Str";
 import AddressComponent from "./AddressComponent.vue";
+import {dateTimeI18} from "../../translator/Translator";
 
 export default {
   name: 'TransactionsTable',
@@ -178,6 +179,7 @@ export default {
   },
   methods: {
     translate,
+    dateTimeI18,
     handleTransactionCommand(command, row) {
       if (command === 'edit_billing_address') {
         this.selectedTransaction = row;

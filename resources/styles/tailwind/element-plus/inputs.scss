@@ -644,3 +644,33 @@
 .el-range-editor.is-disabled input {
     @apply dark:bg-transparent;
 }
+
+/* custom loading */
+.is-custom-loading{
+  .el-select__caret {
+    width: 14px;
+    height: 14px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' opacity='0.2' fill='none' stroke='currentColor' stroke-width='2.5'/%3E%3Cpath d='m12,2c5.52,0,10,4.48,10,10' fill='none' stroke='currentColor' stroke-linecap='round' stroke-width='2.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    animation: el-spin 0.5s linear infinite;
+  }
+  .el-select__caret svg {
+    display: none;
+  }
+}
+
+.dark .is-custom-loading .el-select__caret {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' opacity='0.25' fill='none' stroke='%23e5e7eb' stroke-width='2.5'/%3E%3Cpath d='m12,2c5.52,0,10,4.48,10,10' fill='none' stroke='%23e5e7eb' stroke-linecap='round' stroke-width='2.5'/%3E%3C/svg%3E");
+}
+
+
+@keyframes el-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

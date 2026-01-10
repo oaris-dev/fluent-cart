@@ -422,10 +422,10 @@ export default class Filter {
                 // Get all siblings and toggle their visibility
                 const siblings = Array.from(parent.children).filter(child => child !== this);
                 siblings.forEach(sibling => {
-                    if (sibling.style.display === 'none') {
-                        sibling.style.display = '';
+                    if (sibling.classList.contains('hide')) {
+                        sibling.classList.remove('hide');
                     } else {
-                        sibling.style.display = 'none';
+                        sibling.classList.add('hide');
                     }
                 });
             });

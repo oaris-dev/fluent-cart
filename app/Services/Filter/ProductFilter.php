@@ -52,6 +52,8 @@ class ProductFilter extends BaseFilter
             'digital'          => 'fulfillment_type',
             'subscribable'     => 'has_subscription',
             'not_subscribable' => 'has_subscription',
+            'bundle'           => 'bundle',
+            'non_bundle'        => 'nonBundle',
         ];
     }
 
@@ -80,6 +82,7 @@ class ProductFilter extends BaseFilter
         $this->query->when($this->activeView, function ($query, $activeView) use ($tabsMap) {
             return $query->where(function (Builder $q) use ($activeView, $tabsMap) {
                 $column = Arr::get($tabsMap, $activeView);
+
                 if ($activeView === 'draft') {
                     $q->whereIn('post_status', ['draft', 'future']);
                 } else if ($column === 'post_status') {
@@ -92,6 +95,8 @@ class ProductFilter extends BaseFilter
                     $q->whereHas('variants', function ($detailQuery) {
                         $detailQuery->where('payment_type', '!=', 'subscription');
                     });
+                } else if (in_array($activeView, ['bundle', 'non_bundle'])) {
+                    $q->{$column}();
                 } else if (!empty($column)) {
                     $q->whereHas('detail', function ($detailQuery) use ($column, $activeView) {
                         $detailQuery->where($column, $activeView);

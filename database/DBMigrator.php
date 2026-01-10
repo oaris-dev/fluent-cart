@@ -48,6 +48,7 @@ use FluentCartPro\App\Modules\Licensing\Models\LicenseMeta;
 use FluentCartPro\App\Modules\Licensing\Models\LicenseSite;
 use FluentCart\Database\Migrations\ShippingZonesMigrator;
 use FluentCart\Database\Migrations\ShippingMethodsMigrator;
+use FluentCart\Database\Migrations\RetentionSnapshotsMigrator;
 
 class DBMigrator
 {
@@ -85,7 +86,8 @@ class DBMigrator
         ShippingZonesMigrator::class,
         ShippingMethodsMigrator::class,
         ShippingClassesMigrator::class,
-        ScheduledActionsMigrator::class
+        ScheduledActionsMigrator::class,
+        RetentionSnapshotsMigrator::class
     ];
 
     public static function migrateUp($network_wide = false)

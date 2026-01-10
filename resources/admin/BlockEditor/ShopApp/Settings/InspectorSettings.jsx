@@ -25,19 +25,6 @@ const {
 const InspectorSettings = (props) => {
     const {attributes, setAttributes, blockEditorData} = props;
 
-    const resetColors = () => {
-        let colors = DefaultData.colors;
-        setAttributes({colors: colors});
-
-        // Clear all custom properties from :root
-        for (const name of Object.keys(attributes.colors || {})) {
-            document.documentElement.style.removeProperty(name);
-        }
-    }
-    const setPagination = (paginator) => {
-        setAttributes({paginator: paginator});
-    };
-
     const setSearchGridSize = (size) => {
         setAttributes({search_grid_size: size});
     };

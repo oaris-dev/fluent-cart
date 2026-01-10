@@ -2,6 +2,7 @@
 
 namespace FluentCart\App\Modules\PaymentMethods\StripeGateway;
 
+use FluentCart\App\Helpers\CurrenciesHelper;
 use FluentCart\App\Helpers\Helper;
 use FluentCart\App\Models\Product;
 use FluentCart\App\Models\ProductVariation;
@@ -82,11 +83,18 @@ class Plan
         }
 
         // let's create the price now
+        $currency = Arr::get($data, 'currency');
+        $recurringAmount = (int)Arr::get($data, 'recurring_total', 0);
+
+        if (CurrenciesHelper::isZeroDecimal($currency)) {
+            $recurringAmount = (int)($recurringAmount / 100);
+        }
+
         $priceData = [
             'id'                => $pricingId,
             'product'           => $stripeProduct['id'],
-            'currency'          => $data['currency'],
-            'amount'            => $data['recurring_total'],
+            'currency'          => $currency,
+            'amount'            => $recurringAmount,
             'trial_period_days' => Arr::get($data, 'trial_days', 0),
             'interval'          => Arr::get($billingPeriod, 'interval_unit'),
             'interval_count'    => Arr::get($billingPeriod, 'interval_frequency'),
@@ -126,9 +134,16 @@ class Plan
 
         $priceId = 'fct_' . $data['amount'] . '_' . $data['currency'];
 
+        $currency = Arr::get($data, 'currency');
+        $unitAmount = (int)Arr::get($data, 'amount', 0);
+
+        if (CurrenciesHelper::isZeroDecimal($currency)) {
+            $unitAmount = (int)($unitAmount / 100);
+        }
+
         $priceData = [
-            'unit_amount' => $data['amount'],
-            'currency'    => $data['currency'],
+            'unit_amount' => $unitAmount,
+            'currency'    => $currency,
             'product'     => $productId,
             'metadata'    => [
                 'fct_product_id' => $data['product_id'],

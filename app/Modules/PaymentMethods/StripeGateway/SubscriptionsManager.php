@@ -38,6 +38,11 @@ class SubscriptionsManager
      */
     public static function verifyPaymentMethod($paymentMethodId, $customerId, $offSession = true)
     {
+        $rateLimitCheck = static::checkRateLimit($customerId);
+        if (is_wp_error($rateLimitCheck)) {
+            static::sendError(__('Too many verification attempts. You can try again tomorrow.', 'fluent-cart'), 429);
+        }
+
         // Verify via SetupIntent (for SCA compliance)
         $setupIntent = (new API())->createStripeObject('setup_intents', [
             'payment_method'       => $paymentMethodId,
@@ -65,6 +70,38 @@ class SubscriptionsManager
             ], 423);
         }
         return true;
+    }
+
+    /**
+     * Check rate limit for SetupIntent creation to prevent card testing fraud.
+     * 
+     * Rate limit: 3 attempts per day per customer (for subscription card updates)
+     * 
+     * @param string $customerId Stripe customer ID
+     * @return bool|\WP_Error Returns true if allowed, WP_Error if rate limited
+     */
+    protected static function checkRateLimit($customerId)
+    {
+        $customerDailyLimit = apply_filters('fluent_cart/stripe/setup_intent_rate_limit_customer_daily', 3, $customerId);
+
+        $customerDailyKey = 'fct_stripe_setup_intent_rate_daily_' . md5($customerId);
+        $customerDailyAttempts = get_transient($customerDailyKey) ?: 0;
+        
+        if ($customerDailyAttempts >= $customerDailyLimit) {
+            return new \WP_Error('rate_limit_exceeded', __('Daily verification limit reached. You can try again tomorrow.', 'fluent-cart'));
+        }
+
+        set_transient($customerDailyKey, $customerDailyAttempts + 1, DAY_IN_SECONDS);
+
+        return true;
+    }
+
+    public function getRemainingRateLimit($customerId)
+    {
+        $customerDailyLimit = apply_filters('fluent_cart/stripe/setup_intent_rate_limit_customer_daily', 3, $customerId);
+        $customerDailyKey = 'fct_stripe_setup_intent_rate_daily_' . md5($customerId);
+        $customerDailyAttempts = get_transient($customerDailyKey) ?: 0;
+        return $customerDailyLimit - $customerDailyAttempts;
     }
 
     public function getOrCreateStripeCustomer($pm)

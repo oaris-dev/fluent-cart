@@ -226,10 +226,13 @@ const chartOptions = computed(() => {
         fontSize: 12,
       },
       splitLine: {
-        show: false,
+        show: true,
+        lineStyle: {
+          color: isDarkTheme.value ? "#253241" : "#D6DAE1",
+          type: "dashed",
+        },
       },
       min: 0,
-      max: "dataMax",
       splitNumber: 5,
     },
     dataZoom: zoomIsActive.value

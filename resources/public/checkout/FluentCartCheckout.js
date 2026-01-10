@@ -1,5 +1,6 @@
 import FluentCartCheckoutHandler from './FluentCartCheckoutHandler';
 import CheckoutHelper from "./CheckoutHelper";
+import TurnstileHandler from "./TurnstileHandler";
 
 let firstTimeLoad = true;
 let fluentCheckout = {
@@ -18,6 +19,10 @@ let fluentCheckout = {
         return new FluentCartCheckoutHandler(this, form, {});
     },
 };
+
+// Initialize Turnstile Handler
+// console.log('Initializing Turnstile Handler from FluentCartCheckout.js');
+// const turnstileHandler = new TurnstileHandler();
 
 window.addEventListener('load', function () {
     const wrapper = document.querySelector('[data-fluent-cart-checkout-item-wrapper]');
@@ -79,6 +84,9 @@ window.addEventListener('load', function () {
         window.dispatchEvent(
             new CustomEvent("fluent_cart_after_checkout_js_loaded", {})
         );
-    }, 200)
+
+        // Auto-render Turnstile widget if enabled
+        // turnstileHandler.autoRenderWidget();
+    }, 500)
 
 });

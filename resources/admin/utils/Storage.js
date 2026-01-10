@@ -48,6 +48,7 @@ export default class Storage {
     }
 
     static readableFileSizeFromBytes(size) {
+        if (size == 0) return '0 B';       // handle zero size
         if (!size) return '';
         const i = Math.floor(Math.log(size) / Math.log(1024));
         const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];

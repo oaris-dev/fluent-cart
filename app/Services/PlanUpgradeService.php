@@ -3,6 +3,7 @@
 namespace FluentCart\App\Services;
 
 use FluentCart\App\Helpers\Helper;
+use FluentCart\App\Helpers\Status;
 use FluentCart\App\Models\Meta;
 use FluentCart\App\Models\Order;
 use FluentCart\App\Models\OrderItem;
@@ -128,6 +129,11 @@ class PlanUpgradeService
             return [];
         }
 
+        //TODO: Allow upgrades for bundle items
+        if ($originalItem->payment_type == 'bundle') {
+            return [];
+        }
+
         $upgradePaths = [];
         foreach ($upgrades as $upgrade) {
             $toVariants = Arr::get($upgrade->meta_value, 'to_variants', []);
@@ -223,7 +229,7 @@ class PlanUpgradeService
             ->where('parent_order_id', $parentOrderId)
             ->first();
 
-        if (!$subscription || !$subscription->hasAccessValidity()) {
+        if (!$subscription || !$subscription->hasAccessValidity() || ($subscription->status == Status::SUBSCRIPTION_TRIALING && Arr::get($subscription->config, 'is_trial_days_simulated', 'no') != 'yes')) {
             return 0;
         }
 
@@ -244,6 +250,7 @@ class PlanUpgradeService
         if ($daysRemaining > $divider) { // making sure we are not giving discount more than the actual amount
             $daysRemaining = $divider;
         }
+
         $discountAmount = intval($totalPaid / $divider * $daysRemaining);
 
         return $discountAmount < 0 ? 0 : $discountAmount;

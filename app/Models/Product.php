@@ -313,6 +313,7 @@ class Product extends Model
 
         return $default;
     }
+
     public function updateProductMeta($metaKey, $metaValue, $objectType = null)
     {
         $query = ProductMeta::query()
@@ -324,7 +325,7 @@ class Product extends Model
             $query->where('object_type', $objectType);
         }
 
-        $exist  = $query->first();
+        $exist = $query->first();
 
         if ($exist) {
             $exist->meta_value = $metaValue;
@@ -429,6 +430,151 @@ class Product extends Model
         }
 
         return false;
+    }
+
+    public function isStock(): bool
+    {
+        $detail = $this->detail;
+        if (!$detail) {
+            return true;
+        }
+
+        $isBundle = $this->isBundleProduct();
+
+        if (!$detail->manage_stock) {
+            if ($isBundle) {
+                $variation = $detail->default_variation_id
+                    ? $this->variants->firstWhere('id', $detail->default_variation_id)
+                    : $this->variants->first();
+
+                $childIds = $variation ? Arr::get($variation->other_info, 'bundle_child_ids', []) : [];
+                if (!empty($childIds)) {
+                    $children = ProductVariation::query()
+                        ->whereIn('id', $childIds)
+                        ->get(['manage_stock', 'available', 'stock_status']);
+
+                    foreach ($children as $child) {
+                        if ((int)$child->manage_stock === 1) {
+                            if ((int)$child->available <= 0 || $child->stock_status !== Helper::IN_STOCK) {
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        $parentInStock = ($detail->stock_availability === Helper::IN_STOCK);
+        if (!$isBundle) {
+            return $parentInStock;
+        }
+        if (!$parentInStock) {
+            return false;
+        }
+
+        $variation = $detail->default_variation_id
+            ? $this->variants->firstWhere('id', $detail->default_variation_id)
+            : $this->variants->first();
+
+        if (!$variation) {
+            return $parentInStock;
+        }
+
+        $childIds = Arr::get($variation->other_info, 'bundle_child_ids', []);
+        if (empty($childIds)) {
+            return $parentInStock;
+        }
+
+        $children = ProductVariation::query()
+            ->whereIn('id', $childIds)
+            ->get(['manage_stock', 'available', 'stock_status']);
+
+        foreach ($children as $child) {
+            if ((int)$child->manage_stock === 1) {
+                if ((int)$child->available <= 0 || $child->stock_status !== Helper::IN_STOCK) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+
+    public function images(): array
+    {
+        $images = [];
+        $thumbnailImage = $this->thumbnail ?? Vite::getAssetUrl('images/placeholder.svg');
+
+        $galleryImages = get_post_meta(1110, 'fluent-products-gallery-image', true);
+
+
+        if (!empty($galleryImages)) {
+            foreach ($galleryImages as $image) {
+                $images[] = [
+                    'attachment_id' => $image['id'],
+                    'type'          => 'gallery_image',
+                    'url'           => $image['url'],
+                    'alt'           => $image['title'],
+                    'product_title' => $this->post_title,
+                    'attachment_id' => $image['id'],
+                ];
+            }
+        } else {
+            $images[] = [
+                'type'          => 'thumbnail',
+                'url'           => $thumbnailImage,
+                'alt'           => $this->post_title,
+                'product_title' => $this->post_title,
+                'attachment_id' => null,
+            ];
+        }
+
+        foreach ($this->variants as $variant) {
+            if (!empty($variant['media']['meta_value'])) {
+                foreach ($variant['media']['meta_value'] as $image) {
+                    $images[] = [
+                        'attachment_id' => $image['id'],
+                        'type'            => 'variation_image',
+                        'url'             => $image['url'],
+                        'alt'             => $image['title'],
+                        'variation_title' => $variant->variation_title,
+                        'variation_id'    => $variant->id,
+                        'attachment_id'   => $image['id'],
+                    ];
+                }
+
+            }
+        }
+        return $images;
+    }
+
+    public function isBundleProduct(): bool
+    {
+        return $this->detail->other_info && Arr::get($this->detail->other_info, 'is_bundle_product') === 'yes';
+    }
+
+
+
+    public function scopeBundle($query)
+    {
+        return $query->whereHas('detail', function ($q) {
+            $q->whereNotNull('other_info')
+                ->whereRaw("JSON_EXTRACT(other_info, '$.is_bundle_product') = 'yes'");
+        });
+    }
+
+
+    public function scopeNonBundle($query)
+    {
+        return $query->whereHas('detail', function ($q) {
+            $q->where(function ($subQuery) {
+                $subQuery->whereNull('other_info')
+                    ->orWhereRaw("JSON_EXTRACT(other_info, '$.is_bundle_product') != 'yes'")
+                    ->orWhereRaw("JSON_EXTRACT(other_info, '$.is_bundle_product') IS NULL");
+            });
+        });
     }
 
 }

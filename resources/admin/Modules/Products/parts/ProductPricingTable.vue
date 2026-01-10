@@ -107,7 +107,7 @@ const dragOptions = computed(() => {
                 <el-input
                     :class="productEditModel.hasValidationError(`variants.${index}.variation_title`) ? 'is-error' : ''"
                     :id="`variants.${index}.variation_title`"
-                    :placeholder="$t('Title')" type="text" v-model="variant.variation_title" @input="value => {productEditModel.onChangePricing('variation_title', index,value)}" :disabled="product?.detail?.variation_type === 'simple'"
+                    :placeholder="$t('e.g. Small, Medium, Large')" type="text" v-model="variant.variation_title" @input="value => {productEditModel.onChangePricing('variation_title', index,value)}" :disabled="product?.detail?.variation_type === 'simple'"
                     @focus="productEditModel.clearValidationError(`variants.${index}.variation_title`)">
                 </el-input>
 

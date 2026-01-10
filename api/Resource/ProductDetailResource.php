@@ -77,7 +77,7 @@ class ProductDetailResource extends BaseResourceApi
      *  ];
      * @param array $params Additional parameters for the update process.
      *  $params = [
-     *          'triggerable_action'  => (string) Required. This param will help to update detail based on the specific action i.e: all_column(Triggers when  multiple columns'll update), specific_column(Triggers when specific column'll update).
+     *          'action'  => (string) Required. This param will help to update detail based on the specific action i.e: variant_modified(Triggers when variant modified which covers all mutations), change_variation_type(Triggers when variation type will change).
      *  ];
      */
     public static function update($data, $id, $params = [])
@@ -98,23 +98,27 @@ class ProductDetailResource extends BaseResourceApi
             ]);
         }
 
-        if (Arr::get($params, 'triggerable_action') === 'all_column') {
+        $triggeredAction = Arr::get($params, 'action');
+
+        // Stock & Price Range Handling
+        if ($triggeredAction === 'variant_modified') {
             if (Arr::get($data, 'manage_stock') == 0) {
                 $data['stock_availability'] = Helper::IN_STOCK;
             }
-            $data['min_price'] = $detail->variants()->min('item_price');
-            $data['max_price'] = $detail->variants()->max('item_price');
         }
 
-        if (Arr::get($params, 'triggerable_action') === 'specific_column') {
-            if (Arr::get($data, 'variation_type') == 'simple') {
-                $variationIds = Arr::get($data, 'variation_ids', []);
-                if (!empty($detail->post_id) && count($variationIds) > 0) {
-                    ProductAdminHelper::deleteOrphanVariant($detail->post_id, $variationIds);
-                }
+        if ($triggeredAction === 'change_variation_type' && Arr::get($data, 'variation_type') === 'simple') {
+            $variationIds = Arr::get($data, 'variation_ids', []);
+            if (!empty($detail->post_id) && count($variationIds) > 0) {
+                ProductAdminHelper::deleteOrphanVariant($detail->post_id, $variationIds);
+                
             }
         }
 
+        $data['min_price'] = $detail->min_price ?? 0;
+        $data['max_price'] = $detail->max_price ?? 0;
+
+        // Handle Default Variation
         if (empty(Arr::get($data, 'default_variation_id'))) {
             $data['default_variation_id'] = NULL;
         }
@@ -128,18 +132,15 @@ class ProductDetailResource extends BaseResourceApi
             $mergedOtherInfo = array_merge($existingOtherInfo, $newOtherInfo);
 
             // Handle subscription-specific logic
-            if (Arr::get($mergedOtherInfo, 'payment_type') == 'subscription') {
-                if (Arr::get($mergedOtherInfo, 'manage_setup_fee') == 'yes') {
-                    $signupFee = Helper::toCent(floatval(Arr::get($mergedOtherInfo, 'signup_fee', 0)));
-                    $mergedOtherInfo['signup_fee'] = $signupFee;
-                }
+            if (Arr::get($mergedOtherInfo, 'payment_type') == 'subscription' && Arr::get($mergedOtherInfo, 'manage_setup_fee') == 'yes') {
+                $signupFee = Helper::toCent(floatval(Arr::get($mergedOtherInfo, 'signup_fee', 0)));
+                $mergedOtherInfo['signup_fee'] = $signupFee;
             }
 
             $data['other_info'] = $mergedOtherInfo;
         }
 
         $isUpdated = $detail->update($data);
-
 
         if ($isUpdated) {
             return static::makeSuccessResponse($isUpdated, __('Product pricing has been changed!', 'fluent-cart'));

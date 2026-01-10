@@ -37,7 +37,7 @@
                       <Badge size="small" status="info" :text="gateway.tag" />
                     </span>
 
-                    <Badge v-if="gateway?.upcoming === false && !gateway?.requires_pro && !gateway?.is_addon" size="small" :status="gateway.status ? 'active' : 'disabled'"
+                    <Badge v-if="showBadge(gateway)" size="small" :status="gateway.status ? 'active' : 'disabled'"
                            :hide-icon="true">
                       {{ getBadgeTitle(gateway.status) }}
                     </Badge>
@@ -49,35 +49,14 @@
                 </div>
 
                 <div class="fct-content-card-list-action">
-                  <template v-if="gateway?.is_addon">
-                    <el-button v-if="(!gateway?.addon_status?.is_installed && gateway?.addon_source) || (gateway?.addon_status?.is_active && !gateway?.addon_status?.is_installed)"
-                               class="el-button--x-small el-button--primary"
-                               :loading="installingAddon === gateway.route"
-                               @click="() => installAndActivateAddon(gateway)">
-                      {{ $t('Install & Activate') }}
-                    </el-button>
-                    <el-button v-else-if="gateway?.addon_status?.is_installed && !gateway?.addon_status?.is_active"
-                               class="el-button--x-small el-button--primary"
-                               :loading="activatingAddon === gateway.route"
-                               @click="() => activateAddon(gateway)">
-                      {{ $t('Activate') }}
-                    </el-button>
-                    <Badge v-else-if="gateway?.addon_status?.is_active && gateway?.addon_status?.is_plugin_installed" size="small" status="active" :hide-icon="true">
-                      {{ $t('Active') }}
-                    </Badge>
-                    <div v-else>
-                      {{ translate('Coming Soon!') }}
-                    </div>
-                  </template>
-                  <div v-else-if="gateway?.upcoming">
+                  <div v-if="gateway?.upcoming">
                     {{ translate('Coming Soon!') }}
                   </div>
-                  <el-button v-else-if="gateway?.requires_pro" class="el-button--x-small el-button--primary" @click="() => routeToUpgrade()">
-                    {{ $t('Upgrade to Pro') }}
-                  </el-button>
+                 
                   <el-button v-else class="el-button--x-small"
                              @click="() => $router.push({name: gateway.route})">
                     {{ $t('Manage') }}
+                    <img v-if="gateway?.requires_pro" :src="appVars?.asset_url + 'images/crown.svg'" alt="pro feature" class="pro-feature-icon">
                   </el-button>
                 </div>
               </div>
@@ -90,14 +69,15 @@
 </template>
 
 <script setup>
-import {ref, onMounted, getCurrentInstance, computed} from 'vue';
+import {ref, onMounted, onUnmounted, getCurrentInstance, computed} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import * as Card from '@/Bits/Components/Card/Card.js';
 import Badge from "@/Bits/Components/Badge.vue";
+import DynamicIcon from "@/Bits/Components/Icons/DynamicIcon.vue";
 import Asset from "@/utils/support/Asset";
 import translate from "@/utils/translator/Translator";
 import { VueDraggableNext } from 'vue-draggable-next';
-import Notify from "@/utils/Notify";
+import AppConfig from "@/utils/Config/AppConfig";
 
 
 const selfRef = getCurrentInstance().ctx;
@@ -107,6 +87,7 @@ const route = useRoute();
 const router = useRouter();
 const installingAddon = ref(null);
 const activatingAddon = ref(null);
+const isProActive = AppConfig.get('app_config.isProActive');
 
 const dragOptions = computed(() => {
   return {
@@ -114,6 +95,10 @@ const dragOptions = computed(() => {
     ghostClass: 'ghost'
   }
 });
+
+const showBadge = (gateway) => {
+  return (gateway?.upcoming != true) && (!gateway?.requires_pro || (gateway?.requires_pro && isProActive)) && (gateway?.is_addon != true || (gateway?.is_addon && gateway?.addon_status?.is_installed));
+};
 
 const getBadgeTitle = (status) => {
   return status === true ? 'active' : 'inactive';
@@ -133,10 +118,6 @@ const getPaymentMethods = () => {
       });
 };
 
-const routeToUpgrade = () => {
-  window.open('https://fluentcart.com/discount-deal', '_blank');
-}
-
 const getUpcoming = () => {
   return Asset.getUrl('images/payment-methods/upcoming.png');
 }
@@ -150,50 +131,6 @@ const onDragEnd = () => {
       })
       .catch((e) => {
         console.error('Failed to save payment method order:', e);
-      });
-};
-
-const installAndActivateAddon = (gateway) => {
-  if (!gateway.addon_source) {
-    return;
-  }
-  
-  installingAddon.value = gateway.route;
-  selfRef.$post('settings/payment-methods/install-addon', { 
-    source_type: gateway.addon_source.type,
-    source_link: gateway.addon_source.link,
-    plugin_slug: gateway.addon_source.slug
-  })
-      .then(response => {
-        Notify.success(response.message || 'Payment addon installed and activated successfully!');
-        getPaymentMethods();
-      })
-      .catch((error) => {
-        Notify.error(error.message || 'Failed to install payment addon');
-      })
-      .finally(() => {
-        installingAddon.value = null;
-      });
-};
-
-const activateAddon = (gateway) => {
-  if (!gateway.addon_status?.plugin_file) {
-    return;
-  }
-  
-  activatingAddon.value = gateway.route;
-  selfRef.$post('settings/payment-methods/activate-addon', { 
-    plugin_file: gateway.addon_status.plugin_file 
-  })
-      .then(response => {
-        Notify.success(response.message || 'Payment addon activated successfully!');
-        getPaymentMethods();
-      })
-      .catch((error) => {
-        Notify.error(error.message || 'Failed to activate payment addon');
-      })
-      .finally(() => {
-        activatingAddon.value = null;
       });
 };
 

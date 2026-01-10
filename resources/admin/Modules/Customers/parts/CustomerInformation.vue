@@ -252,7 +252,7 @@
 
 <script setup>
 import * as Card from "@/Bits/Components/Card/Card.js";
-import translateNumber from "@/utils/translator/Translator";
+import {translateNumber} from "@/utils/translator/Translator";
 import {formatNumber} from "@/Bits/productService";
 import translate from "@/utils/translator/Translator";
 </script>

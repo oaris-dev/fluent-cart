@@ -323,7 +323,7 @@ class ProductAddToCart extends Element
             'type'        => 'text',
             'inline'      => true,
             'label'       => esc_html__('Button Text', 'fluent-cart'),
-            'placeholder' => esc_html__('Add to cart', 'fluent-cart'),
+            'placeholder' => esc_html__('Add To Cart', 'fluent-cart'),
         ];
         $this->controls['buttonMargin'] = [
             'tab'   => 'content',
@@ -596,7 +596,7 @@ class ProductAddToCart extends Element
     public function getAddToCartText()
     {
         $settings = $this->settings;
-        $buttonText = !empty($settings['buttonText']) ? $settings['buttonText'] : __('Add to Cart', 'fluent-cart');
+        $buttonText = !empty($settings['buttonText']) ? $settings['buttonText'] : __('Add To Cart', 'fluent-cart');
 
         $icon = !empty($settings['icon']) ? self::render_icon($settings['icon'], ['icon']) : false;
         $icon_position = isset($settings['iconPosition']) ? $settings['iconPosition'] : 'left';

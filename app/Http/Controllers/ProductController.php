@@ -18,6 +18,7 @@ use FluentCart\App\Models\Meta;
 use FluentCart\App\Models\Product;
 use FluentCart\App\Models\ProductDetail;
 use FluentCart\App\Models\ProductVariation;
+use FluentCart\App\Models\ShippingClass;
 use FluentCart\App\Models\TaxClass;
 use FluentCart\App\Modules\ReportingModule\ProductReport;
 use FluentCart\App\Services\Async\DummyProductService;
@@ -123,6 +124,7 @@ class ProductController extends Controller
                 'signup_fee_name'    => '',
                 'signup_fee'         => '',
                 'setup_fee_per_item' => 'no',
+                'is_bundle_product'  => Arr::get($detail, 'other_info.is_bundle_product', 'no'),
             ]
         ]);
 
@@ -270,6 +272,53 @@ class ProductController extends Controller
         ]);
         return $this->sendSuccess([
             'message' => __('Tax Class removed successfully', 'fluent-cart')
+        ]);
+    }
+
+    public function updateShippingClass(Request $request, $postId)
+    {
+        $shippingClassId = sanitize_text_field(Arr::get($this->request->all(), 'shipping_class', 0));
+        $shippingClass = ShippingClass::query()->findOrFail($shippingClassId);
+
+        if (empty($shippingClass)) {
+            return $this->sendError([
+                'message' => __('Shipping Class not found', 'fluent-cart')
+            ]);
+        }
+
+        $productDetail = ProductDetail::query()->where('post_id', $postId)->first();
+        if (empty($productDetail)) {
+            return $this->sendError([
+                'message' => __('Product not found', 'fluent-cart')
+            ]);
+        }
+        $otherInfo = $productDetail->other_info;
+        $otherInfo['shipping_class'] = $shippingClass->id;
+        $productDetail->update([
+            'other_info' => $otherInfo
+        ]);
+        return $this->sendSuccess([
+            'message' => __('Shipping Class updated successfully', 'fluent-cart')
+        ]);
+    }
+
+    public function removeShippingClass(Request $request, $postId)
+    {
+        $productDetail = ProductDetail::query()->where('post_id', $postId)->first();
+        if (empty($productDetail)) {
+            return $this->sendError([
+                'message' => __('Product not found', 'fluent-cart')
+            ]);
+        }
+
+        $otherInfo = $productDetail->other_info;
+        $otherInfo['shipping_class'] = '';
+        $productDetail->update([
+            'other_info' => $otherInfo
+        ]);
+        
+        return $this->sendSuccess([
+            'message' => __('Shipping Class removed successfully', 'fluent-cart')
         ]);
     }
 
@@ -499,8 +548,17 @@ class ProductController extends Controller
 
     public function updateProductDetail(Request $request, $id)
     {
+        $data = $request->getSafe([
+            'variation_type' => 'sanitize_key',
+            'variation_ids.*'=> 'intval',
+            'action'         => 'sanitize_key'
+        ]);
 
-        $isUpdated = ProductDetailResource::update($request->all(), $id, ['triggerable_action' => 'specific_column']);
+        $isUpdated = ProductDetailResource::update(
+            $data, 
+            $id, 
+            ['action' => Arr::get($data, 'action', 'change_variation_type')]
+        );
 
         if (is_wp_error($isUpdated)) {
             return $isUpdated;
@@ -762,6 +820,7 @@ class ProductController extends Controller
         $data = $request->getSafe([
             'include_ids.*' => 'intval',
             'search'        => 'sanitize_text_field',
+            'scopes.*'      => 'sanitize_text_field',
         ]);
 
         $search = Arr::get($data, 'search', '');
@@ -769,6 +828,11 @@ class ProductController extends Controller
 
         $productsQuery = Product::query()
             ->with(['variants']);
+
+        $scopes = Arr::get($data, 'scopes', []);
+        if ($scopes) {
+            $productsQuery = $productsQuery->scopes($scopes);
+        }
 
         if ($search) {
             $productsQuery->where('post_title', 'like', '%' . $search . '%');
@@ -939,6 +1003,37 @@ class ProductController extends Controller
         return [
             'products' => $items
         ];
+    }
+
+    public function getBundleInfo(Request $request, $productId): array
+    {
+        $variants = ProductVariation::query()
+            ->where('post_id', $productId)
+            ->select([
+                'id',
+                'variation_title',
+                'other_info'
+            ])
+            ->get()
+            ->toArray();
+
+        $variants = Helper::loadBundleChild($variants);
+
+        return $variants;
+    }
+
+    public function saveBundleInfo(Request $request, $variationId): array
+    {
+        $variation = ProductVariation::query()->findOrFail($variationId);
+
+        $otherInfo = $variation->other_info ?? [];
+
+        $otherInfo['bundle_child_ids'] = $request->get('bundle_child_ids');
+
+        $variation->other_info = $otherInfo;
+
+
+        return [$variation->update()];
     }
 
     public function fetchProductsByIds(Request $request): array

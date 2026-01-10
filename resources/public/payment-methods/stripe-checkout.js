@@ -27,7 +27,14 @@ class StripeCheckout {
         }
         const that = this;
         const stripe = Stripe(this.paymentArgs?.public_key);
-        const elements = await stripe.elements(this.intent);
+        
+        // Use appearance configuration from the response if available
+        const elementsOptions = { ...this.intent };
+        if (this.data.appearance) {
+            elementsOptions.appearance = this.data.appearance;
+        }
+        
+        const elements = await stripe.elements(elementsOptions);
 
         // Configure payment element options
         const paymentElementOptions = {
@@ -86,6 +93,7 @@ class StripeCheckout {
 
         paymentElement.on('ready', function (event) {
             // Remove loading message
+            window.is_stripe_ready = true;
 
             window.dispatchEvent(new CustomEvent('fluent_cart_payment_method_loading_success', {
                 detail: {
@@ -103,11 +111,10 @@ class StripeCheckout {
             } else {
                 const paymentMethod = that.form.querySelector('input[name="_fct_pay_method"]:checked');
                 if (paymentMethod && paymentMethod.value === 'stripe') {
-                    that.paymentLoader.disableCheckoutButton(submitButton.text);
+                    that.paymentLoader.enableCheckoutButton(submitButton.text);
                 }
             }
 
-            window.is_stripe_ready = false;
 
             paymentElement.addEventListener('change', function (e) {
                 window.is_stripe_ready = e.complete;

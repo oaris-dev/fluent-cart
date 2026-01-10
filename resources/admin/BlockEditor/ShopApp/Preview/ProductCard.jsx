@@ -53,7 +53,7 @@ const ProductCard = (props) => {
                     </div>
                     <button
                         className="fct-product-block-editor-product-card-primary-button">
-                        {product && product.detail.variation_type === 'simple' ? blocktranslate('Add to Cart') : blocktranslate('View Product')}
+                        {product && product.detail.variation_type === 'simple' ? blocktranslate('Add To Cart') : blocktranslate('View Product')}
                     </button>
                 </div>
             </div>

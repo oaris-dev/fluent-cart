@@ -7,7 +7,7 @@ use FluentCart\App\Models\Customer;
 class AuthService
 {
 
-    public static function createUserFromCustomer(Customer $customer, $sendUserEmail = true)
+    public static function createUserFromCustomer(Customer $customer, $sendUserEmail = true, $userRole = '')
     {
         $userName = self::createUserNameFromStrings($customer->email, [$customer->first_name, $customer->last_name]);
 
@@ -17,7 +17,8 @@ class AuthService
             '',
             [
                 'first_name' => $customer->first_name,
-                'last_name'  => $customer->last_name
+                'last_name'  => $customer->last_name,
+                'role'       => $userRole
             ]
         );
     }
@@ -136,7 +137,7 @@ class AuthService
         $user = get_user_by('ID', $user->ID);
 
         if ($user) {
-          //  do_action('wp_login', $user->user_login, $user);
+            //  do_action('wp_login', $user->user_login, $user);
         }
 
         return $user;

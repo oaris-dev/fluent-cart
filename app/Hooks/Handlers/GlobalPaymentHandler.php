@@ -3,18 +3,13 @@
 namespace FluentCart\App\Hooks\Handlers;
 
 use FluentCart\App\App;
-use FluentCart\App\Models\OrderTransaction;
 use FluentCart\App\Modules\PaymentMethods\AirwallexGateway\Airwallex;
-use FluentCart\App\Modules\PaymentMethods\AuthorizeNetGateway\AuthorizeNet;
 use FluentCart\App\Modules\PaymentMethods\Cod\Cod;
 use FluentCart\App\Modules\PaymentMethods\Core\GatewayManager;
-use FluentCart\App\Modules\PaymentMethods\PaddleGateway\Paddle;
 use FluentCart\App\Modules\PaymentMethods\PayPalGateway\PayPal;
-use FluentCart\App\Modules\PaymentMethods\RazorpayGateway\Razorpay;
 use FluentCart\App\Modules\PaymentMethods\SquareGateway\Square;
 use FluentCart\App\Modules\PaymentMethods\StripeGateway\Stripe;
 use FluentCart\App\Modules\PaymentMethods\StripeGateway\Connect\ConnectConfig;
-use FluentCart\Framework\Container\Contracts\BindingResolutionException;
 use FluentCart\Framework\Support\Arr;
 use FluentCart\Api\PaymentMethods;
 use FluentCart\Framework\Support\Collection;
@@ -33,9 +28,7 @@ class GlobalPaymentHandler
             $gateway->register('stripe', new Stripe());
             $gateway->register('paypal', new PayPal());
             $gateway->register('offline_payment', new Cod());
-            $gateway->register('razorpay', new Razorpay());
             $gateway->register('square', new Square());
-            $gateway->register('authorize_net', new AuthorizeNet());
             $gateway->register('airwallex', new Airwallex());
 
             $this->verifyStripeConnect();
@@ -124,10 +117,26 @@ class GlobalPaymentHandler
                 return Arr::get($item, 'visible', 'yes') === 'yes';
             })->toArray();
 
-            return [
+            $result = [
                 'fields'   => $filtered,
                 'settings' => $methodInstance->settings->get()
             ];
+
+            // Add addon metadata if it's an addon
+            $meta = $methodInstance->meta();
+
+            if (isset($result['settings']) && empty(Arr::get($result, 'settings.checkout_label')) && Arr::has($meta, 'title')) {
+                Arr::set($result, 'settings.checkout_label', $meta['title']);
+            }
+
+            if (Arr::get($meta, 'is_addon') === true) {
+                $result['addon_info'] = [
+                    'is_addon' => true,
+                    'addon_source' => $meta['addon_source'] ?? [],
+                ];
+            }
+
+            return $result;
         } else {
             throw new \Exception(esc_html__('No valid payment method found!', 'fluent-cart'));
         }

@@ -43,6 +43,6 @@ const tooltip = computed(() => {
     <template #content>
       <span>{{ tooltip }}</span>
     </template>
-    <span class="cursor-pointer">{{ amount }}</span>
+    <span class="cursor-pointer" v-html="amount"></span>
   </el-tooltip>
 </template>

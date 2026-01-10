@@ -229,16 +229,19 @@ const updateChart = () => {
     yAxis: {
       type: "value",
       axisLabel: {
-        formatter: "{value}", // Format for Gross Sale (hundreds range)
+        formatter: "{value}",
         color: isDarkTheme.value ? "#FFFFFF" : "#696778",
         fontSize: 12,
       },
       splitLine: {
-        show: false,
+        show: true,
+        lineStyle: {
+          color: isDarkTheme.value ? "#253241" : "#D6DAE1",
+          type: "dashed",
+        },
       },
-      min: 0, // Adjust the minimum value
-      max: "dataMax", // Automatically adjust based on the data
-      splitNumber: 5, // Number of intervals between min and max
+      min: 0,
+      splitNumber: 5,
     },
     dataZoom: zoomIsActive.value
       ? [

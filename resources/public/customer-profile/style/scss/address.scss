@@ -133,7 +133,7 @@
 // address list
 .fct-form-container {
   .fct-customer-address-list {
-    @apply p-4 pr-1;
+    @apply p-4;
   }
 }
 
@@ -184,7 +184,7 @@
       @apply bg-gray-100;
     }
     .fct-address-action{
-      @apply absolute top-4 right-0;
+      @apply absolute top-0.5 right-0;
     }
   }
 }

@@ -7,6 +7,7 @@ use FluentCart\App\App;
 use FluentCart\App\Helpers\Status;
 use FluentCart\App\Models\OrderTransaction;
 use FluentCart\App\Models\Subscription;
+use FluentCart\App\Modules\PaymentMethods\StripeGateway\SubscriptionsManager;
 use FluentCart\App\Services\OrderService;
 use FluentCart\Framework\Http\Request\Request;
 use FluentCart\Framework\Support\Arr;
@@ -96,7 +97,7 @@ class CustomerSubscriptionController extends BaseFrontendController
             ->where('uuid', $subscription_uuid)
             ->first();
 
-        if (!$subscription || $subscription->status === Status::SUBSCRIPTION_PENDING || $subscription->status === Status::SUBSCRIPTION_INTENDED) {
+        if (!$subscription || in_array($subscription->status, [Status::SUBSCRIPTION_PENDING, Status::SUBSCRIPTION_INTENDED])) {
             return $this->sendError([
                 'message' => __('Subscription not found', 'fluent-cart')
             ]);
@@ -122,6 +123,7 @@ class CustomerSubscriptionController extends BaseFrontendController
             'subtitle'                  => $subscription->variation && $subscription->product ? $subscription->variation->variation_title : '',
             'can_upgrade'               => $subscription->canUpgrade(),
             'can_switch_payment_method' => $subscription->canSwitchPaymentMethod(),
+            'switchable_payment_methods' => $subscription->switchablePaymentMethods(),
             'can_update_payment_method' => $subscription->canUpdatePaymentMethod(),
             'order'                     => [
                 'uuid' => $subscription->order ? $subscription->order->uuid : ''
@@ -345,6 +347,47 @@ class CustomerSubscriptionController extends BaseFrontendController
             'message' => __('Your subscription has been successfully cancelled', 'fluent-cart')
         ];
 
+    }
+
+    public function getSetupIntentRemainingAttempts($subscription_uuid)
+    {
+        $errorResponse = $this->checkUserLoggedIn();
+
+        if ($errorResponse !== null) {
+            return $errorResponse;
+        }
+
+        $customer = CustomerResource::getCurrentCustomer();
+        if (!$customer) {
+            return $this->sendError([
+                'message' => __('Customer not found', 'fluent-cart')
+            ]);
+        }
+
+        $subscription = Subscription::query()
+            ->where('uuid', $subscription_uuid)
+            ->where('customer_id', $customer->id)
+            ->first();
+
+        if (empty($subscription)) {
+            return $this->sendError([
+                'message' => __('Subscription not found', 'fluent-cart')
+            ]);
+        }
+
+        // Only return attempts if current payment method is stripe
+        if ($subscription->current_payment_method !== 'stripe' || empty($subscription->vendor_customer_id)) {
+            return $this->sendError([
+                'message' => __('Payment method not supported', 'fluent-cart')
+            ]);
+        }
+
+        $subscriptionsManager = new SubscriptionsManager();
+        $remaining = $subscriptionsManager->getRemainingRateLimit($subscription->vendor_customer_id);
+
+        return $this->sendSuccess([
+            'remaining' => max(0, $remaining)
+        ]);
     }
 
 }

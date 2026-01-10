@@ -376,6 +376,32 @@
                             </el-form-item>
                         </el-col>
 
+                        <el-col :md="24">
+                          <el-form-item>
+                            <template #label>
+                              <LabelHint
+                                  :title="translate('Recurring Coupon')"
+                                  :content="
+                                  translate(
+                                    'Mark this coupon as recurring to apply it automatically to every future subscription order. This discount will automatically apply on every renewal. However, the coupon will not be applied if it reduces the payable amount to zero.'
+                                  )
+                                "
+                              />
+                            </template>
+                            <el-checkbox
+                                v-model="coupon.conditions.is_recurring"
+                                :label="translate('Make this coupon recurring')"
+                                true-value="yes"
+                                false-value="no"
+                            />
+                          </el-form-item>
+                          <validation-error
+                              v-if="validationErrors?.hasOwnProperty('is_recurring')"
+                              :validation-errors="validationErrors"
+                              field-key="is_recurring"
+                          />
+                        </el-col>
+
 
                     </el-row>
                     
@@ -686,6 +712,7 @@
                       :widgetsQuery="{
                         coupon_id: coupon.id
                       }"
+                      @change="handleChangesMade"
                   />
                 </div>
                 
@@ -796,6 +823,7 @@ export default {
           max_uses: '',
           buy_products: [],
           get_products: [],
+          is_recurring: "no",
         },
       },
       validationErrors: {},

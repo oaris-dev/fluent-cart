@@ -2,9 +2,9 @@
 Contributors: wpmanageninja, techjewel
 Tags: ecommerce, cart, checkout, subscriptions, payments
 Requires at least: 6.7
-Tested up to: 6.8
+Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.3.0
+Stable tag: 1.3.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,7 +22,7 @@ Meet FluentCart. It’s a performance-first, self-hosted eCommerce platform for 
 
 Built from the ground up with flexibility, performance, and long-term scalability in mind, this isn’t a fork of existing plugins. This is a fresh take on what a WordPress store should be: lean, powerful, and completely under your control. FluentCart adapts to your model without adding bloat or cutting you into a SaaS fee structure.
 
-FluentCart is ideal for solo creators, growing businesses, and developers building client stores. If you're tired of overcomplicated dashboards and bloated add-ons this is your answer. Forget about transaction fees, because FluentCart charges exactly 0 transaction fees on both Free and Pro isntallations.  
+FluentCart is ideal for solo creators, growing businesses, and developers building client stores. If you're tired of overcomplicated dashboards and bloated add-ons this is your answer. Forget about transaction fees, because FluentCart charges exactly 0 transaction fees on both Free and Pro isntallations.
 
 FluentCart is for you if you're looking to free yourself from rigid checkout flows, or vendor lock-ins. Run your store with clarity and confidence, whether you sell ebooks, handmade goods, software licenses, or monthly product bundles.
 
@@ -79,13 +79,13 @@ FluentCart supports a variety of sales models, all in the same store. Offer one-
 * User Roles – Control access to FluentCart admin tools by role
 
 === Analytics, Marketing & Growth ===
-* Reports Overview – Track order volume, Revenue by Quarter, Revenue by Country  
+* Reports Overview – Track order volume, Revenue by Quarter, Revenue by Country
 * Sales Reporting – Track order volume, most sold products and variants, Customer LTV and more
 * Order Analytics – Average order value, order items, order heatmap, orders by country, and more
 * Revenue Analytics – Net revenue sorted by Time, Country and Payment Gateway
 * Refund Analytics – Total refunds, Avg. Refund value, Refund Rate, Filter by Country, Payment method and Intervals
-* Product Data – Top performing products, Product Performance over time 
-* Subscriptions Report – Top performing products, Product Performance over time 
+* Product Data – Top performing products, Product Performance over time
+* Subscriptions Report – Top performing products, Product Performance over time
 * Product Data – Top performing products, Product Performance over time
 * Customer Data – Top performing products, Product Performance over time
 * Advanced Filtering (Pro) - Date and Other Filters for tracking beyond 30 days data
@@ -119,13 +119,13 @@ On top of that we’ve built FluentCart for complete programmatic control. REST 
 Whether you're building custom apps on top of FluentCart or creating complex checkout flows, this plugin is built to stay out of your way and give you the keys.
 
 == Customization and Design ==
-No more fighting layouts. Style your cart, checkout, and product pages exactly how you want using your theme, no forced stylesheets or layout overrides. 
+No more fighting layouts. Style your cart, checkout, and product pages exactly how you want using your theme, no forced stylesheets or layout overrides.
 
 Customize every part of the experience: product card components, variation pickers, quantity selectors, checkout forms, and thank-you pages. All templates are overrideable. Whether you’re designing high-converting sales funnels or frictionless repeat purchase flows, FluentCart is built for modern storefront aesthetics.
 
-You can set store branding with global customizations as soon as you setup FluentCart. The responsive blocks act as standard Gutenberg blocks so your store doesn’t break under any circumstances, even on mobile. Moreover, you get direct compatibility with popular store themes along with page builders like Elementor and Bricks Builder. 
+You can set store branding with global customizations as soon as you setup FluentCart. The responsive blocks act as standard Gutenberg blocks so your store doesn’t break under any circumstances, even on mobile. Moreover, you get direct compatibility with popular store themes along with page builders like Elementor and Bricks Builder.
 
-If you need even more customizability, the option to use advanced CSS is also available to give you complete design control. 
+If you need even more customizability, the option to use advanced CSS is also available to give you complete design control.
 
 = Blocks =
 * Product Grid
@@ -139,7 +139,7 @@ If you need even more customizability, the option to use advanced CSS is also av
 * Available Stock
 
 == Business Growth ==
-FluentCart includes tools that help you operate at scale. From revenue analysis to team coordination, it comes with every operational tool pre-integrated, so you don’t need workarounds or extra plugins to manage growth. 
+FluentCart includes tools that help you operate at scale. From revenue analysis to team coordination, it comes with every operational tool pre-integrated, so you don’t need workarounds or extra plugins to manage growth.
 
 = Reports =
 You get detailed breakdowns of subscriptions, refunds, and subscriber churn rates. Filter performance by product, category, date range, to evaluate the ROI of every sale.
@@ -155,19 +155,19 @@ Every feature is tightly integrated, so your operational data flows through one 
 == Reinventing eCommerce ==
 Building stores on WordPress has been riddled with slow queries, bloated schemas, bloated add-ons, and unscalable databases that make your store feel sluggish as it grows. SaaS platforms offload those problems by locking you into hosted environments, but charge you platform fees, gateway markups, and provide exactly zero control over your backend.
 
-At its core, FluentCart runs on a custom database schema purpose-built for digital and subscription commerce. No legacy baggage. It uses fast, indexed tables that prioritize the read/write operations that matter most for modern stores such as, orders, customers, products, subscriptions, licenses, and transactions. This keeps your store snappy even under load, without relying on caching hacks or third-party optimizers. All data is structured for scalability. 
+At its core, FluentCart runs on a custom database schema purpose-built for digital and subscription commerce. No legacy baggage. It uses fast, indexed tables that prioritize the read/write operations that matter most for modern stores such as, orders, customers, products, subscriptions, licenses, and transactions. This keeps your store snappy even under load, without relying on caching hacks or third-party optimizers. All data is structured for scalability.
 
-Whether you’re haqndling 50 or 50,000 orders, FluentCart maintains consistent performance with predictable query logic. No degrading response times as tables balloon, no complex migration paths when scaling up, and no reliance on external APIs to run day-to-day operations. 
+Whether you’re haqndling 50 or 50,000 orders, FluentCart maintains consistent performance with predictable query logic. No degrading response times as tables balloon, no complex migration paths when scaling up, and no reliance on external APIs to run day-to-day operations.
 
 And while most platforms make you pay for scale, whether through add-on upsells, platform commissions, or percentage-based transaction fees, FluentCart is truly self-hosted and pro-ownership. You pay once. You own it. There are zero transaction fees, no enforced usage tiers, and no hidden charges from payment providers. You can integrate Stripe, PayPal, local gateways, or your own custom processor using native hooks without ever sharing a cut.
 
 == Data Privacy ==
-Your data stays where it belongs, on your server. FluentCart does not phone home, track your customers, share checkout data or payment details. There's no reliance on cookies or third-party scripts for core functionality. 
+Your data stays where it belongs, on your server. FluentCart does not phone home, track your customers, share checkout data or payment details. There's no reliance on cookies or third-party scripts for core functionality.
 
 For businesses under strict data policies or privacy regulations, like GDPR and EU DPA, FluentCart is the safest possible eCommerce option. You keep complete control of your stores data. Period.
 
 == Integrations ==
-FluentCart works out of the box with major Fluent plugins including: 
+FluentCart works out of the box with major Fluent plugins including:
 
 * FluentCRM: Run marketing automations triggered by store actions and segment customers with lists and tags.
 * FluentCommunity: Managing your gated community and course sales.
@@ -184,7 +184,7 @@ More native integrations *coming soon* in FluentCart,
 
 
 = Payment Gateways =
-* Stripe 
+* Stripe
 * PayPal
 * Paddle
 * Paystack
@@ -203,11 +203,11 @@ More native integrations *coming soon* in FluentCart,
 == Support ==
 For us, support isn’t outsourced or run by third parties. You get direct access to the same expert team that builds and maintains the plugin, engineers who understand the codebase inside and out, and who treat your issue like it’s their own store.
 
-We prioritize developer-level responsiveness and clarity in support tickets. That means no endless loops of canned replies, no asking for “more details” five times, and no dodging responsibility with vague documentation references. 
+We prioritize developer-level responsiveness and clarity in support tickets. That means no endless loops of canned replies, no asking for “more details” five times, and no dodging responsibility with vague documentation references.
 
 Whether you’re debugging a gateway integration or extending a checkout flow with hooks, our team is here to assist with clear, actionable guidance. But support doesn’t stop at tickets.
 
-You also get access to a 10,000+ member strong community of Fluent product users across our ecosystem including store owners, developers, marketers, and SaaS builders who use FluentCRM, Fluent Support, FluentBooking, and now FluentCart. 
+You also get access to a 10,000+ member strong community of Fluent product users across our ecosystem including store owners, developers, marketers, and SaaS builders who use FluentCRM, Fluent Support, FluentBooking, and now FluentCart.
 
 It's a collaborative environment where people share real-world workflows, custom code snippets, integration tips, and even performance benchmarks.
 
@@ -309,19 +309,81 @@ This service is provided by PayPal: [Terms of Service](https://www.paypal.com/le
 
 == Changelog ==
 
+= 1.3.6 (Jan 08, 2026) =
+- Fixes FSE theme support
+- Fixes Checkout Agree Terms and Conditions issue
+- Fixes Product Min-Max pricing issue
+- Fixes Buy now section position issue
+- Fixes Shortcode issue in cart and checkout page
+- Fixes Subscription related order issue
+- Fixes Checkout page broken on Breakdance builder
+
+= 1.3.5 (Jan 06, 2026) =
+- hotfix: Cart Model caching issue fixed
+
+= 1.3.4 (Jan 06, 2026) =
+- Adds Bundle products
+- Adds Stripe hosted checkout
+- Adds Stripe appearance customizations support
+- Adds Razorpay payment gateway addon (onetime )
+- Adds 100% recurring discount
+- Adds Order reference to Stripe metadata
+- Adds New currency Ghanaian Cedi (GHS)
+- Adds Turnstile invisible captcha
+- Adds Email notification for offline payment
+- Adds Items information in stripe metadata
+- Adds WP user creation
+- Adds Subscription retention & Cohort report
+- Fixes Double confirmation email issue
+- Fixes Order bump with subscription products
+- Fixes NO_SHIPPING for paypal subscription issue
+- Fixes Amount precision issue for paypal
+- Fixes Update button issue for affiliate in coupon
+- Fixes Checkout missing company name store issue
+- Fixes Conflicts with Divi-5 Builder issue
+- Fixes Customer last purchase invalid date issue
+- Fix Downloads handling for object-based order
+- Fixes S3 empty file validation issue
+- Fixes downloadable file issue and empty file visibility
+- Fixes Get paypal plan api endpoints issue
+- Fixes Variation View Image & Text issue for Gutenberg
+- Enhanced Development hooks to customize checkout button text
+- Enhanced Translations for different modules
+- Enhanced More development related hooks and modules
+
+= 1.3.2 (Dec 02, 2025) =
+- Adds Private Product Status
+- Adds Authorize.net payment gateway
+- Adds Recurring discount coupon
+- Adds Checkout block
+- Adds Product variation customization hooks
+- Adds Thank You page payment instructions
+- Fixes handling of zero-decimal currency for Stripe
+- Fixes hookable customer profile menu & icon issue
+- Fixes coupon priority issue
+- Fixes coupon calculation issues
+- Fixes report card design issue
+- Fixes group key SQL security issue
+- Fixes EU VAT renderer issue on initial load
+- Fixes variation title not showing for bump product
+- Fixes wrong Stripe canceled_at date
+- Updates Reports graph design
+- Updates Gateway customization design
+- Updates Addon gateway management for future updates
+
 = 1.3.0 (Nov 19, 2025) =
-- Introducing Paystack Payment Gateway
-- Added Quarterly and Half-Yearly subscription billing intervals
-- Coupons now supports email based restrictions
-- Introducing REST API Doc: https://dev.fluentcart.com/restapi/
-- Security: Performed a paid third-party security audit (Patchstack) as part of ongoing hardening efforts.
-- Improved Translation support for multiple languages
-- Imroved Reporting performance and data accuracy
-- Refreshed the checkout page design and optimized payment method re-rendering.
-- Better Multi-Site Support
-- Improvement on Invoicing & Taxes
-- Added new hooks and filters for developers
-- Bug fixes and Imrovements
+- Adds Paystack payment gateway
+- Adds Quarterly and Half-Yearly subscription billing intervals
+- Adds email-based restrictions for coupons
+- Adds REST API Documentation: https://dev.fluentcart.com/restapi/
+- Adds improved translation support for multiple languages
+- Adds new hooks and filters for developers
+- Improves reporting performance and data accuracy
+- Improves invoicing and tax handling
+- Improves multi-site support
+- Improves checkout page design and optimizes payment method re-rendering
+- Security: Performs a third-party paid security audit (Patchstack)
+- Fixes various bugs and overall improvements
 
 = 1.2.5 (Oct 29, 2025) =
 - Adds More currency formatting options
@@ -340,7 +402,7 @@ This service is provided by PayPal: [Terms of Service](https://www.paypal.com/le
 - Adds Order_paid_done hook
 - Adds More context to fluent_cart/checkout/prepare_other_data hook
 - Adds Customization Hooks in Thank You page
-- Adds Customization Hooks in checkout page 
+- Adds Customization Hooks in checkout page
 - Adds Button style support for ShopApp Block
 - Adds Link toggle and target option to Product Title Block
 - Adds Missing translation strings

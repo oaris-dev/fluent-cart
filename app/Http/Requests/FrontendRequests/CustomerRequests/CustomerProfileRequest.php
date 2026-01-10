@@ -41,6 +41,7 @@ class CustomerProfileRequest extends RequestGuard
             'current_password'     => 'sanitizeText|nullable',
             'new_password'         => 'sanitizeText|nullable',
             'confirm_new_password' => 'sanitizeText|nullable',
+            'company_name'         => 'nullable|sanitizeText|maxLength:255',
         ];
     }
 
@@ -51,7 +52,7 @@ class CustomerProfileRequest extends RequestGuard
     {
         return [
             'name.required' => esc_html__('Name field is required.', 'fluent-cart'),
-            'address_1.required' => esc_html__('Full Address is required.', 'fluent-cart'),
+            'address_1.required' => esc_html__('Street Address is required.', 'fluent-cart'),
             'city.required'      => esc_html__('City field is required.', 'fluent-cart'),
             'postcode.required'  => esc_html__('Postcode field is required.', 'fluent-cart'),
             'country.required'   => esc_html__('Country field is required.', 'fluent-cart'),
@@ -87,10 +88,10 @@ class CustomerProfileRequest extends RequestGuard
 
                 return sanitize_email($value);
             },
-            'is_primary'           => 'sanitize_text_field',
             'status'               => 'sanitize_text_field',
             'userId'               => 'sanitize_text_field',
             'customerId'           => 'sanitize_text_field',
+            'company_name'         => 'sanitize_text_field',
 
             'address.type'       => 'sanitize_text_field',
             'address.name'       => 'sanitize_text_field',
@@ -110,6 +111,7 @@ class CustomerProfileRequest extends RequestGuard
             },
             'address.is_primary' => 'sanitize_text_field',
             'address.status'     => 'sanitize_text_field',
+            'address.company_name' => 'sanitize_text_field',
         ];
     }
 }

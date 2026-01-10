@@ -3,6 +3,7 @@
 namespace FluentCart\App\Modules\PaymentMethods\StripeGateway\Webhook;
 
 use FluentCart\App\Events\Order\OrderRefund;
+use FluentCart\App\Helpers\CurrenciesHelper;
 use FluentCart\App\Events\Order\OrderStatusUpdated;
 use FluentCart\App\Helpers\Status;
 use FluentCart\App\Models\Order;
@@ -25,6 +26,9 @@ class IPN
 
         add_action('fluent_cart/payments/stripe/webhook_charge_dispute_created', [$this, 'handleChargeDisputeCreated'], 10, 1);
         add_action('fluent_cart/payments/stripe/webhook_charge_dispute_closed', [$this, 'handleChargeDisputeClosed'], 10, 1);
+
+        // For Hosted Checkout (Checkout Sessions)
+        add_action('fluent_cart/payments/stripe/webhook_checkout_session_completed', [$this, 'handleCheckoutSessionCompleted'], 10, 1);
 
         // For Subscriptions
         add_action('fluent_cart/payments/stripe/webhook_customer_subscription_updated', [$this, 'handleSubscriptionUpdated'], 10, 1);
@@ -80,12 +84,19 @@ class IPN
 
             $reason = Arr::get($refund, 'reason', 'other') ? Arr::get($refund, 'reason', 'other') : 'not specified';
 
+            $refundCurrency = Arr::get($charge, 'currency') ?? $order->currency;
+            $normalizedRefundAmount = (int)Arr::get($refund, 'amount', 0);
+
+            if ($refundCurrency && CurrenciesHelper::isZeroDecimal($refundCurrency)) {
+                $normalizedRefundAmount = $normalizedRefundAmount * 100;
+            }
+
             $refundData = [
                 'payment_method_type' => $refundMethodType,
                 'vendor_charge_id'    => Arr::get($refund, 'id'),
                 'status'              => Status::TRANSACTION_REFUNDED,
-                'currency'            => Arr::get($charge, 'currency') ?? $order->currency,
-                'total'               => (int)Arr::get($refund, 'amount'),
+                'currency'            => $refundCurrency,
+                'total'               => $normalizedRefundAmount,
                 'meta'                => [
                     'reason'         => $reason,
                     'transaction_id' => $parentTransaction ? $parentTransaction->id : null,
@@ -123,10 +134,17 @@ class IPN
         $transaction = OrderTransaction::query()->where('vendor_charge_id', $intentId)->first();
 
         if (!$transaction) {
+            $chargeCurrency = Arr::get($charge, 'currency', $order->currency);
+            $normalizedChargeAmount = (int)Arr::get($charge, 'amount', 0);
+
+            if ($chargeCurrency && CurrenciesHelper::isZeroDecimal($chargeCurrency)) {
+                $normalizedChargeAmount = $normalizedChargeAmount * 100;
+            }
+
             $transaction = OrderTransaction::query()
                 ->where('order_id', $order->id)
                 ->where('status', Status::TRANSACTION_PENDING)
-                ->where('total', (int)Arr::get($charge, 'amount'))
+                ->where('total', $normalizedChargeAmount)
                 ->orderBy('id', 'DESC')
                 ->first();
         }
@@ -258,6 +276,79 @@ class IPN
                 'total_paid' => max($newPaidAmount, 0),
                 'payment_status' => $newPaidAmount > 0 ? Status::PAYMENT_PARTIALLY_PAID : Status::PAYMENT_FAILED,
             ]);
+        }
+
+        return true;
+    }
+
+    /**
+     * Handle checkout.session.completed webhook for hosted checkout mode
+     * This ensures webhooks work properly even if redirect confirmation hasn't happened yet
+     */
+    public function handleCheckoutSessionCompleted($data)
+    {
+        $event = Arr::get($data, 'event');
+        $order = Arr::get($data, 'order');
+        $eventArray = json_decode(json_encode($event), true);
+        $session = Arr::get($eventArray, 'data.object');
+
+        $sessionId = Arr::get($session, 'id');
+        $paymentIntentId = Arr::get($session, 'payment_intent');
+        $paymentStatus = Arr::get($session, 'payment_status');
+        $mode = Arr::get($session, 'mode');
+
+        if (!$sessionId) {
+            return false;
+        }
+
+        // Find transaction by session_id stored in meta
+        $transaction = OrderTransaction::query()
+            ->where('order_id', $order->id)
+            ->whereRaw("JSON_EXTRACT(meta, '$.session_id') = ?", [$sessionId])
+            ->first();
+
+        // Fallback: try to find by vendor_charge_id if it was stored as session_id
+        if (!$transaction) {
+            $transaction = OrderTransaction::query()
+                ->where('order_id', $order->id)
+                ->where('vendor_charge_id', $sessionId)
+                ->first();
+        }
+
+        if (!$transaction) {
+            return false;
+        }
+
+        // Skip if already confirmed
+        if ($transaction->status === Status::TRANSACTION_SUCCEEDED) {
+            return true;
+        }
+
+        // Update vendor_charge_id to payment_intent for future webhook lookups
+        if ($paymentIntentId && $mode === 'payment') {
+            $transaction->update([
+                'vendor_charge_id' => $paymentIntentId
+            ]);
+        }
+
+        // For subscription mode, update vendor_subscription_id
+        if ($mode === 'subscription') {
+            $subscriptionId = Arr::get($session, 'subscription');
+            if ($subscriptionId) {
+                $subscription = Subscription::query()->where('id', $transaction->subscription_id)->first();
+                if ($subscription) {
+                    $subscription->update([
+                        'vendor_subscription_id' => $subscriptionId
+                    ]);
+                }
+
+                // Update transaction with payment_intent if available
+                if ($paymentIntentId) {
+                    $transaction->update([
+                        'vendor_charge_id' => $paymentIntentId
+                    ]);
+                }
+            }
         }
 
         return true;

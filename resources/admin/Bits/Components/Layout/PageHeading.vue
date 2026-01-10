@@ -1,12 +1,15 @@
 <template>
     <div class="page-heading-wrap">
-        <h1 class="page-title">
-            <router-link :to="to" v-if="to">
-                <DynamicIcon v-if="icon" :name="icon"/>
-            </router-link>
-            {{title}}
-        </h1>
-      <div class="actions">
+      <slot name="title" v-if="$slots['title']"/>
+
+      <h1 class="page-title" v-else>
+          <router-link :to="to" v-if="to">
+              <DynamicIcon v-if="icon" :name="icon"/>
+          </router-link>
+         {{title}}
+      </h1>
+
+      <div class="actions" v-if="$slots['action']">
         <slot name="action"/>
       </div>
     </div><!-- .page-heading-wrap -->

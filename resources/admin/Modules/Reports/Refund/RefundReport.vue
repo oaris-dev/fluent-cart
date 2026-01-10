@@ -6,6 +6,8 @@ import WeeksBetweenRefundChart from "./WeeksBetweenRefundChart.vue";
 import RefundTable from "./RefundTable.vue";
 import refundReport from "@/Models/Reports/RefundReportModel";
 import UserCan from "@/Bits/Components/Permission/UserCan.vue";
+import PageHeading from "@/Bits/Components/Layout/PageHeading.vue";
+import translate from "@/utils/translator/Translator";
 
 const props = defineProps({
   reportFilter: {
@@ -73,11 +75,7 @@ onUnmounted(() => {
 <template>
   <UserCan :permission="'reports/view'">
     <div class="fct-refund-report-page">
-      <div class="page-heading-wrap flex items-center justify-between">
-        <h1 class="page-title">
-          {{ $t('Refunds') }}
-        </h1>
-      </div>
+      <PageHeading :title="translate('Refunds')"></PageHeading>
 
       <Summary />
 

@@ -2,7 +2,7 @@
   <div class="fct-upgrade-paths-wrap fct-layout-width">
     <CardContainer>
       <CardHeader :title="translate('Upgrade Paths')"/>
-      <template v-if="isProActive">
+      <template v-if="isProActive && !isBundleProduct">
         <CardBody class="px-0 pb-0">
 
           <UpgradePathsLoader v-if="loading" />
@@ -176,11 +176,19 @@
         </CardFooter>
       </template>
 
-      <div v-else class="border border-solid border-gray-divider mt-5 pt-5 border-x-0 border-b-0 dark:border-dark-400">
+      <div v-else-if="!isProActive" class="border border-solid border-gray-divider mt-5 pt-5 border-x-0 border-b-0 dark:border-dark-400">
         <ProFeatureNotice
             class="py-7.5"
             :title="translate('Get access to this feature by Upgrading to FluentCart Pro')"
             :text="translate('This feature is only available in FluentCart Pro.')"
+        />
+      </div>
+
+      <div v-else-if="isBundleProduct" class="border border-solid border-gray-divider mt-5 border-x-0 border-b-0 dark:border-dark-400">
+        <Empty
+            icon="Empty/WebPage"
+            :title="translate('Upgrade Paths Temporarily Unavailable for Bundle Products')"
+            :text="translate('Upgrade paths feature is temporarily disabled for bundle products. This feature will be enabled in a future update.')"
         />
       </div>
 
@@ -189,6 +197,7 @@
   </div>
 
   <AddModal
+      v-if="!isBundleProduct"
       :productId="product.ID"
       @pathGenerated="handlePathGenerated"
       ref="addModalRef"
@@ -218,6 +227,7 @@ import EditModal from "@/Modules/Products/UpgradePaths/EditModal.vue";
 import UpgradePathsLoader from "@/Modules/Products/UpgradePaths/UpgradePathsLoader.vue";
 import ProFeatureNotice from "@/Bits/Components/ProFeatureNotice.vue";
 import AppConfig from "@/utils/Config/AppConfig";
+import Empty from "@/Bits/Components/Table/Empty.vue";
 
 // Props
 const props = defineProps({
@@ -231,6 +241,11 @@ const props = defineProps({
   }
 });
 
+// Computed
+const isBundleProduct = computed(() => {
+  return Arr.get(props.product, 'detail.other_info.is_bundle_product') === 'yes';
+});
+
 // Refs
 const loading = ref(false);
 const addModalRef = ref(null);
@@ -242,7 +257,7 @@ const upgradeSettings = ref({
 const isProActive = AppConfig.get('app_config.isProActive');
 
 const upgradePaths = ref([]);
-// Computed
+
 const upgradePathOptions = computed(() => {
   return props.product.variants.filter(variant => {
     const existingPathsCount = existingUpgradePathMap.value[variant.id]?.length || 0;

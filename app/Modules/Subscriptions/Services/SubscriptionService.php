@@ -69,7 +69,7 @@ class SubscriptionService
         $product = $subscriptionModel->product;
 
         $parentOrderItem = OrderItem::query()
-            ->where('order_id', $parentOrder->order_id)
+            ->where('order_id', $parentOrder->id)
             ->where('payment_type', Status::ORDER_TYPE_SUBSCRIPTION)
             ->first();
 
@@ -88,6 +88,19 @@ class SubscriptionService
             'line_meta' => [],
             'other_info' => []
         ];
+
+        $bundleItemIds = Arr::get($parentOrderItem->line_meta, 'bundle_item_ids', []);
+
+        $isBundleOrder = false;
+        if ($bundleItemIds) {
+            $isBundleOrder = true;
+            $orderItem['line_meta'] = array_merge(
+                $orderItem['line_meta'],
+                [
+                    'bundle_item_ids' => $bundleItemIds
+                ]
+            );
+        }
 
         $fulfillmentType = $orderItem['fulfillment_type'];
 

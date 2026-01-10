@@ -1,7 +1,7 @@
 import Arr from "@/utils/support/Arr";
 import dayjs from "dayjs";
 import translate from "@/utils/translator/Translator";
-import translateNumber from "@/utils/translator/Translator";
+import {translateNumber} from "@/utils/translator/Translator";
 import AppConfig from "@/utils/Config/AppConfig";
 
 export default class CurrencyFormatter {
@@ -92,6 +92,7 @@ export default class CurrencyFormatter {
             return CurrencyFormatter.formatNumber(amount, withCurrency, hideEmpty, currency);
         }
 
+
         formattedAmount = CurrencyFormatter.formatNumber(amount, false, hideEmpty, currency);
 
         if(!withCurrency) {
@@ -101,6 +102,8 @@ export default class CurrencyFormatter {
         // Combine the formatted amount with the suffix
         const valueWithSuffix = `${formattedAmount}${suffix}`;
 
+
+
         // Apply currency sign based on position
         if (CurrencyFormatter.#currencyPosition === 'before') {
             return `${currency}${valueWithSuffix}`;
@@ -108,8 +111,54 @@ export default class CurrencyFormatter {
         return `${valueWithSuffix}${currency}`;
     }
 
+    static formatScaledChart(amount, currencyName = '') {
+        if (!amount) {
+            return '0';
+        }
+
+        const currency = Arr.get(
+            CurrencyFormatter.#currencySigns,
+            currencyName || '',
+            CurrencyFormatter.#currencySign
+        )
+            // decode HTML entities to real characters for canvas
+            .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(n))
+            .replace(/&amp;/g, '&')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&nbsp;/g, ' ');
+
+        let suffix = '';
+
+        if (Math.abs(amount) >= 100000000000) {
+            amount = amount / 1000000000;
+            suffix = 'B';
+        } else if (Math.abs(amount) >= 100000000) {
+            amount = amount / 1000000;
+            suffix = 'M';
+        } else if (Math.abs(amount) >= 100000) {
+            amount = amount / 1000;
+            suffix = 'K';
+        }
+
+        const formatted = new Intl.NumberFormat(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(amount);
+
+        const value = `${formatted}${suffix}`;
+
+        return CurrencyFormatter.#currencyPosition === 'before'
+            ? `${currency}${value}`
+            : `${value}${currency}`;
+    }
+
     static scaled(amountInDollars, withCurrency = true, hideEmpty = false, currencyName = '') {
         return CurrencyFormatter.formatScaled(amountInDollars * 100, withCurrency, hideEmpty, currencyName);
+    }
+
+    static scaledChart(amountInDollars, withCurrency = true, hideEmpty = false, currencyName = '') {
+        return CurrencyFormatter.formatScaledChart(amountInDollars * 100, currencyName);
     }
 
     // Format a list of amounts

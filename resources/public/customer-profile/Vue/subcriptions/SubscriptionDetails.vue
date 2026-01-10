@@ -88,7 +88,7 @@
 
                 <span class="text" v-if="subscription.next_billing_date" role="status" aria-live="polite">
                     {{ translate('Your next billing date is:') }}
-                    {{ formatDate(subscription.next_billing_date, true) }}
+                    {{ dateTimeI18(subscription.next_billing_date) }}
                 </span>
 
                 <span class="text" v-if="subscription.trial_ends_at" role="status" aria-live="polite">
@@ -135,7 +135,6 @@
 
 <script setup>
 import translate from "../../translator/Translator";
-import {formatDate} from "@/Bits/common";
 import Badge from "@/Bits/Components/Badge.vue";
 import UpgradePlan from "./UpdatePaymentInfos/UpgradePlan.vue";
 import {computed, getCurrentInstance, ref} from "vue";
@@ -145,6 +144,7 @@ import SubscriptionHelper from "../../SubscriptionHelper.js";
 import UpdatePaymentInfos from "./UpdatePaymentInfos/index.vue";
 import DynamicIcon from "@/Bits/Components/Icons/DynamicIcon.vue";
 import IconButton from "@/Bits/Components/Buttons/IconButton.vue";
+import {dateTimeI18} from "../../translator/Translator";
 
 const props = defineProps({
     subscription: Object,

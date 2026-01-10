@@ -183,7 +183,7 @@ class SubscriptionManager
 
         $nextBillingDate = Arr::get($paypalSubscription, 'billing_info.next_billing_time') ?? null;
         if (!empty($nextBillingDate)) {
-            $nextBillingDate = gmdate('Y-m-d H:i:s');
+            $nextBillingDate = gmdate('Y-m-d H:i:s', strtotime($nextBillingDate));
         }
 
         $config = $subscription->config ?: [];

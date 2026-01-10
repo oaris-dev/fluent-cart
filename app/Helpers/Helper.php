@@ -9,9 +9,11 @@ use FluentCart\Api\Taxonomy;
 use FluentCart\App\App;
 use FluentCart\App\CPT\FluentProducts;
 use FluentCart\App\Models\Customer;
+use FluentCart\App\Models\ProductVariation;
 use FluentCart\App\Models\User;
 use FluentCart\App\Services\DateTime\DateTime;
 use FluentCart\App\Services\Localization\LocalizationManager;
+use FluentCart\App\Services\Translations\TransStrings;
 use FluentCart\App\Services\URL;
 use FluentCart\Framework\Http\URL as BaseUrl;
 use FluentCart\Framework\Support\Arr;
@@ -302,7 +304,7 @@ class Helper
      * @hook fluent_cart/hide_unnecessary_decimals - Filter to control whether unnecessary decimals (like .00) should be hidden.
      * Usage: add_filter('fluent_cart/hide_unnecessary_decimals', '__return_true'); // This will show 10 instead of 10.00
      */
-    public static function toDecimal($amount, $withCurrency = true, $currencyCode = null, $formatted = true, $showDecimals = true, $thousand_separator = true)
+    public static function toDecimal($amount, $withCurrency = true, $currencyCode = null, $formatted = true, $showDecimals = true, $thousand_separator = true, $withTranslatedDigit = true)
     {
         if (!is_numeric($amount)) {
             return $amount;
@@ -324,10 +326,7 @@ class Helper
         // Get currency sign
         $sign = CurrenciesHelper::getCurrencySign($currencyCode);
 
-        // Adjust amount for currencies that aren't zero-decimal
-        if (!CurrenciesHelper::isZeroDecimal($sign)) {
-            $amount = floatVal($amount / 100);
-        }
+        $amount = floatVal($amount / 100);
 
         // If $showDecimals is false, we override decimal places to 0
         if (!$showDecimals) {
@@ -364,6 +363,10 @@ class Helper
                         $amount = $parts[0] . $decimal_separator . $parts[1];
                     }
                 }
+            }
+
+            if($withTranslatedDigit) {
+                $amount = self::translateNumber($amount);
             }
         }
 
@@ -849,7 +852,7 @@ class Helper
         // Normalize / defaults
         $trialDays = $data['trial_days'] ?? 0;
         $interval = (string)($data['interval'] ?  $data['interval'] : 'monthly');
-        
+
         $unit = '';
         if (isset($intervalOptions[$interval])) {
             $unit = $intervalOptions[$interval];
@@ -861,7 +864,7 @@ class Helper
                     break;
                 }
             }
-            
+
             if (!$unit) {
                 $unit = strtolower(str_replace(['_', '-'], ' ', $interval));
             }
@@ -870,7 +873,7 @@ class Helper
         if (!$unit) {
             $unit = 'year';
         }
-        
+
         $count = max(1, (int)($data['interval_count'] ?? 1));
         $times = (int)($data['times'] ?? 0);
         $price = (string)($data['price'] ?? '');
@@ -889,7 +892,7 @@ class Helper
                 case 'quarter':
                     return _n('quarter', 'quarters', $n, 'fluent-cart');
                 case 'half_year':
-                    return _n('half year', 'half years', $n, 'fluent-cart');
+                    return _n('six month', 'six months', $n, 'fluent-cart');
                 case 'year':
                     return _n('year', 'years', $n, 'fluent-cart');
                 case 'month':
@@ -984,6 +987,25 @@ class Helper
         return $main;
     }
 
+    public static function getTranslatedIntervalUnit(string $unit, int $count = 1): string
+    {
+        switch ($unit) {
+            case 'day':
+                return _n('day', 'days', $count, 'fluent-cart');
+            case 'week':
+                return _n('week', 'weeks', $count, 'fluent-cart');
+            case 'month':
+                return _n('month', 'months', $count, 'fluent-cart');
+            case 'quarter':
+                return _n('quarter', 'quarters', $count, 'fluent-cart');
+            case 'half_year':
+                return _n('six month', 'six months', $count, 'fluent-cart');
+            case 'year':
+                return _n('year', 'years', $count, 'fluent-cart');
+            default:
+                return $count > 1 ? $unit . 's' : $unit;
+        }
+    }
 
     public static function generateSubscriptionInfo($otherInfo, $itemPrice): ?string
     {
@@ -993,6 +1015,13 @@ class Helper
         }
 
         $price = self::toDecimal($itemPrice);
+        $recurringDiscountAmount = Arr::get($otherInfo, 'recurring_discounts.amount', 0);
+
+        if ($recurringDiscountAmount) {
+            $newRecurringAmount = $itemPrice - $recurringDiscountAmount;
+            $price = "<del>" . $price . "</del> " . self::toDecimal($newRecurringAmount);
+        }
+
         $repeatInterval = Arr::get($otherInfo, 'repeat_interval', '');
         $occurrence = (int)Arr::get($otherInfo, 'times', 0);
 
@@ -1009,21 +1038,24 @@ class Helper
                         break;
                     }
                 }
-                
+
                 if (!$intervalUnit) {
                     $intervalUnit = ucwords(str_replace(['_', '-'], ' ', $repeatInterval));
                 }
         }
 
+        $intervalLabel = Helper::getTranslatedIntervalUnit($intervalUnit, $occurrence);
 
         $interval = $intervalUnit
             ? sprintf(
-            /* translators: %s is the interval (e.g., day, week, month, quarter, half_year, year) */
-                __(' per %s', 'fluent-cart'), $intervalUnit)
+                /* translators: %s is the interval (e.g., day, week, month, quarter, half_year, year) */
+                __('per %s', 'fluent-cart'),
+                $intervalLabel
+            )
             : '';
 
         $time = $intervalUnit
-            ? ($occurrence > 1 ? $intervalUnit . 's' : $intervalUnit)
+            ? $intervalLabel
             : '';
 
         $paymentInfo = sprintf(
@@ -1066,12 +1098,12 @@ class Helper
 
         if ($originalSetupFee = Arr::get($otherInfo, 'original_signup_fee', 0)) {
             if ($fee != $originalSetupFee) {
-                return __('Adjusted setup fee', 'fluent-cart') . CurrencySettings::getPriceHtml($fee);
+                return __('Adjusted setup fee', 'fluent-cart') . CurrencySettings::getPriceHtml($fee, null, true, true);
             }
         }
 
 
-        return $signupFeeName . ' ' . CurrencySettings::getPriceHtml($fee);
+        return $signupFeeName . ' ' . CurrencySettings::getPriceHtml($fee, null, true, true);
     }
 
     public static function generateTrialInfo($otherInfo)
@@ -1514,7 +1546,7 @@ class Helper
         }
 
         return $intervalMaps;
-        
+
     }
 
     public static function calculateAdjustedTrialDaysForInterval($trialDays, $repeatInterval)
@@ -1602,4 +1634,62 @@ class Helper
         return $result;
     }
 
+    public static function loadBundleChild(array $variants, $select = ['id', 'variation_title']): array
+    {
+        $allChildVariants = Arr::pluck($variants, 'other_info.bundle_child_ids');
+
+        $allChildVariants = array_unique(Arr::flatten($allChildVariants));
+        $allChildVariants = Arr::except(
+            $allChildVariants,
+            Arr::pluck($variants, 'id')
+        );
+        $allChildVariants = array_filter($allChildVariants);
+        $childVariants = ProductVariation::query()
+            ->whereIn('id', $allChildVariants)
+            ->select($select)
+            ->get()
+            ->toArray();
+
+
+        foreach ($variants as &$variant) {
+            $childIds = Arr::get($variant, 'other_info.bundle_child_ids', []);
+            $variant['bundle_child_ids'] = $childIds;
+            if (count($childIds) < 1) {
+                $variant['child_variants'] = [];
+                continue;
+            }
+            foreach ($childVariants as $childVariant) {
+                if (in_array($childVariant['id'], Arr::get($variant, 'other_info.bundle_child_ids', []))) {
+                    $variant['child_variants'][$childVariant['id']] = $childVariant;
+                }
+            }
+        }
+
+        return $variants;
+    }
+
+    /**
+     * Translate digits in a number according to the configured numeric system.
+     *
+     * Converts the digits 0-9 in the given number to their equivalents
+     * defined in the numeric system string from `dateTimeStrings()`.
+     * This allows displaying numbers in other numeral systems, e.g., Bengali, Arabic, Hindi, etc.
+     *
+     * Only digits are translated; other characters such as decimal points, currency symbols, or text remain unchanged.
+     *
+     * @param int|float|string $number The number to translate.
+     * @return string The number with digits translated according to the configured numeric system.
+     */
+    public static function translateNumber($number): string
+    {
+        $config = TransStrings::dateTimeStrings();
+        $numericSystem = Arr::get($config, 'numericSystem', '0_1_2_3_4_5_6_7_8_9');
+        $digits = explode('_', $numericSystem);
+
+        return strtr(
+            (string)$number,
+            array_combine(range(0,9),
+            $digits)
+        );
+    }
 }

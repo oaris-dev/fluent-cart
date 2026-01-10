@@ -92,7 +92,7 @@
                     }"
                   >
                     <span>
-                      {{ scope.row.use_count ?? 0 }}
+                      {{ translateNumber(scope.row.use_count ?? 0) }}
                     </span>
                     <span class="px-1">/</span>
                     <span>

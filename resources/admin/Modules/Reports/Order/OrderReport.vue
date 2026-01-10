@@ -2,11 +2,7 @@
   <UserCan :permission="'reports/view'">
     <div class="fct-order-report-page">
 
-      <div class="page-heading-wrap flex items-center justify-between">
-        <h1 class="page-title">
-          {{ $t('Orders') }}
-        </h1>
-      </div>
+      <PageHeading :title="translate('Orders')"></PageHeading>
 
       <Summary :orderReport="orderReport" :reportFilter="reportFilter" />
 
@@ -88,6 +84,8 @@ import OrderValueDistribution from "./OrderValueDistribution.vue";
 import AverageOrderGross from "./AverageOrderGross.vue";
 import AverageOrderItems from "./AverageOrderItems.vue";
 import UserCan from "@/Bits/Components/Permission/UserCan.vue";
+import PageHeading from "@/Bits/Components/Layout/PageHeading.vue";
+import translate from "@/utils/translator/Translator";
 
 const props = defineProps({
   reportFilter: {

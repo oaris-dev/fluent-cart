@@ -21,7 +21,7 @@
                     <el-alert type="error" :closable="false" role="alert" aria-live="assertive">
                         <div class="text-center p-4">
                             <p class="p-0 m-0 mb-3">Your license has been expired at
-                                {{ formatDate(license.expiration_date) }}. Please renew the license for getting updates
+                                {{ dateTimeI18(license.expiration_date) }}. Please renew the license for getting updates
                                 and support.</p>
                             <a :href="license.renewal_url" class="el-button el-button--primary" :aria-label="$t('Renew License')">
                                 {{ $t('Renew License') }}
@@ -91,7 +91,7 @@
                                     <div class="title">{{ $t('Expiration Date') }}</div>
                                     <div class="text">
                                         {{
-                                            license.expiration_date ? formatDate(license.expiration_date, true) : $t('Never Expires')
+                                            license.expiration_date ? dateTimeI18(license.expiration_date) : $t('Never Expires')
                                         }}
                                     </div>
                                 </div>
@@ -142,7 +142,7 @@ import Badge from "@/Bits/Components/Badge.vue";
 import LicenseKey from "./parts/LicenseKey.vue";
 import ActivatedSites from "./parts/ActivatedSites.vue";
 import UpgradePlan from "./subcriptions/UpdatePaymentInfos/UpgradePlan.vue";
-
+import {dateTimeI18} from "../translator/Translator";
 
 export default {
     name: 'LicenseDetails',
@@ -167,6 +167,7 @@ export default {
         }
     },
     methods: {
+        dateTimeI18,
         fetchLicense() {
             this.loading = true;
             this.$get('customer-profile/licenses/' + this.license_key)

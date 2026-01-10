@@ -205,7 +205,7 @@ registerBlockType(blockEditorData.slug + '/' + blockEditorData.name, {
                             {blocktranslate('Buy Now')}
                         </button>
                         <button className="fluent-cart-add-to-cart-button">
-                            {blocktranslate('Add to Cart')}
+                            {blocktranslate('Add To Cart')}
                         </button>
                     </div>
 

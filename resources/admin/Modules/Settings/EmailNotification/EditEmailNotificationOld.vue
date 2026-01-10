@@ -320,15 +320,22 @@ const toggleShowHiddenTags = () => {
       </template>
 
       <template #action>
-        <el-switch
-          active-value="yes"
-          inactive-value="no"
-          v-model="notification.enabled"
-          :active-text="
-            notification.enabled == 'yes' ? $t('Enabled') : $t('Enable')
-          "
-        >
-        </el-switch>
+        <!-- Only show enable/disable switch for notifications that are not order_placed_admin or order_placed_customer -->
+        <div v-if="notificationData?.manage_toggle !== 'no'">
+          <el-switch
+            active-value="yes"
+            inactive-value="no"
+            v-model="notification.enabled"
+            :active-text="
+              notification.enabled == 'yes' ? $t('Enabled') : $t('Enable')
+            "
+          >
+          </el-switch>
+        </div>
+        <!-- Show a text indicator for order_placed notifications -->
+        <div v-else class="text-gray-500 text-sm">
+          {{ $t('Auto-enabled for offline payments') }}
+        </div>
       </template>
     </CardHeader>
     <CardBody>

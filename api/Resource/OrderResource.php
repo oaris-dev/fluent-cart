@@ -316,7 +316,7 @@ class OrderResource extends BaseResourceApi
 
     private static function getCustomer($data)
     {
-        $customer = CustomerResource::find(Arr::get($data, 'customer.id'), [
+        $customer = CustomerResource::find(Arr::get($data, 'customer_id'), [
             'with' => ['primary_billing_address', 'primary_shipping_address']
         ]);
         return Arr::get($customer, 'customer');

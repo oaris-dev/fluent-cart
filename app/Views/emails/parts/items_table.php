@@ -173,7 +173,7 @@ use FluentCart\Framework\Support\Arr;
                     </td>
                     <td style="width:30%;text-align:right">
                         <p style="font-size:14px;font-weight:700;color:rgb(17,24,39);line-height:24px;margin: 0;">
-                            <?php echo esc_html(\FluentCart\Api\CurrencySettings::getFormattedPrice($order->total_amount - $order->total_refund)); ?>
+                            <?php echo esc_html(\FluentCart\Api\CurrencySettings::getFormattedPrice(($order->total_amount - $order->total_refund), null, false, true, true)); ?>
                         </p>
                     </td>
                 </tr>

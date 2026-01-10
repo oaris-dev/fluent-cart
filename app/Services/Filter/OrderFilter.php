@@ -277,6 +277,16 @@ class OrderFilter extends BaseFilter
                         'type'  => 'numeric',
                     ],
                     [
+                        'label' => __('Order Hash (UUID)', 'fluent-cart'),
+                        'value' => 'uuid',
+                        'type'  => 'text',
+                        'column' => 'uuid',
+                        'operators'   => [
+                            'equals'      => __('Equals', 'fluent-cart'),
+                            'not_equals'  => __('Not Equals', 'fluent-cart'),
+                        ]
+                    ],
+                    [
                         'label'       => __('Order Date', 'fluent-cart'),
                         'value'       => 'created_at',
                         'type'        => 'dates',

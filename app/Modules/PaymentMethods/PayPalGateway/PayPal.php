@@ -23,7 +23,9 @@ class PayPal extends AbstractPaymentGateway
 
     private $methodSlug = 'paypal';
 
-    public array $supportedFeatures = ['payment', 'refund', 'webhook', 'custom_payment', 'card_update', 'switch_payment_method', 'dispute_handler', 'subscriptions'];
+    public array $supportedFeatures = ['payment', 'refund', 'webhook', 'custom_payment', 'card_update', 'switch_payment_method' => [
+        'supported_gateways' => ['stripe', 'paypal'],
+    ], 'dispute_handler', 'subscriptions'];
 
 
     public function __construct()

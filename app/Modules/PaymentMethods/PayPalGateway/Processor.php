@@ -89,7 +89,7 @@ class Processor
         if ($taxTotal > 0 && $order->tax_behavior == 1) {
             $purchaseUnits['amount']['breakdown']['tax_total'] = [
                 'currency_code' => $transaction->currency,
-                'value'         => $taxTotal,
+                'value'         => number_format($taxTotal, 2, '.', ''),
             ];
             $pushedTotal += $taxTotal;
         }

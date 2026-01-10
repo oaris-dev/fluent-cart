@@ -82,6 +82,22 @@
               @apply text-sm font-bold text-[rgb(17,24,39)] m-0 leading-[24px];
             }
           }
+          .fct-bundle-products {
+            @apply mt-2.5;
+            .fct-bundle-products-title {
+              @apply text-[13px];
+            }
+            .fct-bundle-products-list,
+            .fct-see-more-btn {
+              @apply text-xs;
+            }
+            .fct-see-more-btn svg {
+              @apply w-2.5;
+            }
+            .fct-see-more-btn span {
+              @apply gap-1;
+            }
+          }
         }
         &-total {
           @apply bg-[rgb(249,250,251)] p-4 rounded m-0 w-full max-w-[290px] ml-auto;
@@ -99,7 +115,7 @@
             @apply text-sm text-[rgb(55,65,81)] leading-[24px] m-0;
           }
           &-value {
-            @apply uppercase text-[13px] text-[rgb(55,65,81)] m-0 leading-[24px] text-right;
+            @apply text-[13px] text-[rgb(55,65,81)] m-0 leading-[24px] text-right;
           }
           &-total {
             .fct-thank-you-page-order-items-total-label {

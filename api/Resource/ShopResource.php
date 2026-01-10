@@ -190,10 +190,26 @@ class ShopResource extends BaseResourceApi
                 //Extract number from start of title (e.g., "30 Day Retreat" → 30)
                 global $wpdb;
                 $postTable = $wpdb->prefix . 'posts';
-                $query = $query->orderByRaw("
-                    CAST(SUBSTRING_INDEX($postTable.post_title, ' ', 1) AS UNSIGNED) $sortOrder
-                ")->orderBy('posts.post_title', $sortOrder);
                 
+                // SQLite-compatible substring extraction
+                $isSqlite = defined('DB_ENGINE') && DB_ENGINE === 'sqlite';
+                if ($isSqlite) {
+                    // SQLite: Use a simpler approach to avoid parsing issues
+                    // First extract the number part, then sort by it
+                    $query = $query->selectRaw("
+                        CASE 
+                            WHEN INSTR($postTable.post_title, ' ') > 0 
+                            THEN SUBSTR($postTable.post_title, 1, INSTR($postTable.post_title, ' ') - 1)
+                            ELSE $postTable.post_title
+                        END AS title_number
+                    ")->orderByRaw("title_number $sortOrder, $postTable.post_title $sortOrder");
+                } else {
+                    // MySQL: Use SUBSTRING_INDEX
+                    $query = $query->orderByRaw("
+                        CAST(SUBSTRING_INDEX($postTable.post_title, ' ', 1) AS UNSIGNED) $sortOrder
+                    ")->orderBy('posts.post_title', $sortOrder);
+                }
+
                 if (Arr::get($params, 'paginate_using') === 'cursor') {
                     $query = $query->orderBy("posts.ID", 'ASC');
                 }
@@ -253,47 +269,74 @@ class ShopResource extends BaseResourceApi
      */
     public static function getSimilarProducts($id, $asArray = true)
     {
-        $getProducts = static::getQuery()
-            ->with('wpTerms.taxonomy')
-            ->where('ID', $id)->first();
+        $post = get_post($id);
 
-        if (empty($getProducts)) {
+        if (!$post) {
             return [];
         }
 
-        $termIds = $getProducts->wpTerms->pluck('term_id', 'taxonomy.taxonomy')->toArray();
+        $taxonomies = get_object_taxonomies($post->post_type);
 
-        foreach ($termIds as &$item) {
-            if (!is_array($item)) {
-                $item = [$item];
+        $termIds = [];
+
+        foreach ($taxonomies as $taxonomy) {
+            $terms = wp_get_post_terms($id, $taxonomy, ['fields' => 'ids']);
+            if (!empty($terms)) {
+                $termIds[$taxonomy] = $terms;
             }
         }
 
-        $params = [
-            "select"           => '*',
-            "with"             => ['postmeta', 'detail'],
-            "selected_status"  => true,
-            "excluded_id"      => ["ID" => ["column" => "ID", "operator" => "!=", "value" => $id]],
-            "status"           => ["post_status" => ["column" => "post_status", "operator" => "in", "value" => ["publish"]]],
-            "taxonomy_filters" => $termIds,
-            "per_page"         => 5
+        if (empty($termIds)) {
+            return [];
+        }
+
+        $taxQuery = ['relation' => 'OR'];
+
+        foreach ($termIds as $taxonomy => $ids) {
+            $taxQuery[] = [
+                'taxonomy' => $taxonomy,
+                'field'    => 'term_id',
+                'terms'    => $ids,
+                'operator' => 'IN'
+            ];
+        }
+
+        $args = [
+            'post_type'      => $post->post_type,
+            'post_status'    => 'publish',
+            'posts_per_page' => 5,
+            'post__not_in'   => [$id],
+            'tax_query'      => $taxQuery,
+            'fields'         => 'ids'
         ];
 
-        $products = static::get($params);
-        if (!empty($products['products']) && $products['products']->count() > 0) {
-            $products['products']->setCollection(
-                $products['products']->getCollection()->transform(function ($product) {
-                    return $product->setAppends(['view_url', 'edit_url', 'thumbnail']);
-                })
-            );
+        $query = new \WP_Query($args);
 
-            if ($asArray) {
-                return $products['products']->toArray()['data'];
-            }
-            return $products;
+        if (empty($query->posts)) {
+            return [];
         }
 
-        return [];
+        $results = [];
+
+        foreach ($query->posts as $postId) {
+
+            // Convert WP Post → Product Model
+            $similarProduct = static::getQuery()
+                ->with(['postmeta', 'detail'])
+                ->find($postId);
+
+            if ($similarProduct) {
+                $similarProduct->setAppends(['view_url', 'edit_url', 'thumbnail']);
+                $results[] = $similarProduct;
+            }
+        }
+
+        // Return array or objects
+        if ($asArray) {
+            return array_map(fn ($product) => $product->toArray(), $results);
+        }
+
+        return $results;
     }
 
     public static function create($data, $params = [])

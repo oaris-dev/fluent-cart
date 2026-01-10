@@ -33,7 +33,7 @@ class CartShortcode extends ShortCode
         }, 10);
     }
 
-    public function render(?array $viewData = null): string
+    public function render(?array $viewData = null)
     {
         $storeSettings = new StoreSettings();
         $cart = CartHelper::getCart();
@@ -41,15 +41,12 @@ class CartShortcode extends ShortCode
         $cartRenderer = new CartRenderer($cartItems);
 
         if (!$cart || !$cart->cart_data) {
-            ob_start();
             $cartRenderer->renderEmpty();
-            return ob_get_clean();
+            return;
         }
 
         $cart->reValidateCoupons();
-        ob_start();
         $cartRenderer->render();
-        return ob_get_clean();
     }
 
     protected function getStyles(): array

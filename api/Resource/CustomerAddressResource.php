@@ -217,24 +217,24 @@ class CustomerAddressResource extends BaseResourceApi
             if ($addressType === 'billing') {
                 return static::makeSuccessResponse(
                     $address,
-                    __('Billing address created successfully!', 'fluent-cart')
+                    __('Billing address updated successfully!', 'fluent-cart')
                 );
             }
 
             return static::makeSuccessResponse(
                 $address,
-                __('Shipping address created successfully!', 'fluent-cart')
+                __('Shipping address updated successfully!', 'fluent-cart')
             );
         }
 
         if ($addressType === 'billing') {
             return static::makeErrorResponse([
-                ['code' => 400, 'message' => __('Failed creating billing address', 'fluent-cart')]
+                ['code' => 400, 'message' => __('Failed updating billing address', 'fluent-cart')]
             ]);
         }
 
         return static::makeErrorResponse([
-            ['code' => 400, 'message' => __('Failed creating shipping address', 'fluent-cart')]
+            ['code' => 400, 'message' => __('Failed updating shipping address', 'fluent-cart')]
         ]);
     }
 

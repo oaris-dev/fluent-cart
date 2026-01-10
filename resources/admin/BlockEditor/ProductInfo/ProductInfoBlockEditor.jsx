@@ -23,8 +23,10 @@ const TEMPLATE = [
         ]],
         ['core/column', {}, [
             ['fluent-cart/shopapp-product-title', {}],
+            ['fluent-cart/excerpt', {}],
             ['fluent-cart/stock', {}],
-            ['fluent-cart/shopapp-product-price', {}],
+            ['fluent-cart/price-range', {}],
+            // ['fluent-cart/shopapp-product-price', {}],
             ['fluent-cart/buy-section', {}]
         ]]
     ]]
@@ -90,8 +92,6 @@ registerBlockType(blockEditorData.slug + '/' + blockEditorData.name, {
                     'X-WP-Nonce': rest.nonce
                 },
             }).then((response) => {
-                console.log(response.product, ' response');
-
                 setSelectedProduct(response.product || {});
             }).finally(() => {
 
@@ -126,11 +126,13 @@ registerBlockType(blockEditorData.slug + '/' + blockEditorData.name, {
                                     'fluent-cart/buy-section',
                                     'fluent-cart/product-gallery',
                                     'fluent-cart/stock',
+                                    'fluent-cart/price-range',
                                     'core/columns',
                                     'core/paragraph',
                                     'core/title',
                                     'fluent-cart/shopapp-product-title',
-                                    'fluent-cart/shopapp-product-price'
+                                    'fluent-cart/excerpt'
+                                    // 'fluent-cart/shopapp-product-price'
                                 ]
                             }
                         />

@@ -1,7 +1,7 @@
+@use "./scss/nav.scss";
 @config "./customer-profile.config.js";
 
 @tailwind utilities;
-@import "./scss/nav.scss";
 
 :root {
   --fct-customer-dashboard-primary-text-color: var(--fct-primary-text-color, theme('colors.primary.500'));
@@ -130,7 +130,7 @@
 
 // .fct-customer-dashboard-customer-info
 .fct-customer-dashboard-customer-info {
-  @apply relative flex items-center gap-3 py-3 pl-5 pr-3 border-0 border-b-[1px] border-solid border-gray-divider;
+  @apply relative flex gap-3 py-3 pl-5 pr-3 border-0 border-b-[1px] border-solid border-gray-divider;
   @media (max-width: 806px) {
     @apply hidden;
   }

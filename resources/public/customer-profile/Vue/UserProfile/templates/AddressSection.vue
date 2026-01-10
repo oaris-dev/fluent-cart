@@ -14,7 +14,7 @@
       <ul v-if="addresses.length" class="fct-customer-address-list" role="list" :aria-label="`${addressType} addresses`">
         <li :class="`fct-customer-address-block ${address.is_primary === '1' ? 'default-address' : ''}`"
             v-for="address in sortedAddresses" :key="address.id" role="listitem">
-          <div class="title">
+          <div class="title" v-if="address.label">
             {{ address.label }}
 
             <Badge

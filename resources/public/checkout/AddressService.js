@@ -15,7 +15,7 @@ export default class AddressService {
     onReady = null;
     defaultCountry = null;
     #nonce = '';
-
+    translate = window.fluentcart.$t;
     static init(checkoutHandler, onReady) {
 
         if (AddressService.instance === null) {
@@ -24,7 +24,6 @@ export default class AddressService {
         window.fluent_cart_address_service = AddressService.instance;
         return AddressService.instance;
     }
-
 
     constructor(checkoutHandler, onReady) {
         this.formWrapper = checkoutHandler.form;
@@ -37,7 +36,6 @@ export default class AddressService {
         this.onReady = onReady;
         this.initCustomBillingSelect();
     }
-
 
     async initCustomBillingSelect() {
 
@@ -404,7 +402,7 @@ export default class AddressService {
 
                 let formattedData = [
                     {
-                        text: 'Select ' + stateLabel,
+                        text: this.translate('Select %s', stateLabel),
                         value: ''
                     }
                 ];
@@ -541,6 +539,8 @@ export default class AddressService {
                 data_value: value
             });
 
+        window.fluent_cart_checkout_ui_service.setLoading('shippingMethodsWrapper');
+
         fetch(url, {
             method: "POST",
             headers: {
@@ -559,7 +559,9 @@ export default class AddressService {
             if (data?.shipping_charge_changes || data?.tax_total_Changes) {
                 this.checkoutHandler.handleCheckoutAmountChanges();
             }
-        })
+        }).finally(() => {
+            window.fluent_cart_checkout_ui_service.finishLoading('shippingMethodsWrapper');
+        });
 
     }
 

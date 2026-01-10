@@ -2,10 +2,10 @@
 import {dateTimeI18, translateNumber} from "../../translator/Translator";
 import translate from "../../translator/Translator";
 import {pluralizeTranslate} from "../../translator/Translator";
-import {formatDate} from "@/Bits/common";
 import DynamicIcon from "@/Bits/Components/Icons/DynamicIcon.vue";
 import Badge from "@/Bits/Components/Badge.vue";
 import Str from "@/utils/support/Str";
+import BundleProducts from "@/Bits/Components/BundleProducts.vue";
 
 const props = defineProps({
     orders: {
@@ -126,6 +126,7 @@ const getStatusText = (status) => {
       return Str.headline(status);
   }
 }
+
 </script>
 
 <template>
@@ -195,7 +196,7 @@ const getStatusText = (status) => {
                         {{ item.post_title }}
                       </router-link>
                       <span class="variation-title">
-                        <b>{{ item.quantity }} </b> x
+                        <b>{{ translateNumber(item.quantity) }} </b> x
                         {{ item.title }}
                       </span>
                     </p>
@@ -233,6 +234,7 @@ const getStatusText = (status) => {
           {{translate('Your purchases will be shown here!')}}
         </div>
       </div><!-- order-content-only-mobile -->
+
 
       <!-- desktop view -->
         <el-table class="order-content-only-desktop" :empty-text="$t('Your purchases will be shown here!')" :data="orders" :show-header="showTableHeader" role="table"
@@ -301,7 +303,7 @@ const getStatusText = (status) => {
                                         }" class="title" :aria-label="$t('View item details:') + item.post_title">
                                             {{ item.post_title }}
                                         </router-link>
-                                        <span class="variation-title"><b>{{ item.quantity }} </b> x {{
+                                        <span class="variation-title"><b>{{ translateNumber(item.quantity) }} </b> x {{
                                                 item.title
                                             }}</span>
                                     </p>
@@ -321,6 +323,10 @@ const getStatusText = (status) => {
                             </template>
                         </el-popover>
                     </div>
+
+                  <template v-if="scope.row.order_items">
+                    <BundleProducts v-for="item in scope.row.order_items" :key="item.id" :product="item"/>
+                  </template>
                 </template>
             </el-table-column>
 

@@ -1,10 +1,6 @@
 <template>
   <div class="fct-default-report-page">
-    <div class="page-heading-wrap flex items-center justify-between">
-      <h1 class="page-title">
-        {{ $t('Sales') }}
-      </h1>
-    </div>
+    <PageHeading :title="translate('Sales')"></PageHeading>
 
     <SummaryCards :default-report="defaultReport" />
 
@@ -39,13 +35,12 @@
 import { onMounted, onUnmounted, ref, computed, watch } from "vue";
 import defaultReport from "@/Models/Reports/DefaultReportModel";
 import SummaryCards from "@/Modules/Reports/Default/Components/SummaryCards.vue";
-import AverageCards from "@/Modules/Reports/Default/Components/AverageCards.vue";
 import FailedOrders from "@/Modules/Reports/Default/Components/FailedOrders.vue";
 import TopSoldProducts from "@/Modules/Reports/Default/Components/TopSoldProducts.vue";
 import TopSoldVariants from "@/Modules/Reports/Default/Components/TopSoldVariants.vue";
 import Sources from "@/Modules/Reports/Default/Components/Sources.vue";
-import Permission from "@/utils/permission/Permission";
-import Storage from "@/utils/Storage";
+import PageHeading from "@/Bits/Components/Layout/PageHeading.vue";
+import translate from "@/utils/translator/Translator";
 
 const props = defineProps({
   reportFilter: {

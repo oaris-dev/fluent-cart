@@ -73,13 +73,13 @@ class TemplateActions
 
 
             $products = ShopResource::getSimilarProducts($productId, false);
-            if (empty($products['products'])) {
+            if (empty($products)) {
                 return '';
             }
 
             ob_start();
             (new ProductListRenderer(
-                $products['products'],
+                $products,
                 __('Related Products', 'fluent-cart'),
                 'fct-similar-product-list-container'
             ))->render();
@@ -187,7 +187,7 @@ class TemplateActions
 
     public function initSingleProductHooks()
     {
-        add_filter('the_title', function ($title, int $post_id) {
+        add_filter('the_title', function ($title, $post_id) {
             if (apply_filters('fluent_cart/disable_auto_single_product_page', false)) {
                 return $title;
             }
@@ -199,7 +199,7 @@ class TemplateActions
                 // this is the main query for a single product page
                 $wp_query->is_main_query()
                 // post_id is get_queried id
-                && $post_id === $wp_query->get_queried_object_id()
+                && $post_id == $wp_query->get_queried_object_id()
                 && $post->post_type === FluentProducts::CPT_NAME
             ) {
                 return '';
@@ -229,6 +229,11 @@ class TemplateActions
         $headerContent = ob_get_clean();
         $content = $headerContent . $content;
 
+        ob_start();
+        do_action('fluent_cart/product/after_product_content', $post->ID);
+        $productContent = ob_get_clean();
+        $content .= $productContent;
+
         $storeSettings = new StoreSettings();
 
         $showRelevant = $storeSettings->get('show_relevant_product_in_single_page') == 'yes';
@@ -237,7 +242,7 @@ class TemplateActions
             $products = ShopResource::getSimilarProducts($post->ID, false);
             ob_start();
             (new ProductListRenderer(
-                  Arr::get($products, 'products', []),
+                $products,
                 __('Related Products', 'fluent-cart'),
                 'fct-similar-product-list-container'
             ))->render();

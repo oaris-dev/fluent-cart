@@ -56,7 +56,9 @@ class FluentCartGeneralApi
                     [$slug => [
                         'label'     => Arr::get($args, 'title'),
                         'css_class' => 'fct-menu-item-' . $slug,
-                        'link'      => \FluentCart\App\Services\URL::getCustomerDashboardUrl($slug)
+                        'link'      => \FluentCart\App\Services\URL::getCustomerDashboardUrl($slug),
+                        'icon_svg'  => Arr::get($args, 'icon_svg'),
+                        'icon_url'  => Arr::get($args, 'icon_url'),
                     ]] +
                     array_slice($items, $profileKey, null, true);
             } else {
@@ -65,7 +67,9 @@ class FluentCartGeneralApi
                     $items[$slug] = [
                         'label'     => Arr::get($args, 'title'),
                         'css_class' => 'fct-menu-item-' . $slug,
-                        'link'      => \FluentCart\App\Services\URL::getCustomerDashboardUrl($slug)
+                        'link'      => \FluentCart\App\Services\URL::getCustomerDashboardUrl($slug),
+                        'icon_svg'  => Arr::get($args, 'icon_svg'),
+                        'icon_url'  => Arr::get($args, 'icon_url'),
                     ];
                 }
             }

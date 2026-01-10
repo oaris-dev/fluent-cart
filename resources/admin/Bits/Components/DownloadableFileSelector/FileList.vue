@@ -192,7 +192,7 @@ const deleteFile = async (file, index) => {
       <el-table
           v-if="!hasError"
           ref="tableRef"
-          :data="fileList"
+          :data="fileList.filter(file => file.size > 0)"
           @selection-change="onSelectFile"
       >
         <!-- Multiple selection (checkboxes) -->
@@ -200,7 +200,7 @@ const deleteFile = async (file, index) => {
             v-if="multiple"
             type="selection"
             width="45"
-            :selectable="(row) => !row.deleting"
+            :selectable="(row) => !row.deleting && row.size > 0"
             @selection-change="onSelectFile"
         />
 
@@ -210,6 +210,7 @@ const deleteFile = async (file, index) => {
             <el-radio
                 v-model="singleSelected"
                 :label="scope.row"
+                :disabled="scope.row.size == 0"
                 @change="onSelectFile([scope.row])"
             />
           </template>
@@ -217,7 +218,7 @@ const deleteFile = async (file, index) => {
 
         <el-table-column :label="translate('File Name')">
           <template #default="scope">
-            <span>{{ getFileName(scope.row.name) }}</span>
+            <span class="file-name">{{ getFileName(scope.row.name) }}</span>
           </template>
         </el-table-column>
 

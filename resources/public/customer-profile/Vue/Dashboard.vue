@@ -39,6 +39,7 @@
 <script type="text/babel">
 import OrderTable from "./parts/OrderTable.vue";
 import OrderTableLoader from "./parts/OrderTableLoader.vue";
+import { formatOrderItems } from "@/Bits/common";
 
 export default {
     name: "Dashboard",
@@ -59,11 +60,17 @@ export default {
         };
     },
     methods: {
+      formatOrderItems,
         fetchDashboardData() {
             this.loading = true;
             this.$get("customer-profile")
                 .then((response) => {
                     this.dashboardData = response.dashboard_data;
+
+                    this.dashboardData.orders.forEach((order) => {
+                      order.order_items = this.formatOrderItems(order.order_items);
+                    });
+
                     if(response.section_parts) {
                         this.sectionParts = response.section_parts;
                     }

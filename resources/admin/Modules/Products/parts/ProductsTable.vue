@@ -53,12 +53,15 @@ const getProductTypeText = (type) => {
       return translate('Physical');
     case 'digital':
       return translate('Digital');
+    case 'bundle':
+      return translate('Bundle');
     default:
       Str.headline(type)
   }
 }
 
 const getVariationTypeText = (type) => {
+
   switch (type) {
     case 'simple':
       return translate('Simple');
@@ -128,17 +131,20 @@ const getVariationTypeText = (type) => {
     </el-table-column>
 
     <el-table-column v-if="productTable.isColumnVisible('product_type')" :label="translate('Type')"
-                     width="100">
+                     width="170">
       <template #default="scope">
 
         <RouteCell class="hover:no-underline"
                    :to="{ name: 'product_edit', params: { product_id: scope.row.ID } }">
-          <span v-if="scope.row.detail">
-            {{
-              getProductTypeText(scope.row.detail.fulfillment_type)
-            }}
-          </span>
-          <span v-else>{{ translate('N/A') }}</span>
+          <div class="flex items-center gap-2">
+            <span v-if="scope.row.detail?.other_info?.is_bundle_product === 'yes'">{{ translate('Bundle') }} - </span>
+            <span v-if="scope.row.detail">
+              {{
+                  getProductTypeText(scope.row.detail.fulfillment_type)
+                }}
+            </span>
+            <span v-else>{{ translate('N/A') }}</span>
+          </div>
         </RouteCell>
 
       </template>

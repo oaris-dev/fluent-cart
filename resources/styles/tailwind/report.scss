@@ -457,12 +457,25 @@
   grid-template-columns: repeat(var(--loader-grid-cols), minmax(0, 1fr));
 }
 
-
+.fct-reports-view {
+  .fct-card {
+    .el-table--border {
+      &::before,
+      .el-table__border-left-patch {
+        @apply w-0;
+      }
+    }
+  }
+}
 // Responsive 
 @media (max-width: 1024px) {
-  .fct-reports-view {
-    &-inner {
+  .fct-report-order-summary {
+    &.summary-col-2 {
+      @apply grid-cols-1 gap-0;
+    }
 
+    .summary-item::after {
+      @apply hidden;
     }
   }
 }

@@ -8,6 +8,7 @@ use FluentCart\App\Helpers\Helper;
 use FluentCart\App\Helpers\Status;
 use FluentCart\App\Models\Concerns\CanSearch;
 use FluentCart\App\Models\Concerns\CanUpdateBatch;
+use FluentCart\App\Models\Relations\BundleChildrenRelation;
 use FluentCart\App\Services\PlanUpgradeService;
 use FluentCart\App\Services\URL;
 use FluentCart\Framework\Database\Orm\Builder;
@@ -235,8 +236,7 @@ class ProductVariation extends Model
      */
     public function canPurchase($quantity = 1)
     {
-        if ($this->item_status !== 'active' ||
-            $this->product->post_status !== 'publish') {
+        if ($this->item_status !== 'active' || !in_array($this->product->post_status, ['publish', 'private'])) {
             return new \WP_Error('unpublished', __('This product is not available for purchase.', 'fluent-cart'));
         }
 
@@ -253,6 +253,22 @@ class ProductVariation extends Model
             if (($productDetail->manage_stock && $this->manage_stock) && $quantity > $this->available) {
                 return new \WP_Error('insufficient_stock', __('Sorry, this product is currently out of stock.', 'fluent-cart'));
             }
+        }
+
+
+        if ($this->product->isBundleProduct() && !App::isProActive()) {
+            return new \WP_Error('invalid_bundle_product', __('Sorry, this product is not available for purchase.', 'fluent-cart'));
+
+        }
+
+        $bundleCheck = apply_filters('fluent_cart/variation/can_purchase_bundle', null, [
+            'variation' => $this,
+            'quantity'  => (int)$quantity
+        ]);
+        if (is_wp_error($bundleCheck)) {
+            return $bundleCheck;
+        } elseif ($bundleCheck === false) {
+            return new \WP_Error('insufficient_stock', __('Sorry, this product is currently out of stock.', 'fluent-cart'));
         }
 
         return true;
@@ -290,5 +306,103 @@ class ProductVariation extends Model
             return $this->product->soldIndividually();
         }
         return false;
+    }
+
+    public function isStock(): bool
+    {
+        // Check if variation is active
+        if ($this->item_status !== 'active') {
+            return false;
+        }
+
+        // Check if this is a bundle product variation
+        $isBundleProduct = $this->product && $this->product->isBundleProduct();
+
+        // If stock management is disabled for this variation
+        if (!$this->manage_stock) {
+            // For bundle products, still check child items
+            if ($isBundleProduct) {
+                return $this->isBundleChildrenInStock();
+            }
+            // For regular products without stock management, check status
+            return $this->stock_status === Helper::IN_STOCK;
+        }
+
+        // Stock management is enabled - check availability and status
+        $hasStock = ($this->available > 0 && $this->stock_status === Helper::IN_STOCK);
+
+        // For non-bundle products, return stock status
+        if (!$isBundleProduct) {
+            return $hasStock;
+        }
+
+        // For bundle products, parent must be in stock AND all children must be in stock
+        if (!$hasStock) {
+            return false;
+        }
+
+        return $this->isBundleChildrenInStock();
+    }
+
+    /**
+     * Check if all bundle children are in stock
+     *
+     * @return bool
+     */
+    protected function isBundleChildrenInStock(): bool
+    {
+        $childIds = Arr::get($this->other_info, 'bundle_child_ids', []);
+
+        // No bundle children, consider as in stock
+        if (empty($childIds) || !is_array($childIds)) {
+            return true;
+        }
+
+        // Get all bundle children variations
+        $children = static::query()
+            ->whereIn('id', $childIds)
+            ->get(['id', 'manage_stock', 'available', 'stock_status', 'item_status', 'post_id', 'other_info']);
+
+        // Check each child
+        foreach ($children as $child) {
+            // Child must be active
+            if ($child->item_status !== 'active') {
+                return false;
+            }
+
+            // If child manages stock
+            if ((int)$child->manage_stock === 1) {
+                if ((int)$child->available <= 0 || $child->stock_status !== Helper::IN_STOCK) {
+                    return false;
+                }
+            } else {
+                // Child doesn't manage stock, just check status
+                if ($child->stock_status !== Helper::IN_STOCK) {
+                    return false;
+                }
+            }
+
+            // If child is also a bundle (nested bundle), check recursively
+            if ($child->product && $child->product->isBundleProduct()) {
+                $nestedChildIds = Arr::get($child->other_info, 'bundle_child_ids', []);
+                if (!empty($nestedChildIds)) {
+                    if (!$child->isBundleChildrenInStock()) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    public function bundleChildren(): BundleChildrenRelation
+    {
+        return new BundleChildrenRelation(
+            $this->newQuery(),
+            $this,
+            'other_info',           // JSON column name
+            'bundle_child_ids'      // JSON key name
+        );
     }
 }

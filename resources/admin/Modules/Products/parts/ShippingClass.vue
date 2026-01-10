@@ -9,6 +9,7 @@ import DynamicIcon from "@/Bits/Components/Icons/DynamicIcon.vue";
 import ShippingClassDrawer from "@/Modules/Shipping/Components/ShippingClassDrawer.vue";
 import LabelHint from "@/Bits/Components/LabelHint.vue";
 import AppConfig from "@/utils/Config/AppConfig";
+import Notify from "@/utils/Notify";
 
 const props = defineProps({
   product: Object,
@@ -58,6 +59,35 @@ const openAddClassDrawer = () => {
   showClassDrawer.value = true;
 };
 
+const saveShippingClass = () => {
+  if (!selectedClass.value) {
+    return;
+  }
+
+  Rest.post('products/'+props.product.ID+'/shipping-class', {
+    shipping_class: selectedClass.value
+  }).then(response => {
+    Notify.success(response.message);
+  }).catch(errors => {
+    if (errors.status_code == '422') {
+      Notify.validationErrors(errors);
+    } else {
+      Notify.error(errors.data?.message);
+    }
+  });
+}
+const removeShippingClass = () => {
+  Rest.post('products/'+props.product.ID+'/shipping-class/remove').then(response => {
+    Notify.success(response.message);
+  }).catch(errors => {
+    if (errors.status_code == '422') {
+      Notify.validationErrors(errors);
+    } else {
+      Notify.error(errors.data?.message);
+    }
+  });
+}
+
 onMounted(() => {
   fetchShippingClasses();
 })
@@ -87,10 +117,8 @@ onMounted(() => {
               :loading="loading"
               filterable
               clearable
-              @change="()=>{
-              productEditModel.onChangeInputField('shipping_class', selectedClass);
-              generateShippingInfo();
-            }"
+              @change="saveShippingClass"
+              @clear="removeShippingClass"
               popper-class="fct-shipping-class-select"
           >
             <el-option

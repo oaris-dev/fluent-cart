@@ -139,8 +139,8 @@ const getPaymentMethodLabel = (paymentMethod) => {
           min-width="150"
         >
           <template #default="scope">
-            <div class="inline-flex">
-              {{ CurrencyFormatter.scaled(scope.row.gross_sale) }}
+            <div class="inline-flex" v-html="CurrencyFormatter.scaled(scope.row.gross_sale)">
+
             </div>
           </template>
         </el-table-column>
@@ -151,16 +151,16 @@ const getPaymentMethodLabel = (paymentMethod) => {
           min-width="150"
         >
           <template #default="scope">
-            <div class="inline-flex" :class="liabilityClass(scope.row.total_refunds)">
-              {{ maybeLiability(scope.row.total_refunds) }}
+            <div class="inline-flex" :class="liabilityClass(scope.row.total_refunds)" v-html="maybeLiability(scope.row.total_refunds)">
+
             </div>
           </template>
         </el-table-column>
 
         <el-table-column prop="total_tax" :label="$t('Taxes')" min-width="150" v-if="total_tax > 0">
           <template #default="scope">
-            <div class="inline-flex" :class="liabilityClass(scope.row.total_tax)">
-              {{ maybeLiability(scope.row.total_tax) }}
+            <div class="inline-flex" :class="liabilityClass(scope.row.total_tax)" v-html="maybeLiability(scope.row.total_tax)">
+
             </div>
           </template>
         </el-table-column>
@@ -172,8 +172,8 @@ const getPaymentMethodLabel = (paymentMethod) => {
           v-if="shipping_total > 0"
         >
           <template #default="scope">
-            <div class="inline-flex" :class="liabilityClass(scope.row.shipping_total)">
-              {{ maybeLiability(scope.row.shipping_total) }}
+            <div class="inline-flex" :class="liabilityClass(scope.row.shipping_total)" v-html="maybeLiability(scope.row.shipping_total)">
+
             </div>
           </template>
         </el-table-column>
@@ -184,8 +184,8 @@ const getPaymentMethodLabel = (paymentMethod) => {
           min-width="150"
         >
           <template #default="scope">
-            <div class="inline-flex">
-              {{ CurrencyFormatter.scaled(scope.row.net_sale) }}
+            <div class="inline-flex" v-html="CurrencyFormatter.scaled(scope.row.net_sale)">
+
             </div>
           </template>
         </el-table-column>

@@ -50,13 +50,13 @@ class CartItemRenderer
         } else {
             $promoPriceOriginal = '';
         }
-
         ?>
         <div class="<?php $this->renderCssAtts($wrapperClassAttributes); ?>" role="listitem">
             <div class="fct_line_item_info">
                 <?php $this->renderImage(); ?>
                 <div class="fct_item_content">
                     <?php $this->renderTitle(); ?>
+                    <?php $this->renderChildVariants(); ?>
                     <?php do_action('fluent_cart/cart/line_item/line_meta', $this->getEventInfo()); ?>
                 </div>
             </div><!-- .fct_line_item_info -->
@@ -156,6 +156,10 @@ class CartItemRenderer
         $otherInfo = Arr::get($this->item, 'other_info', []);
         $paymentType = Arr::get($otherInfo, 'payment_type', '');
         $itemPrice = Arr::get($this->item, 'unit_price', 0);
+        
+        if (isset($this->item['recurring_discounts'])) {
+            $otherInfo['recurring_discounts'] = $this->item['recurring_discounts'];
+        }
 
         if ($paymentType === 'subscription') {
             $subscriptionInfo = Helper::generateSubscriptionInfo($otherInfo, $itemPrice);
@@ -165,7 +169,7 @@ class CartItemRenderer
             <div class="fct_item_payment_info">
                 <span class="sr-only"><?php esc_html_e('Payment information', 'fluent-cart'); ?></span>
 
-                <span> <?php echo esc_html($subscriptionInfo); ?> </span>
+                <span> <?php echo wp_kses($subscriptionInfo, ['del' => true]); ?> </span>
                 <?php if ($trialInfo): ?>
                     <span class="trial-days"> <?php echo esc_html($trialInfo); ?> </span>
                 <?php endif; ?>
@@ -191,5 +195,58 @@ class CartItemRenderer
         </div>
         <?php
     }
+
+    public function renderChildVariants(){
+        $childVariants = Arr::get($this->item, 'child_variants', []);
+
+        if (empty($childVariants)) {
+            return;
+        }
+
+        $total = count($childVariants);
+
+        ?>
+        <div class="fct-bundle-products" data-fluent-cart-collapsibles>
+            <h4 class="fct-bundle-products-title">
+                <?php echo esc_html__('Bundle of', 'fluent-cart') . ':'; ?>
+            </h4>
+            <div class="fct-bundle-products-list">
+                <?php foreach (array_slice($childVariants, 0, 2) as $childVariant): ?>
+                    <p>
+                        <?php echo esc_html($childVariant['variation_title']); ?>
+                    </p>
+                <?php endforeach; ?>
+
+                <?php if ($total > 2): ?>
+                    <div class="fct-bundle-products-more">
+                        <div class="fct-bundle-products-more-list">
+                            <?php foreach (array_slice($childVariants, 2) as $childVariant): ?>
+                                <p>
+                                    <?php echo esc_html($childVariant['variation_title']); ?>
+                                </p>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                <?php endif;?>
+            </div>
+
+            <?php if ($total > 2) : ?>
+                <a href="#" class="fct-see-more-btn" data-fluent-cart-collapsible-toggle>
+                    <span class="see-more-text">
+                        <?php echo esc_html__('See More', 'fluent-cart'); ?>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="7" viewBox="0 0 12 7" fill="none">
+                            <path d="M0.75 0.75L5.04289 5.04289C5.37623 5.37623 5.54289 5.54289 5.75 5.54289C5.95711 5.54289 6.12377 5.37623 6.45711 5.04289L10.75 0.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                    <span class="see-less-text">
+                        <?php echo esc_html__('See Less', 'fluent-cart'); ?>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="7" viewBox="0 0 14 8" fill="none">
+                            <path d="M0.75 6.54297L6.04289 1.25008C6.37623 0.916742 6.54289 0.750076 6.75 0.750076C6.95711 0.750076 7.12377 0.916742 7.45711 1.25008L12.75 6.54297" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </a>
+            <?php endif; ?>
+        </div>
+    <?php }
 
 }

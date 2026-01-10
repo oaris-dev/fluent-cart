@@ -35,7 +35,7 @@
                     #{{ order.parent_id }}
                   </a>
                 </el-breadcrumb-item>
-                <el-breadcrumb-item> #{{ order_id }}</el-breadcrumb-item>
+                <el-breadcrumb-item> #{{ translateNumber(order_id) }}</el-breadcrumb-item>
               </el-breadcrumb>
               <div class="single-page-header-status-wrap">
                 <Badge :status="order.status"/>
@@ -241,7 +241,7 @@
                                         formatNumber(product.unit_price)
                                       }}</span>
                                     <span>x</span>
-                                    <span>{{ product.quantity }}</span>
+                                    <span>{{ translateNumber(product.quantity) }}</span>
                                   </div><!-- .product-details-quantity -->
 
                                   <div class="product-details-price-mobile" v-if="!isEditingItem">
@@ -260,11 +260,12 @@
                                           formatNumber(product.unit_price)
                                         }}</span>
                                       <span>x</span>
-                                      <span>{{ product.quantity }}</span>
+                                      <span>{{ translateNumber(product.quantity) }}</span>
                                     </div><!-- .product-details-quantity -->
                                   </div><!-- .product-details-price-mobile -->
 
-
+                                  <!-- Bundle Products -->
+                                  <BundleProducts v-if="product.bundle_items.length > 0" :product="product"/>
 
                                 </div>
 
@@ -287,7 +288,7 @@
                                         formatNumber(product.unit_price)
                                       }}</span>
                                     <span>x</span>
-                                    <span>{{ product.quantity }}</span>
+                                    <span>{{ translateNumber(product.quantity) }}</span>
                                   </div>
                                   <!-- .product-details-quantity -->
                                 </div>
@@ -715,7 +716,8 @@
                 <DynamicTemplates
                     filter="single_order_page"
                     :widgets-query="{
-                      'order_id': order.uuid
+                      'order_uuid': order.uuid,
+                      order_id: order.id
                     }"
                     :data="{ order }"
                 />
@@ -906,6 +908,8 @@ import UtmDetails from "@/Modules/Orders/Components/UtmDetails.vue";
 import OrderUpDownIndicator from "@/Bits/Components/OrderUpDownIndicator.vue";
 import TransactionMobile from "./_TransactionMobile.vue";
 import AppConfig from "@/utils/Config/AppConfig";
+import {formatOrderItems} from "@/Bits/common";
+import BundleProducts from "@/Bits/Components/BundleProducts.vue";
 
 export default {
   name: "SingleOrder",
@@ -926,7 +930,8 @@ export default {
     ShippingComponent,
     UtmDetails,
     OrderUpDownIndicator,
-    TransactionMobile
+    TransactionMobile,
+    BundleProducts
   },
   data() {
     return {
@@ -1063,10 +1068,11 @@ export default {
         ...this.otherData,
         transaction_type: this.transactionType,
       })
-          .then(() => {
+          .then((response) => {
             this.markingOrderAsPaid = false;
             this.transactionMedium = false;
-            this.reloadOrder();
+            Notify.success(response.message);
+            this.fetch();
           })
           .catch((errors) => {
             this.markingOrderAsPaid = false;
@@ -1256,8 +1262,9 @@ export default {
       this.loading = true;
 
       const orderData = {...this.order};
-
+      delete orderData["customer"];
       delete orderData["note"];
+
       Rest.post("orders/" + this.order_id, {
         ...orderData,
         deletedItems: this.deletedItems,
@@ -1290,6 +1297,7 @@ export default {
             this.hasCoupon = this.coupons.length > 0 ? true : false;
             this.appliedCoupons = this.coupons.map((obj) => obj.coupon_id);
             this.order = response.order;
+            this.order.order_items = this.formatOrderItems(response.order.order_items);
 
             this.isSubscription =
                 this.order?.subscriptions && this.order.subscriptions.length > 0;
@@ -1484,7 +1492,8 @@ export default {
       }).finally(() => {
 
       });
-    }
+    },
+    formatOrderItems,
   },
   mounted() {
     this.changeTitle("Order #" + this.order_id);

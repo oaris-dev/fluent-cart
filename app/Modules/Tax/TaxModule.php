@@ -62,70 +62,18 @@ class TaxModule
             //     return;
             // }
 
+
             // Show breakdown by tax rate if available
             if (!empty($taxLines) && !$isReverseCharge) {
-                foreach ($taxLines as $taxLine) {
-                    $rateLabel = Arr::get($taxLine, 'label', 'Tax');
-                    $rateTaxAmount = (int)Arr::get($taxLine, 'tax_amount', 0);
-                    $isCompound = Arr::get($taxLine, 'is_compound', false);
-                    $taxableBase = (int)Arr::get($taxLine, 'taxable_amount', 0);
-                    $ratePercent = Arr::get($taxLine, 'rate_percent', 0);
-                    
-                    // Build the label with compound indicator if needed
-                    $displayLabel = $rateLabel;
-                    if ($isCompound) {
-                        $displayLabel .= ' (' . __('Compound', 'fluent-cart') . ')';
-                    }
-                    
-                    // Add calculation details if available
-                    if ($taxableBase && $ratePercent) {
-                        $displayLabel .= ' [' . Helper::toDecimal($taxableBase) . ' × ' . number_format($ratePercent, 2) . '%]';
-                    }
-                    ?>
-                    <li>
-                        <span class="fct_summary_label">
-                            <?php if ($isInclusive) : ?>
-                                <?php echo esc_html($displayLabel . ' (' . __('Included', 'fluent-cart') . ')'); ?>
-                            <?php else : ?>
-                                <?php echo esc_html($displayLabel . ' (' . __('Excluded', 'fluent-cart') . ')'); ?>
-                            <?php endif; ?>
-                        </span>
-                        <span class="fct_summary_value"><?php echo esc_html(Helper::toDecimal($rateTaxAmount)); ?></span>
-                    </li>
-                    <?php
-                }
+                $this->renderCompoundTaxRow($cart);
             } else {
                 // Fallback to showing total tax if no breakdown available
+                $this->renderTaxRow($cart);
                 ?>
-                <li>
-                    <span class="fct_summary_label">
-                        <?php if ($isReverseCharge && $taxAmount == 0): ?>
-                            <?php echo esc_html__('Reverse Charge (No Tax)', 'fluent-cart'); ?>
-                        <?php elseif ($isInclusive) : ?>
-                            <?php echo esc_html__('Tax Estimate (Included)', 'fluent-cart'); ?>
-                        <?php else : ?>
-                            <?php echo esc_html__('Tax Estimate (Excluded)', 'fluent-cart'); ?>
-                        <?php endif; ?>
-                    </span>
-                    <span class="fct_summary_value"><?php echo esc_html(Helper::toDecimal($taxAmount)); ?></span>
-                </li>
                 <?php
             }
 
-            if ($shippingTax > 0): ?>
-                <li>
-                    <!-- shipping tax -->
-                    <span class="fct_summary_label">
-                        <?php if ($isInclusive) : ?>
-                            <?php echo esc_html__('Shipping Tax (Included)', 'fluent-cart'); ?>
-                        <?php else : ?>
-                            <?php echo esc_html__('Shipping Tax (Excluded)', 'fluent-cart'); ?>
-                        <?php endif; ?>
-                    </span>
-                    <span class="fct_summary_value"><?php echo esc_html(Helper::toDecimal($shippingTax)); ?></span>
-                </li>
-            <?php endif; ?>
-            <?php
+            $this->renderShippingTaxRow($cart);
         });
 
         add_action('fluent_cart/checkout/prepare_other_data', [$this, 'prepareOtherData'], 10, 1);
@@ -151,6 +99,92 @@ class TaxModule
         $this->registerAjaxHandlers();
 
         add_action('fluent_cart/cart/cart_data_items_updated', [$this, 'recalculateTax']);
+    }
+
+    public function renderTaxRow($cart, $atts = '')
+    {
+        $taxAmount = (int)Arr::get($cart->checkout_data, 'tax_data.tax_total', 0);
+        $shippingTax = (int)Arr::get($cart->checkout_data, 'tax_data.shipping_tax', 0);
+        $isInclusive = Arr::get($cart->checkout_data, 'tax_data.tax_behavior', 2) === 2;
+        $isReverseCharge = Arr::get($cart->checkout_data, 'tax_data.valid', false);
+        ?>
+        <li <?php echo $atts; ?>>
+            <span class="fct_summary_label">
+                <?php if ($isReverseCharge && $taxAmount == 0): ?>
+                    <?php echo esc_html__('Reverse Charge (No Tax)', 'fluent-cart'); ?>
+                <?php elseif ($isInclusive) : ?>
+                    <?php echo esc_html__('Tax Estimate (Included)', 'fluent-cart'); ?>
+                <?php else : ?>
+                    <?php echo esc_html__('Tax Estimate (Excluded)', 'fluent-cart'); ?>
+                <?php endif; ?>
+            </span>
+            <span class="fct_summary_value"><?php echo esc_html(Helper::toDecimal($taxAmount)); ?></span>
+        </li>
+        <?php
+    }
+
+    public function renderShippingTaxRow($cart, $atts = '')
+    {
+
+        $shippingTax = (int)Arr::get($cart->checkout_data, 'tax_data.shipping_tax', 0);
+        $isInclusive = Arr::get($cart->checkout_data, 'tax_data.tax_behavior', 2) === 2;
+
+        if ($shippingTax == 0) {
+            return '';
+        }
+        ?>
+        <li <?php echo $atts; ?>>
+            <!-- shipping tax -->
+            <span class="fct_summary_label">
+                        <?php if ($isInclusive) : ?>
+                            <?php echo esc_html__('Shipping Tax (Included)', 'fluent-cart'); ?>
+                        <?php else : ?>
+                            <?php echo esc_html__('Shipping Tax (Excluded)', 'fluent-cart'); ?>
+                        <?php endif; ?>
+                    </span>
+            <span class="fct_summary_value"><?php echo esc_html(Helper::toDecimal($shippingTax)); ?></span>
+        </li>
+        <?php
+    }
+
+    public function renderCompoundTaxRow($cart, $atts = '')
+    {
+        $taxAmount = (int)Arr::get($cart->checkout_data, 'tax_data.tax_total', 0);
+        $taxLines = Arr::get($cart->checkout_data, 'tax_data.tax_lines', []);
+        $shippingTax = (int)Arr::get($cart->checkout_data, 'tax_data.shipping_tax', 0);
+        $isInclusive = Arr::get($cart->checkout_data, 'tax_data.tax_behavior', 2) === 2;
+        $isReverseCharge = Arr::get($cart->checkout_data, 'tax_data.valid', false);
+
+        foreach ($taxLines as $taxLine) {
+            $rateLabel = Arr::get($taxLine, 'label', 'Tax');
+            $rateTaxAmount = (int)Arr::get($taxLine, 'tax_amount', 0);
+            $isCompound = Arr::get($taxLine, 'is_compound', false);
+            $taxableBase = (int)Arr::get($taxLine, 'taxable_amount', 0);
+            $ratePercent = Arr::get($taxLine, 'rate_percent', 0);
+
+            // Build the label with compound indicator if needed
+            $displayLabel = $rateLabel;
+            if ($isCompound) {
+                $displayLabel .= ' (' . __('Compound', 'fluent-cart') . ')';
+            }
+
+            // Add calculation details if available
+            if ($taxableBase && $ratePercent) {
+                $displayLabel .= ' [' . Helper::toDecimal($taxableBase) . ' × ' . number_format($ratePercent, 2) . '%]';
+            }
+            ?>
+            <li>
+                <span class="fct_summary_label">
+                    <?php if ($isInclusive) : ?>
+                        <?php echo esc_html($displayLabel . ' (' . __('Included', 'fluent-cart') . ')'); ?>
+                    <?php else : ?>
+                        <?php echo esc_html($displayLabel . ' (' . __('Excluded', 'fluent-cart') . ')'); ?>
+                    <?php endif; ?>
+                </span>
+                <span class="fct_summary_value"><?php echo esc_html(Helper::toDecimal($rateTaxAmount)); ?></span>
+            </li>
+            <?php
+        }
     }
 
     public function recalculateTax($data)
@@ -252,7 +286,6 @@ class TaxModule
 
         $taxTotal = $taxCalculator->getTotalTax();
         $shippingTax = $taxCalculator->getShippingTax();
-        $recurringTax = $taxCalculator->getRecurringTax();
         $taxCountry = $taxCalculator->getTaxCountry();
         $taxLines = $taxCalculator->getTaxLinesByRates();
         $checkoutData['tax_data']['tax_total'] = $taxTotal;
@@ -262,9 +295,7 @@ class TaxModule
         $checkoutData['tax_data']['tax_lines'] = $taxLines;
         $fillData['checkout_data'] = $checkoutData;
 
-        if ($taxTotal || $recurringTax || $shippingTax) {
-            $fillData['cart_data'] = $taxCalculator->getTaxedLines();
-        }
+        $fillData['cart_data'] = $taxCalculator->getTaxedLines();
 
         if (isset($fillData['hook_changes'])) {
             Arr::set($fillData, 'hook_changes.tax', true);
@@ -429,7 +460,7 @@ class TaxModule
         }
 
         ?>
-        <div class="fct_checkout_tax_wrapper <?php echo !$isEuVatRcAvailable ? 'is-hidden' : ''; ?>" data-fluent-cart-checkout-page-tax-wrapper>
+        <div class="fct_checkout_tax_wrapper" data-fluent-cart-checkout-page-tax-wrapper>
             <?php if ($isEuVatRcAvailable): ?>
                 <div class="fct_checkout_form_section">
                     <div class="fct_form_section_header">

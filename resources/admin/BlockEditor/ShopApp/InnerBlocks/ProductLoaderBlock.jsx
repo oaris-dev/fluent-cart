@@ -1,4 +1,7 @@
 import blocktranslate from "@/BlockEditor/BlockEditorTranslator";
+import { ProductContainerContext } from "@/BlockEditor/ShopApp/Context/ProductContainerContext";
+const {useContext} = wp.element;
+
 
 const {useBlockProps, InnerBlocks} = wp.blockEditor;
 
@@ -15,9 +18,12 @@ const ProductLoaderBlock = {
         'fluent-cart/enable_filter',
     ],
     edit: (props) => {
+        const { simulateLoading } = useContext(ProductContainerContext);
+
+        let isShown = simulateLoading ? 'show' : '';
 
         const blockProps = useBlockProps({
-            className: 'fluent-cart-product-loader',
+            className: 'fluent-cart-product-loader' + ' ' + isShown,
         });
 
         return <div {...blockProps} >

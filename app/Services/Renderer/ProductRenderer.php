@@ -18,6 +18,8 @@ class ProductRenderer
 
     protected $variants;
 
+    protected $storeSettings;
+
     protected $defaultVariant = null;
 
     protected $hasOnetime = false;
@@ -44,11 +46,30 @@ class ProductRenderer
 
     public function __construct(Product $product, $config = [])
     {
+
         $this->product = $product;
         $this->variants = $product->variants;
-        $this->viewType = $config['view_type'] ?? 'both';
-        $this->columnType = $config['column_type'] ?? 'masonry';
+
+        $this->storeSettings = new StoreSettings();
+        $this->viewType = $this->storeSettings->get('variation_view', 'both');
+        $this->columnType = $this->storeSettings->get('variation_columns', 'masonry');
+
         $defaultVariationId = $config['default_variation_id'] ?? '';
+
+        // 'image', 'text','both'
+        $this->viewType = apply_filters('fluent_cart/single_product/variation_view_type', $this->viewType, [
+                'product'            => $product,
+                'variants'           => $this->variants,
+                'defaultVariationId' => $defaultVariationId,
+        ]);
+
+        // 'one', 'two','three', 'four', 'masonry'
+        $this->columnType = apply_filters('fluent_cart/single_product/variation_column_type', $this->columnType, [
+                'product'            => $product,
+                'variants'           => $this->variants,
+                'defaultVariationId' => $defaultVariationId,
+        ]);
+
 
         if (!$defaultVariationId) {
             $variationIds = $product->variants->pluck('id')->toArray();
@@ -60,6 +81,11 @@ class ProductRenderer
 
             $this->defaultVariationId = $defaultVariationId;
         }
+
+
+        $this->product->variants->load('bundleChildren.product');
+
+
 
         foreach ($this->product->variants as $variant) {
             if ($variant->id == $this->defaultVariationId) {
@@ -147,7 +173,7 @@ class ProductRenderer
 
 
             $intervalOptions = Helper::getAvailableSubscriptionIntervalOptions();
-           
+
             $groupLanguageMap = [
                     'onetime'      => __('One Time', 'fluent-cart'),
                     'subscription' => __('Subscription', 'fluent-cart'),
@@ -176,10 +202,31 @@ class ProductRenderer
                     $this->renderStockAvailability();
                     $this->renderExcerpt();
                     $this->renderPrices();
+
+                    if ($this->product->detail->variation_type === 'simple' && !$this->hasSubscription) {
+                        foreach ($this->product->variants as $variant) {
+                            $this->renderVariationsBundleProduct($variant);
+                        }
+                    }
+
                     $this->renderBuySection();
                     ?>
                 </div>
             </div>
+        </div>
+        <?php
+    }
+
+    public function renderBuySectionWrapperStart()
+    {
+        ?>
+        <div aria-labelledby="fct-product-summary-title" data-fluent-cart-product-pricing-section data-product-id="<?php echo esc_attr($this->product->ID); ?>" class="fct_buy_section">
+        <?php
+    }
+
+    public function renderBuySectionWrapperEnd()
+    {
+        ?>
         </div>
         <?php
     }
@@ -189,22 +236,31 @@ class ProductRenderer
         $otherInfo = (array)Arr::get($this->product->detail, 'other_info');
         $groupBy = Arr::get($otherInfo, 'group_pricing_by', 'repeat_interval'); //repeat_interval,payment_type,none
 
-        echo '<div aria-labelledby="fct-product-summary-title" data-fluent-cart-product-pricing-section data-product-id="' . esc_attr($this->product->ID) . '" class="fct_buy_section">';
+        $this->renderBuySectionWrapperStart();
+
+        $this->renderVariationDisplay($atts);
+
+        $this->renderItemPrice();
+
+        $this->renderQuantity();
+        ?>
+        <div class="fct-product-buttons-wrap">
+            <?php $this->renderPurchaseButtons(Arr::get($atts, 'button_atts', [])); ?>
+        </div>
+        <?php
+        $this->renderBuySectionWrapperEnd();
+    }
+
+    public function renderVariationDisplay($atts = [])
+    {
+        $otherInfo = (array)Arr::get($this->product->detail, 'other_info');
+        $groupBy = Arr::get($otherInfo, 'group_pricing_by', 'repeat_interval'); //repeat_interval,payment_type,none
 
         if (count($this->paymentTypes) === 1 || $groupBy === 'none') {
             $this->renderVariants(Arr::get($atts, 'variation_atts', []));
         } else {
             $this->renderTab(Arr::get($atts, 'variation_atts', []));
         }
-
-        $this->renderItemPrice();
-        $this->renderQuantity();
-        ?>
-        <div class="fct-product-buttons-wrap">
-            <?php $this->renderPurchaseButtons(Arr::get($atts, 'button_atts', [])); ?>
-        </div>
-        </div>
-        <?php
     }
 
     public function renderGalleryThumb()
@@ -238,6 +294,8 @@ class ProductRenderer
 
         $images = empty($thumbnails) ? [] : $thumbnails;
 
+
+
         $this->images = $images;
 
         if (!empty($images)) {
@@ -266,7 +324,17 @@ class ProductRenderer
 
     public function renderGalleryThumbControls()
     {
+        $totalThumbImages = Arr::pluck($this->images, 'media.*.url');
+
+        if(count($totalThumbImages) == 1 && count($totalThumbImages[0]) == 1){
+            
+            return '';
+        }
+
+
         ?>
+
+
 
         <div class="fct-gallery-thumb-controls" data-fluent-cart-single-product-page-product-thumbnail-controls>
 
@@ -383,16 +451,13 @@ class ProductRenderer
             return '';
         }
 
-        $stockLabel = $stockAvailability['availability'];
+        $isStock = $this->product->isStock();
 
-        $hasInStock = $this->product->variants()
-                ->where('stock_status', Helper::IN_STOCK)->exists();
-
-        if (!$hasInStock) {
-            $stockLabel = __('Out of stock', 'fluent-cart');
+        if ($this->product->detail->variation_type === 'simple' && $this->defaultVariant) {
+            $isStock = $this->defaultVariant->isStock();
         }
-
-        $statusClass = $stockAvailability['class'] ?? '';
+        $stockLabel = $isStock ? $stockAvailability['availability'] : __('Out of stock', 'fluent-cart');
+        $statusClass = $isStock ? ($stockAvailability['class'] ?? '') : 'out-of-stock';
 
         echo sprintf(
                 '<div class="fct-product-stock %1$s" role="status" aria-live="polite">
@@ -571,86 +636,49 @@ class ProductRenderer
             return; // for simple product we already rendered the price
         }
 
-        $defaultPaymentType = $this->defaultVariant ? Arr::get($this->defaultVariant->other_info, 'payment_type', 'onetime') : 'onetime';
-
-
-        if ($defaultPaymentType !== 'subscription') {
-
-        }
         do_action('fluent_cart/product/single/before_price_block', [
                 'product'       => $this->product,
                 'current_price' => $this->defaultVariant ? $this->defaultVariant->item_price : 0,
                 'scope'         => 'product_variant_price'
         ]);
-        ?>
-        <?php if ($this->viewType !== 'text' || $this->columnType !== 'one'): ?>
 
-        <?php
-        foreach ($this->product->variants as $variant): ?>
-            <div
-                    class="fct-product-item-price fluent-cart-product-variation-content <?php echo $this->defaultVariant->id != $variant->id ? ' is-hidden' : '' ?>"
-                    data-fluent-cart-product-item-price
-                    data-variation-id="<?php echo esc_attr($variant->id); ?>"
-            >
-
-                <?php if ($this->defaultVariant && !$this->hasSubscription) {
-                    if ($variant->compare_price): ?>
-                        <span class="fct-compare-price">
-                            <del><?php echo esc_html(Helper::toDecimal($variant->compare_price)); ?></del>
-                        </span>
-                    <?php endif;
-
-                    echo wp_kses_post(apply_filters('fluent_cart/single_product/variation_price', esc_html(Helper::toDecimal($variant->item_price)), [
-                            'product' => $this->product,
-                            'variant' => $variant,
-                            'scope'   => 'product_variant_price'
-                    ]));
-                    do_action('fluent_cart/product/after_price', [
-                            'product'       => $this->product,
-                            'current_price' => $variant->item_price,
-                            'scope'         => 'product_variant_price'
-                    ]);
-                } ?>
-            </div>
-        <?php endforeach; ?>
-    <?php
-    endif; ?>
-        <?php if ($this->hasSubscription && $this->viewType !== 'text' && $this->columnType !== 'one'): ?>
-
-        <?php
-        foreach ($this->product->variants as $variant): ?>
-            <?php
-            $paymentType = Arr::get($variant->other_info, 'payment_type', 'onetime');
-            $atts = [
-                    'class'                                 => 'fct-product-payment-type fluent-cart-product-variation-content ' . ($paymentType !== 'subscription' || $this->defaultVariant->id != $variant->id ? ' is-hidden' : ''),
-                    'data-fluent-cart-product-payment-type' => '',
-                    'data-variation-id'                     => $variant->id
-            ];
-            ?>
-            <div <?php $this->renderAttributes($atts); ?>>
-                <?php if ($variant->compare_price): ?>
-                    <span class="fct-compare-price">
-                        <del><?php echo esc_html(Helper::toDecimal($variant->compare_price)); ?></del>
-                    </span>
-                <?php endif; ?>
-                <?php
-
-
-                if ($paymentType === 'onetime') {
-                    echo esc_html(Helper::toDecimal($variant->item_price));
-
+        foreach ($this->product->variants as $variant) {
+            if ($this->shouldRenderPriceInPriceSection()) {
+                $this->renderVariantPricingWrapperStart($variant);
+                $paymentType = Arr::get($variant->other_info, 'payment_type', 'onetime');
+                if (!$this->hasSubscription) {
+                    $this->renderVariationComparePrice($variant);
+                    $this->applyVariationPriceFilter($variant, $paymentType);
                 } else {
-                    echo wp_kses_post(apply_filters('fluent_cart/single_product/variation_price', esc_html($variant->getSubscriptionTermsText(true)), [
-                            'product' => $this->product,
-                            'variant' => $variant,
-                            'scope'   => 'product_variant_price'
-                    ]));
+
+                    $atts = [
+                            'class'                                 => 'fct-product-payment-type fluent-cart-product-variation-content ' . ( $this->defaultVariant->id != $variant->id ? ' is-hidden' : ''),
+                            'data-fluent-cart-product-payment-type' => '',
+                            'data-variation-id'                     => $variant->id
+                    ];
+
+                    $this->renderComparePriceWrapperStart($atts);
+                    $this->renderVariationComparePrice($variant);
+                    if ($paymentType === 'onetime') {
+                        echo esc_html(Helper::toDecimal($variant->item_price));
+                    } else {
+                        $this->applyVariationPriceFilter($variant, $paymentType);
+                    }
+                    $this->renderComparePriceWrapperEnd();
                 }
 
-                ?>
-            </div>
-        <?php endforeach; ?>
-    <?php endif;
+                $this->renderVariantPricingWrapperEnd();
+            }
+
+        }
+
+
+        foreach ($this->product->variants as $variant) {
+            $this->renderVariationsBundleProduct($variant);
+        }
+
+
+
 
         do_action('fluent_cart/product/single/after_price_block', [
                 'product'       => $this->product,
@@ -658,6 +686,130 @@ class ProductRenderer
                 'scope'         => 'product_variant_price'
         ]);
     }
+
+    public function shouldRenderPriceInPriceSection(): bool
+    {
+        return !($this->viewType === 'text' && $this->columnType === 'one');
+    }
+
+    public function applyVariationPriceFilter($variant, $paymentType = 'onetime')
+    {
+        $priceText = $paymentType === 'onetime' ? Helper::toDecimal($variant->item_price) : $variant->getSubscriptionTermsText(true);
+        echo wp_kses_post(apply_filters('fluent_cart/single_product/variation_price', esc_html($priceText), [
+                'product' => $this->product,
+                'variant' => $variant,
+                'scope'   => 'product_variant_price'
+        ]));
+        do_action('fluent_cart/product/after_price', [
+                'product'       => $this->product,
+                'current_price' => $variant->item_price,
+                'scope'         => 'product_variant_price'
+        ]);
+    }
+
+    public function renderComparePriceWrapperStart($atts = [])
+    {
+        ?>
+        <div <?php $this->renderAttributes($atts); ?> >
+        <?php
+    }
+
+    public function renderComparePriceWrapperEnd()
+    {
+        ?>
+        </div>
+        <?php
+    }
+
+    public function renderVariationComparePrice($variant)
+    {
+        if (!$variant->compare_price) {
+            return;
+        } ?>
+
+        <span class="fct-compare-price">
+            <del><?php echo esc_html(Helper::toDecimal($variant->compare_price)); ?></del>
+        </span>
+        <?php
+    }
+
+    public function renderVariantPricingWrapperStart($variant)
+    { ?>
+        <div
+        class="fct-product-item-price fluent-cart-product-variation-content <?php echo $this->defaultVariant->id != $variant->id ? ' is-hidden' : '' ?>"
+        data-fluent-cart-product-item-price
+        data-variation-id="<?php echo esc_attr($variant->id); ?>"
+        >
+    <?php }
+
+
+    public function renderVariantPricingWrapperEnd()
+    {
+        ?> </div> <?php
+    }
+
+    public function renderVariationsBundleProduct($variant)
+    {
+        if (count($variant->bundleChildren) == 0) {
+            return;
+        }
+
+        if(is_object($variant->bundleChildren)) {
+            $bundleProducts = $variant->bundleChildren->toArray();
+        }else{
+            $bundleProducts = $variant->bundleChildren;
+        }
+
+        $total = count($bundleProducts);
+        ?>
+        <div class="fluent-cart-product-variation-content fct-bundle-products <?php echo $this->defaultVariant->id != $variant->id ? ' is-hidden' : '' ?>"
+             data-variation-id="<?php echo esc_attr($variant->id); ?>"
+             data-fluent-cart-collapsibles
+        >
+            <h4 class="fct-bundle-products-title">
+                <?php echo esc_html__('Bundle of', 'fluent-cart') . ':'; ?>
+            </h4>
+
+            <div class="fct-bundle-products-list">
+                <?php foreach (array_slice($bundleProducts, 0, 2) as $product): ?>
+                    <p>
+                        <?php echo Arr::get($product, 'product.post_title'); ?> -
+                        <?php echo esc_html($product['variation_title']); ?>
+                    </p>
+                <?php endforeach; ?>
+
+                <?php if($total > 2): ?>
+                    <div class="fct-bundle-products-more">
+                        <div class="fct-bundle-products-more-list">
+                            <?php foreach (array_slice($bundleProducts, 2) as $product): ?>
+                                <p>
+                                    <?php echo Arr::get($product, 'product.post_title'); ?> -
+                                    <?php echo esc_html($product['variation_title']); ?>
+                                </p>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                <?php endif;?>
+            </div>
+
+            <?php if ($total > 2) : ?>
+                <a href="#" class="fct-see-more-btn" data-fluent-cart-collapsible-toggle>
+                    <span class="see-more-text">
+                        <?php echo esc_html__('See More', 'fluent-cart'); ?>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="7" viewBox="0 0 12 7" fill="none">
+                            <path d="M0.75 0.75L5.04289 5.04289C5.37623 5.37623 5.54289 5.54289 5.75 5.54289C5.95711 5.54289 6.12377 5.37623 6.45711 5.04289L10.75 0.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                    <span class="see-less-text">
+                        <?php echo esc_html__('See Less', 'fluent-cart'); ?>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="7" viewBox="0 0 14 8" fill="none">
+                            <path d="M0.75 6.54297L6.04289 1.25008C6.37623 0.916742 6.54289 0.750076 6.75 0.750076C6.95711 0.750076 7.12377 0.916742 7.45711 1.25008L12.75 6.54297" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </a>
+            <?php endif; ?>
+        </div>
+    <?php }
 
     public function renderQuantity()
     {
@@ -736,14 +888,21 @@ class ProductRenderer
 
     public function renderPurchaseButtons($atts = [])
     {
-        if (ModuleSettings::isActive('stock_management')) {
-            if ($this->product->detail->variation_type === 'simple' && $this->defaultVariant) {
-                if ($this->product->detail->manage_stock && $this->defaultVariant->stock_status !== Helper::IN_STOCK) {
-                    echo '<span aria-disabled="true">' . esc_html__('Out of stock', 'fluent-cart') . '</span>';
-                    return;
-                }
-            }
-        }
+        $this->renderBuyNowButton($atts);
+        $this->renderAddToCartButton($atts);
+    }
+
+    public function renderBuyNowButton($atts = [])
+    {
+        // Stock management check using isStock() method
+//        if (ModuleSettings::isActive('stock_management')) {
+//            if ($this->product->detail->variation_type === 'simple' && $this->defaultVariant) {
+//                if (!$this->defaultVariant->isStock()) {
+//                    echo '<span aria-disabled="true">' . esc_html__('Out of stock', 'fluent-cart') . '</span>';
+//                    return;
+//                }
+//            }
+//        }
 
         $defaults = [
                 'buy_now_text'     => __('Buy Now', 'fluent-cart'),
@@ -752,48 +911,81 @@ class ProductRenderer
 
         $atts = wp_parse_args($atts, $defaults);
 
+        $stockStatus = 'in-stock';
+        if (ModuleSettings::isActive('stock_management')) {
+            $stockStatus = $this->defaultVariant->isStock() ? 'in-stock' : 'out-of-stock';
+        }
+
+        $variationClass = 'fluent-cart-direct-checkout-button';
+        if (!$this->defaultVariant->isStock()) {
+            $variationClass .= ' is-hidden ';
+        }
         $buyNowAttributes = [
                 'data-fluent-cart-direct-checkout-button' => '',
                 'data-variation-type'                     => $this->product->detail->variation_type,
-                'class'                                   => 'fluent-cart-direct-checkout-button',
-                'data-stock-availability'                 => 'in-stock',
+                'class'                                   => $variationClass,
+                'data-stock-availability'                 => $stockStatus,
                 'data-quantity'                           => '1',
                 'href'                                    => site_url('?fluent-cart=instant_checkout&item_id=') . ($this->defaultVariant ? $this->defaultVariant->id : '') . '&quantity=1',
                 'data-cart-id'                            => $this->defaultVariant ? $this->defaultVariant->id : '',
                 'data-url'                                => site_url('?fluent-cart=instant_checkout&item_id='),
         ];
 
-        $cartAttributes = [
-                'data-fluent-cart-add-to-cart-button' => '',
-                'data-cart-id'                        => $this->defaultVariant ? $this->defaultVariant->id : '',
-                'data-product-id'                     => $this->product->ID,
-                'class'                               => 'fluent-cart-add-to-cart-button ',
-                'data-variation-type'                 => $this->product->detail->variation_type,
-        ];
-
-        $defaultVariantData = $this->getDefaultVariantData();
-
-        if ($this->hasSubscription && Arr::get($defaultVariantData, 'payment_type') !== 'onetime') {
-            $cartAttributes['class'] .= ' is-hidden';
-        }
-
         $buyButtonText = apply_filters('fluent_cart/product/buy_now_button_text', $atts['buy_now_text'], [
-                'product' => $this->product
-        ]);
-
-        $addToCartText = apply_filters('fluent_cart/product/add_to_cart_text', $atts['add_to_cart_text'], [
                 'product' => $this->product
         ]);
         ?>
         <a <?php $this->renderAttributes($buyNowAttributes); ?> aria-label="<?php echo esc_attr($buyButtonText); ?>">
             <?php echo wp_kses_post($buyButtonText); ?>
         </a>
-        <?php if ($this->hasOnetime): ?>
-        <button <?php $this->renderAttributes($cartAttributes); ?> aria-label="<?php echo esc_attr($addToCartText); ?>">
-            <span class="text">
-                <?php echo wp_kses_post($addToCartText); ?>
-            </span>
-            <span class="fluent-cart-loader" role="status">
+        <?php
+    }
+
+    public function renderAddToCartButton($atts = [])
+    {
+        $defaults = [
+                'buy_now_text'     => __('Buy Now', 'fluent-cart'),
+                'add_to_cart_text' => __('Add To Cart', 'fluent-cart'),
+        ];
+
+        $atts = wp_parse_args($atts, $defaults);
+
+        $cartAttributes = [
+                'data-fluent-cart-add-to-cart-button' => '',
+                'data-cart-id'                        => $this->defaultVariant ? $this->defaultVariant->id : '',
+                'data-product-id'                     => $this->product->ID,
+                'class'                               => 'fluent-cart-add-to-cart-button',
+                'data-variation-type'                 => $this->product->detail->variation_type,
+        ];
+
+        $defaultVariantData = $this->getDefaultVariantData();
+
+        // If product is subscription-only, hide add-to-cart
+        if ($this->hasSubscription && Arr::get($defaultVariantData, 'payment_type') !== 'onetime') {
+            $cartAttributes['class'] .= ' is-hidden';
+        }
+
+        // Check stock availability using isStock() method
+        if (ModuleSettings::isActive('stock_management')) {
+            if (!$this->defaultVariant->isStock()) {
+                $cartAttributes['disabled'] = 'disabled';
+                $cartAttributes['class'] .= ' out-of-stock';
+                $cartAttributes['aria-disabled'] = 'true';
+            }
+        }
+
+        $addToCartText = apply_filters('fluent_cart/product/add_to_cart_text', $atts['add_to_cart_text'], [
+                'product' => $this->product
+        ]);
+        // Only render add to cart if the product supports onetime
+        if ($this->hasOnetime) :
+            ?>
+            <button <?php $this->renderAttributes($cartAttributes); ?>
+                    aria-label="<?php echo esc_attr($addToCartText); ?>">
+                <span class="text">
+                    <?php echo wp_kses_post($addToCartText); ?>
+                </span>
+                <span class="fluent-cart-loader" role="status">
                     <svg aria-hidden="true"
                          width="20"
                          height="20"
@@ -807,8 +999,9 @@ class ProductRenderer
                                   fill="currentFill"/>
                     </svg>
                 </span>
-        </button>
-    <?php endif;
+            </button>
+        <?php
+        endif;
     }
 
 
@@ -869,7 +1062,7 @@ class ProductRenderer
         $renderingAttributes = [
                 'data-fluent-cart-product-variant' => '',
                 'data-cart-id'                     => $variant->id,
-                'data-item-stock'                  => $variant->stock_status,
+                'data-item-stock'                  => $variant->isStock() ? 'in-stock' : 'out-of-stock',
                 'data-default-variation-id'        => $defaultId,
                 'data-payment-type'                => $paymentType,
                 'data-available-stock'             => $availableStocks,
@@ -929,6 +1122,7 @@ class ProductRenderer
             </div>
 
             <?php if ($this->viewType === 'text' && $paymentType === 'subscription' && $this->columnType === 'one'): ?>
+
                 <?php $this->renderSubscriptionInfo($variant); ?>
             <?php endif; ?>
 
@@ -973,8 +1167,12 @@ class ProductRenderer
         <?php
     }
 
-    protected function renderSubscriptionInfo($variant)
+    protected function renderSubscriptionInfo($variant = null)
     {
+
+        if(!$variant){
+            return '';
+        }
         $info = $variant->getSubscriptionTermsText(true);
 
         if (!$info) {

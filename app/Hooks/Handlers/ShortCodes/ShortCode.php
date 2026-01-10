@@ -28,10 +28,10 @@ abstract class ShortCode
     {
         $this->enqueueAssets();
         ob_start(null);
-        $view = $this->render(
+        $this->render(
             $this->viewData()
         );
-        return $view ?? ob_get_clean();
+        return ob_get_clean();
     }
 
     public function parseAttribute(array $shortcodeAttributes): array

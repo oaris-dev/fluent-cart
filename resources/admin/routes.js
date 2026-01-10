@@ -6,6 +6,7 @@ import Dashboard from './Pages/Dashboard/Dashboard.vue';
 import FeedEditor from "./Modules/Integrations/FeedEditor.vue";
 import Integrations from "./Modules/Integrations/Integrations.vue";
 import GlobalPaymentComponents from './Modules/Settings/GlobalPaymentComponents.vue'
+import PaymentDesign from './Modules/Settings/PaymentDesign.vue'
 import IntegrationEditor from "./Modules/Integrations/IntegrationEditor.vue";
 import Onboarding from "./Modules/Onboarding/Onboarding.vue";
 import OrdersRoute from './Modules/Orders/OrdersRoute.vue';
@@ -40,6 +41,7 @@ import OrderReport from "./Modules/Reports/Order/OrderReport.vue";
 import RefundReport from "@/Modules/Reports/Refund/RefundReport.vue";
 import SubscriptionReport from "@/Modules/Reports/Subscription/SubscriptionReport.vue";
 import FutureRenewalsReport from "@/Modules/Reports/Subscription/FutureRenewalsReport.vue";
+import RetentionReport from "@/Modules/Reports/Subscription/Retention/RetentionReport.vue";
 import CustomerReport from "@/Modules/Reports/Customer/CustomerReport.vue";
 import SourcesReport from "@/Modules/Reports/Sources/SourcesReport.vue";
 
@@ -323,6 +325,24 @@ export var routes = {
                 }
             },
             {
+                name: "subscriptions-retention",
+                path: "subscriptions/subscriptions-retention",
+                component: RetentionReport,
+                meta: {
+                    title: "Retention",
+                    permission: "reports/view"
+                }
+            },
+            {
+                name: "subscriptions-cohorts",
+                path: "subscriptions/subscriptions-cohorts",
+                component: () => import('./Modules/Reports/Subscription/Cohort.vue'),
+                meta: {
+                    title: "Cohorts",
+                    permission: "reports/view"
+                }
+            },
+            {
                 name: "future_renewals",
                 path: "subscriptions/future-renewals",
                 component: FutureRenewalsReport,
@@ -546,6 +566,17 @@ export var routes = {
                     title: 'Storage Settings',
                     permission: "is_super_admin"
                 },
+            },
+            {
+                name: 'payment-design',
+                path: 'payments/:method/design',
+                component: PaymentDesign,
+                meta: {
+                    active_menu: 'settings',
+                    title: "Gateway",
+                    permission: "is_super_admin"
+                },
+                props: true,
             },
             {
                 name: 'drivers',

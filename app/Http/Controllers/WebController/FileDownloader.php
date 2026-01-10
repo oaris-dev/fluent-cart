@@ -41,6 +41,7 @@ class FileDownloader extends Controller
         }
 
         $downloadIdentifier = Arr::get($validated, 'download_identifier');
+        //dsd($downloadIdentifier);
         $download = ProductDownload::query()->where('download_identifier', $downloadIdentifier)->first();
 
         if (empty($downloadIdentifier) || !$download) {

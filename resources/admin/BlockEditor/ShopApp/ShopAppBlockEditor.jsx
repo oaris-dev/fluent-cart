@@ -1,11 +1,9 @@
 // Import necessary dependencies
 import InspectorSettings from "@/BlockEditor/ShopApp/Settings/InspectorSettings.jsx";
-import Preview from "@/BlockEditor/ShopApp/Preview/Preview.jsx";
 import DefaultData from "@/BlockEditor/ShopApp/Data/Data";
 import {Product} from "../Icons";
 import ProductsPreview from "./Products.png";
 import ErrorBoundary from "@/BlockEditor/Components/ErrorBoundary";
-import ServerSidePreview from "@/BlockEditor/Components/ServerSidePreview.jsx";
 import {ParentDataProvider} from "@/BlockEditor/ShopApp/Context/ProductContext";
 import apiFetch from "@wordpress/api-fetch";
 import blocktranslate from "@/BlockEditor/BlockEditorTranslator";
@@ -67,18 +65,6 @@ const DEFAULT_TEMPLATE = [
         },
         [
             [
-                'fluent-cart/shopapp-product-loader',
-                {
-                    layout: {type: 'constrained'},
-                    metadata: {name: 'Product Loader'},
-                },
-                [
-                    [
-                        'fluent-cart/shopapp-product-spinner'
-                    ],
-                ]
-            ],
-            [
                 'fluent-cart/shopapp-product-filter',
                 {},
                 [
@@ -93,6 +79,20 @@ const DEFAULT_TEMPLATE = [
                         ]
                     ],
                 ]
+            ],
+            [
+                'fluent-cart/shopapp-product-loop',
+                {
+                    className: 'fluent-product-loop',
+                    layout: {type: 'constrained'},
+                    metadata: {name: 'Product Loop'},
+                },
+                [
+                    ['fluent-cart/shopapp-product-image'],
+                    ['fluent-cart/shopapp-product-title'],
+                    ['fluent-cart/shopapp-product-price'], // (duplicate, but valid syntax-wise)
+                    ['fluent-cart/shopapp-product-buttons'],
+                ],
             ],
             [
                 'fluent-cart/shopapp-product-no-result',
@@ -121,18 +121,16 @@ const DEFAULT_TEMPLATE = [
                 ]
             ],
             [
-                'fluent-cart/shopapp-product-loop',
+                'fluent-cart/shopapp-product-loader',
                 {
-                    className: 'fluent-product-loop',
                     layout: {type: 'constrained'},
-                    metadata: {name: 'Product Loop'},
+                    metadata: {name: 'Product Loader'},
                 },
                 [
-                    ['fluent-cart/shopapp-product-image'],
-                    ['fluent-cart/shopapp-product-title'],
-                    ['fluent-cart/shopapp-product-price'], // (duplicate, but valid syntax-wise)
-                    ['fluent-cart/shopapp-product-buttons'],
-                ],
+                    [
+                        'fluent-cart/shopapp-product-spinner'
+                    ],
+                ]
             ],
         ]
     ],

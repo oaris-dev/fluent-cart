@@ -11,6 +11,7 @@ use FluentCart\App\Helpers\Helper;
 use FluentCart\App\Models\Cart;
 use FluentCart\App\Models\Customer;
 use FluentCart\App\Models\ProductVariation;
+use FluentCart\App\Services\RateLimitter;
 use FluentCart\Framework\Database\Orm\Builder;
 use FluentCart\Framework\Support\Arr;
 use FluentCart\Framework\Support\Collection;
@@ -26,6 +27,8 @@ class CartResource extends BaseResourceApi
 
     public static function generateCartForInstantCheckout($variationId, $quantity = 1)
     {
+
+        RateLimitter::isSpamming('generate_instant_checkout_cart_attempt', 10, 60, true);
 
         $variation = ProductVariation::query()
             ->with(['product'])
@@ -50,7 +53,27 @@ class CartResource extends BaseResourceApi
             return $canPurchase;
         }
 
-        $cart = CartHelper::generateCartFromVariation($variation, $quantity);
+
+        $cartQuery = Cart::query()
+            ->whereJsonLength('cart_data', 1)
+            ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(cart_data, '$[0].id')) = ?", [(string)$variationId])
+            ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(cart_data, '$[0].quantity')) = ?", [(string)$quantity])
+            ->where('cart_group', 'instant')
+            ->where('stage', '==', 'draft');
+
+        if (is_user_logged_in()) {
+            $cartQuery->where('user_id', get_current_user_id());
+        } else {
+            $cartQuery->whereNull('user_id');
+        }
+
+        $cart = $cartQuery->first();
+
+
+        if (!$cart) {
+            $cart = CartHelper::generateCartFromVariation($variation, $quantity);
+        }
+
 
         if (is_user_logged_in()) {
             $cart->user_id = get_current_user_id();
@@ -446,7 +469,7 @@ class CartResource extends BaseResourceApi
                 return [
                     'code'    => 'failed',
                     'message' => sprintf(
-                        /* translators: %s is the product title */
+                    /* translators: %s is the product title */
                         __('%s is out of stock', 'fluent-cart'),
                         Arr::get($productVariation, 'variation_title')
                     ),

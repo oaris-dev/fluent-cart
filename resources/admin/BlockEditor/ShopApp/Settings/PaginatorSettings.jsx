@@ -2,8 +2,6 @@ import InspectorSettings from "@/BlockEditor/ShopApp/Settings/InspectorSettings"
 import BlockEditorControl from "@/BlockEditor/Components/BlockEditorControl";
 import blocktranslate from "@/BlockEditor/BlockEditorTranslator";
 
-const {InspectorControls} = wp.blockEditor
-
 const {
     __experimentalRadio: Radio,
     __experimentalRadioGroup: RadioGroup,

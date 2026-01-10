@@ -16,8 +16,8 @@ import Rest from "@/utils/http/Rest";
 import ElementPlus, {ElMessageBox, ElNotification, ElLoadingDirective} from 'element-plus';
 import {useElementPlusComponents} from "./mixin/useElementPlusComponents";
 import Translate from "./translator/Translator";
+import {translateNumber} from "./translator/Translator";
 import {formatDate} from "@/Bits/common";
-
 
 const routes = [
     {
@@ -161,32 +161,47 @@ if (containers && containers.length > 0) {
             $post: Rest.post,
             $put: Rest.put,
             $del: Rest.delete,
-            formatNumber(amount, currency = true, hideEmpty = false) {
+            formatNumber(amount, withCurrency = true, hideEmpty = false) {
                 if (!amount && hideEmpty) {
                     return '';
                 }
+                const shopConfig = window.fluentcart_customer_profile_vars.shop;
+                const currency = shopConfig.currency_sign || '';
+                const currencyPosition = shopConfig.currency_position;
+
+                let locale = window.fluentcart_customer_profile_vars.wp_locale.replace('_', '-');
+                const decimalSeparator = shopConfig.decimal_separator || null;
+                
+                if (decimalSeparator) {
+                    locale = decimalSeparator === 'comma' ? 'de-DE' : 'en-US';
+                }
+                else {
+                    locale = 'en-US';
+                }
+
 
                 if (!amount) {
                     amount = '0.00';
                 } else {
-                    amount = (amount / 100).toFixed(2);
+                    amount = (amount / 100).toFixed(2); // Convert cents to dollars
                 }
 
-                if (!currency) {
+                if (!withCurrency) {
                     return amount;
                 }
 
-                let locale = window.fluentcart_customer_profile_vars.wp_locale.replace('_', '-');
-                amount = new Intl.NumberFormat(locale).format(amount);
+                let formatted = new Intl.NumberFormat(locale, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }).format(amount);
 
-                let currency_position = window.fluentcart_customer_profile_vars.shop.currency_position;
-                let currency_sign = window.fluentcart_customer_profile_vars.shop.currency_sign;
+                formatted = translateNumber(formatted);
 
-                if (currency_position === 'before') {
-                    return currency_sign + amount;
+                if (!withCurrency) {
+                    return formatted;
                 }
 
-                return amount + currency_sign;
+                return currencyPosition === 'before' ? `${currency}${formatted}` : `${formatted}${currency}`;
             },
             $t: Translate,
             handleError(response) {
@@ -285,6 +300,7 @@ if (containers && containers.length > 0) {
                 }
 
                 // Push remaining components to the address array
+                if (object['company_name']) address.push(object['company_name']);
                 if (object['address_1']) address.push(object['address_1']);
                 if (object['address_2']) address.push(object['address_2']);
                 if (object['city']) address.push(object['city']);

@@ -35,7 +35,7 @@ class ProductCreateRequest extends RequestGuard
         return [
             'post_title'              => 'required|sanitizeText|maxLength:200',
             'post_status'             => ['nullable', 'string'],
-            'detail.fulfillment_type' => ['sanitizeText', 'maxLength:100', function ($attribute, $value) {
+            'detail.fulfillment_type' => ['sanitizeText', function ($attribute, $value) {
                 if (!in_array($value, ['physical', 'digital'])) {
                     return __('Invalid fulfillment type.', 'fluent-cart');
                 }
@@ -73,6 +73,10 @@ class ProductCreateRequest extends RequestGuard
                 }
                 return sanitize_text_field($value);
             },
+
+            'detail.other_info.is_bundle_product' => function ($value) {
+                return $value === 'yes' ? 'yes' : 'no';
+            }
         ];
 
     }

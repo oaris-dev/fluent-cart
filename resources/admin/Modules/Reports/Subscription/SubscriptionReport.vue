@@ -14,6 +14,7 @@ import SubscriptionMRRTrend from "@/Modules/Reports/Subscription/SubscriptionMRR
 import ChurnAnalytics from "@/Modules/Reports/Subscription/ChurnAnalytics.vue";
 import Comparison from "@/Modules/Reports/Subscription/Comparison.vue";
 import Rest from "@/utils/http/Rest";
+import PageHeading from "@/Bits/Components/Layout/PageHeading.vue";
 
 const props = defineProps({
   reportFilter: {
@@ -120,11 +121,7 @@ onUnmounted(() => {
   <UserCan :permission="'reports/view'">
     <div class="fct-refund-report-page">
 
-      <div class="page-heading-wrap flex items-center justify-between">
-        <h1 class="page-title">
-          {{ translate('Subscriptions') }}
-        </h1>
-      </div>
+      <PageHeading :title="translate('Subscriptions')"></PageHeading>
 
       <Summary
           :summaryData="subscriptionReportData.summary"

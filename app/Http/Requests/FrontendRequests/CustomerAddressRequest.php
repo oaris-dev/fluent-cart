@@ -38,7 +38,7 @@ class CustomerAddressRequest extends RequestGuard
         $type = $this->get('type') . '_';
 
         return [
-            $type . 'address_1.required' => esc_html__('Address field is required.', 'fluent-cart'),
+            $type . 'address_1.required' => esc_html__('Street Address field is required.', 'fluent-cart'),
             $type . 'label.max'          => esc_html__('Label may not be greater than 15 characters.', 'fluent-cart'),
             $type . 'city.required'      => esc_html__('City field is required.', 'fluent-cart'),
             $type . 'state.required'     => esc_html__('State field is required.', 'fluent-cart'),

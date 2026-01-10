@@ -6,8 +6,19 @@
       }"
   >
     <template #action>
-      <div class="fct-btn-group sm" v-if="!isEmpty">
-        <Screenshot :targetRef="chartRef" size="x-small" />
+      <div class="flex items-center gap-2 justify-between" v-if="!isEmpty">
+        <el-button-group class="left">
+          <el-button size="small" @click="breakdown = 'revenue'" :type="breakdown === 'revenue' ? 'primary' : ''">
+            {{ translate('Revenue') }}
+          </el-button>
+          <el-button size="small" @click="breakdown = 'orders'" :type="breakdown === 'orders' ? 'primary' : ''">
+            {{ translate('Orders') }}
+          </el-button>
+        </el-button-group>
+
+        <div class="fct-btn-group sm">
+          <Screenshot :targetRef="chartRef" />
+        </div>
       </div>
     </template>
 
@@ -53,6 +64,7 @@ const props = defineProps({
 const colors = Theme.colors;
 const chartRef = ref(null);
 const isDarkTheme = ref(Theme.isDark());
+const breakdown = ref('revenue');
 
 // Track which legend items are selected/hidden
 const legendStates = ref({});
@@ -103,6 +115,7 @@ const customLegendData = computed(() => {
         legendData.push({
             name: relevantKeys[key],
             value: props.data[key + '_count'] || 0,
+            count: props.data[key + '_count'] || 0,
             gross : props.data[key + '_gross'] || 0,
             net : props.data[key + '_net'] || 0,
             percentage: totalOrders ? ((props.data[key + '_count'] / totalOrders) * 100).toFixed(2) : 0,
@@ -127,7 +140,8 @@ const visiblePieData = computed(() => {
   return customLegendData.value
       .filter(item => legendStates.value[item.name] !== false)
       .map((item, index) => ({
-        value: item.value,
+        value: breakdown.value === 'revenue' ? item.net : item.count,
+        count: item.count,
         name: item.name,
         gross : item.gross,
         net : item.net,
@@ -178,9 +192,9 @@ const updateChart = () => {
             ${params.marker} ${params.name} (${params.percent}%)
           </div>
           <div>
-            <span style="color: ${color};">${translate('Count')}</span>
+            <span style="color: ${color};">${translate('Orders')}</span>
             <span style="font-weight: bold; float: right; margin-left: 15px; color: ${color};">
-              ${formatNumber(params.value)}
+              ${formatNumber(params.data.count)}
             </span>
           </div>
           <div>
@@ -206,7 +220,7 @@ const updateChart = () => {
     series: [
       {
         type: "pie",
-        center: ['50%', '50%'],
+        radius: '70%',
         data: visiblePieData.value,
         label: {
           show: true,
@@ -247,6 +261,10 @@ watch(isEmpty, (value) => {
 
 watch(dataLoader, (value) => {
   if (!value) initChart();
+});
+
+watch(breakdown, () => {
+  updateChart();
 });
 
 const onThemeChanged = (event) => {

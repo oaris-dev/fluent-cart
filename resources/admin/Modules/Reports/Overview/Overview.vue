@@ -13,6 +13,7 @@ import CountryVolumeChart from "@/Modules/Reports/Overview/CountryVolumeChart.vu
 import CountryNetChart from "@/Modules/Reports/Overview/CountryNetChart.vue";
 import OverviewLoading from "@/Modules/Reports/Overview/OverviewLoading.vue";
 import Summary from "./Summary.vue";
+import PageHeading from "@/Bits/Components/Layout/PageHeading.vue";
 
 const data = ref({});
 
@@ -77,11 +78,7 @@ onMounted(() => {
 
 <template>
   <div class="report-overview-page">
-    <div class="page-heading-wrap flex items-center justify-between">
-      <h1 class="page-title">
-        {{ translate('Overview') }}
-      </h1>
-    </div>
+    <PageHeading :title="translate('Overview')"></PageHeading>
 
     <div class="flex items-center justify-start gap-1 mb-2 text-xs text-system-mid dark:text-system-light">
       <DynamicIcon name="InformationFill" class="w-4 h-4 text-system-light" />

@@ -545,12 +545,12 @@ return [
         "group" => "EU",
         "tax"   => [
             [
-                'rate'     => 20,
+                'rate'     => 23,
                 'compound' => false,
                 'type'     => 'standard',
             ],
             [
-                'rate'     => 10,
+                'rate'     => 19,
                 'compound' => false,
                 'type'     => 'reduced',
             ],

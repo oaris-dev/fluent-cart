@@ -463,7 +463,11 @@ class MenuHandler
 
     public function globalEnqueueAssets($adminBar)
     {
-        $screen = get_current_screen();
+        if ( function_exists('get_current_screen') ) {
+            $screen = get_current_screen();
+        } else {
+            $screen = null;
+        }
 
         if ($screen && $screen->base !== 'user-edit') {
             return;

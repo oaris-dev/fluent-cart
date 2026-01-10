@@ -34,6 +34,14 @@ class Cart extends Model
     protected $hidden = ['order_id', 'customer_id', 'user_id'];
 
     /**
+     * Static cache for loaded cart data with bundle children
+     * Keyed by cart_hash (primary key)
+     *
+     * @var array
+     */
+    private static $cache = [];
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array
@@ -117,14 +125,39 @@ class Cart extends Model
         $this->attributes['cart_data'] = json_encode(
             Arr::wrap($settings)
         );
+
+        $key = $this->getKey();
+        if ($key) {
+            unset(static::$cache[$key]);
+        }
     }
 
-    public function getCartDataAttribute($settings)
+
+    public function getCartDataAttribute($data): array
     {
-        if (!$settings) {
+        if (!$data) {
             return [];
         }
-        return json_decode($settings, true);
+
+        $key = $this->getKey();
+        
+        if ($key && isset(static::$cache[$key])) {
+            return static::$cache[$key];
+        }
+
+        $decoded = json_decode($data, true);
+        
+        if (!$decoded || !is_array($decoded)) {
+            $result = [];
+        } else {
+            $result = Helper::loadBundleChild($decoded, ['*']);
+        }
+
+        if ($key) {
+            static::$cache[$key] = $result;
+        }
+
+        return $result;
     }
 
     public function setUtmDataAttribute($utmData)
@@ -446,14 +479,20 @@ class Cart extends Model
             return new \WP_Error('cart_locked', __('This cart is locked and cannot be modified.', 'fluent-cart'));
         }
 
+        $previousCartData = $this->cart_data;
+        $previousCoupons = $this->coupons;
+        $previousCheckoutData = $this->checkout_data;
+
         $discountService = new \FluentCart\App\Services\Coupon\DiscountService($this);
         $result = $discountService->applyCouponCodes($codes);
         if (is_wp_error($result)) {
             return $result;
         }
 
+        $updatedCartItems = $discountService->getCartItems();
+
         $this->coupons = $discountService->getAppliedCoupons();
-        $this->cart_data = $discountService->getCartItems();
+        $this->cart_data = $updatedCartItems;
 
 
         $checkoutData = $this->checkout_data;
@@ -477,6 +516,30 @@ class Cart extends Model
         ]);
 
         return $discountService->getResult();
+    }
+
+    protected function hasZeroRecurringAmount(array $cartItems)
+    {
+        foreach ($cartItems as $item) {
+            if (Arr::get($item, 'other_info.payment_type') !== 'subscription') {
+                continue;
+            }
+
+            $recurringDiscount = (int)Arr::get($item, 'recurring_discounts.amount', 0);
+
+            if ($recurringDiscount <= 0) {
+                continue;
+            }
+
+            $unitPrice = (int)Arr::get($item, 'unit_price', 0);
+            $remainingRecurring = $unitPrice - $recurringDiscount;
+
+            if ($remainingRecurring <= 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function getDiscountLines($revalidate = false)
@@ -575,7 +638,10 @@ class Cart extends Model
 
     public function getShippingTotal()
     {
-        return (int)Arr::get($this->checkout_data ?? [], 'shipping_data.shipping_charge', 0);
+        if ($this->requireShipping()) {
+            return (int)Arr::get($this->checkout_data ?? [], 'shipping_data.shipping_charge', 0);
+        }
+        return 0;
     }
 
     public function getItemsSubtotal()
@@ -619,6 +685,22 @@ class Cart extends Model
         return apply_filters('fluent_cart/cart/estimated_total', $total, [
             'cart' => $this
         ]);
+    }
+
+    public function getEstimatedRecurringTotal()
+    {
+        return array_reduce(
+            $this->cart_data ?? [],
+            function ($carry, $item) {
+                if (Arr::get($item, 'other_info.payment_type') === 'subscription') {
+                    $subtotal = Arr::get($item, 'subtotal', 0);
+                    $discount = Arr::get($item, 'recurring_discounts.amount', 0);
+                    $carry += ($subtotal - $discount);
+                }
+                return $carry;
+            },
+            0
+        );
     }
 
     protected function findExistingItemAndIndex($objectId, $extraArgs = [])

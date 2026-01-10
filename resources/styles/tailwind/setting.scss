@@ -422,3 +422,10 @@
 .fct-checkout-field-action {
      @apply flex gap-1.5 items-center;
 }
+
+.fct-powered-by-email-footer-checkbox {
+  @apply mb-4 pb-4 border-[1px] border-l-0 border-t-0 border-r-0 border-solid border-gray-divider dark:border-dark-400;
+  .el-checkbox__label {
+    @apply inline-flex items-center gap-1;
+  }
+}

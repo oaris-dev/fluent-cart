@@ -19,6 +19,7 @@ export default class CheckoutUIService {
         shippingState: null,
         shippingStateSelect: null,
         checkoutButton: null,
+        shippingMethodsWrapper: null,
     };
 
 
@@ -56,6 +57,9 @@ export default class CheckoutUIService {
         if (this.views.shippingState) {
             this.views.shippingStateSelect = this.views.shippingState.closest('#shipping_state_wrapper');
         }
+
+        this.views.shippingMethodsWrapper = this.formWrapper.querySelector('[data-fluent-cart-checkout-page-shipping-methods-wrapper]');
+
 
 
         this.views.checkoutButton = this.formWrapper.querySelector('#fluent_cart_order_btn');
@@ -130,5 +134,23 @@ export default class CheckoutUIService {
             return;
         }
         this.views[component].style.display = display;
+    }
+
+    setLoading(component) {
+        if (!this.views[component]) {
+            return;
+        }
+
+        this.views[component].classList.add('fct-loading');
+        this.views[component].setAttribute('fct-loading', '1');
+    }
+
+    finishLoading(component) {
+        if (!this.views[component]) {
+            return;
+        }
+
+        this.views[component].classList.remove('fct-loading');
+        this.views[component].removeAttribute('fct-loading');
     }
 }

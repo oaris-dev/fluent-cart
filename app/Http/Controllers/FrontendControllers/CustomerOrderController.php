@@ -63,7 +63,7 @@ class CustomerOrderController extends BaseFrontendController
         $orders = Order::query()
             ->select(['invoice_no', 'id', 'parent_id', 'total_amount', 'uuid', 'type', 'status', 'created_at'])
             ->with(['order_items' => function ($query) {
-                $query->select('order_id', 'post_title', 'title', 'quantity', 'payment_type');
+                $query->select('id', 'order_id', 'post_title', 'title', 'quantity', 'payment_type', 'line_meta');
             }])
             ->where('customer_id', $customer->id)
             ->where(function ($query) {
@@ -89,10 +89,14 @@ class CustomerOrderController extends BaseFrontendController
                 'renewals_count' => $order->renewals_count,
                 'order_items'    => $order->order_items->map(function ($item) {
                     return [
+                        'id'           => $item->id,
                         'post_title'   => $item->post_title,
                         'title'        => $item->title,
                         'quantity'     => $item->quantity,
                         'payment_type' => $item->payment_type,
+                        'line_meta'    => [
+                            'bundle_parent_item_id' => Arr::get($item, 'line_meta.bundle_parent_item_id', null),
+                        ]
                     ];
                 }),
             ];
@@ -190,7 +194,9 @@ class CustomerOrderController extends BaseFrontendController
                 'extra_amount'  => $extraAmount,
                 'image'         => Arr::get($item, 'productImage.meta_value.0.url', ''),
                 'variant_image' => Arr::get($item, 'variantImages.meta_value.0.url', ''),
-                'url'           => $item->product->view_url ?? ''
+                'url'           => $item->product->view_url ?? '',
+                'line_meta'     => $item->line_meta,
+                'id'            => $item->id
 
             ];
             $variationIds[] = $item->object_id;
@@ -225,9 +231,13 @@ class CustomerOrderController extends BaseFrontendController
             'payment_method'        => $order->payment_method,
         ];
 
-        $formattedOrderData['subscriptions'] = $order->subscriptions->map(function ($subscription) {
-            return OrderService::transformSubscription($subscription);
-        });
+        $formattedOrderData['subscriptions'] = $order->subscriptions
+            ->filter(function ($subscription) {
+                return !in_array($subscription->status, [Status::SUBSCRIPTION_PENDING, Status::SUBSCRIPTION_INTENDED]);
+            })
+            ->map(function ($subscription) {
+                return OrderService::transformSubscription($subscription);
+            });
 
         $formattedOrderData['downloads'] = ProductDownload::query()->whereIn('post_id', $productIds)->get()->filter(function ($download) use ($variationIds) {
             $ids = $download->product_variation_id;

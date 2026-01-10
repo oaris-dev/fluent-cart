@@ -44,6 +44,9 @@ class SubscriptionController extends Controller
 
 
         $subscription->related_orders = Order::query()
+            ->with(['order_items' => function ($query) {
+                $query->select('id', 'order_id', 'post_title', 'title', 'quantity', 'payment_type', 'line_meta');
+            }])
             ->where('id', $subscription->parent_order_id)
             ->orWhere('parent_id', $subscription->parent_order_id)
             ->orderBy('id', 'DESC')

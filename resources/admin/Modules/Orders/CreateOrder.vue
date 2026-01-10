@@ -579,12 +579,15 @@ export default {
       this.customModal = false;
       this.calculateLine();
     },
-    update() {    
-      delete this.order.customer.orders;
+    update() {  
+      delete this.order.customer.orders;  
       this.loading = true;
 
+      const orderData = {...this.order};
+      delete orderData["customer"];
+
       Rest.post("orders", {
-        ...this.order,
+        ...orderData,
         discount: this.discount,
         shipping: this.shippingSettings,
         labels: this.selectedLabels,
@@ -601,7 +604,7 @@ export default {
             }, 300);
           })
           .catch((errors) => {
-            if (errors.data?.status_code == '422') {
+            if (errors.status_code == '422') {
               Notify.validationErrors(errors);
             } else {
               Notify.error(errors.data?.message);

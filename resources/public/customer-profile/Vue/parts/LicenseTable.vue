@@ -1,7 +1,6 @@
 <script setup>
 import translate, {dateTimeI18} from "../../translator/Translator";
 import Badge from "@/Bits/Components/Badge.vue";
-import {formatDate} from "@/Bits/common";
 import LicenseKey from "./LicenseKey.vue";
 import {useRouter} from "vue-router";
 import AppConfig from "@/utils/Config/AppConfig";

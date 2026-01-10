@@ -10,6 +10,7 @@ use FluentCart\App\Helpers\Helper;
 use FluentCart\App\Models\Product;
 use FluentCart\App\Modules\Data\ProductDataSetup;
 use FluentCart\App\Modules\Templating\TemplateLoader;
+use FluentCart\App\Services\TemplateService;
 use FluentCart\App\Services\Renderer\ShopAppRenderer;
 use FluentCart\App\Services\Translations\TransStrings;
 use FluentCart\Framework\Pagination\CursorPaginator;
@@ -740,8 +741,11 @@ class InnerBlocks
     {
         $product = $this->getProductFromBlockContext($block);
 
-        $priceFormat = Arr::get($block->context, 'fluent-cart/price_format', 'starts_from');
-
+        $defaultPriceFormat = 'starts_from';
+        if (is_singular('fluent-products') && TemplateService::getCurrentFcPageType() === 'single_product') {
+            $defaultPriceFormat = 'range';
+        }
+        $priceFormat = Arr::get($block->context, 'fluent-cart/price_format', $defaultPriceFormat);
 
         if (empty($product)) {
             return '';

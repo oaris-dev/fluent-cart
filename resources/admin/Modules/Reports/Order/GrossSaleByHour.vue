@@ -171,7 +171,7 @@ const updateChart = () => {
         axisLabel: {
           color: isDarkTheme.value ? "#FFFFFF" : "#696778",
           fontSize: 12,
-          formatter: (value) => `${CurrencyFormatter.formatScaled(value)}`,
+          formatter: (value) => `${CurrencyFormatter.scaled(value)}`,
         },
         min: 0,
         max: "dataMax",
@@ -194,7 +194,7 @@ const updateChart = () => {
         min: 0,
         max: "dataMax",
         splitLine: {
-          show: true,
+          show: false,
           lineStyle: {
             color: isDarkTheme.value ? "#253241" : "#D6DAE1",
             type: "dashed",

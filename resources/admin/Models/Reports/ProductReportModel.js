@@ -13,7 +13,8 @@ class ProductReportModel extends Model {
     isBusy: true,
     currentMetrics: [],
     previousMetrics: [],
-    chartData: []
+    chartData: [],
+    topSoldProducts: [],
   };
 
   makeRequest(endPoint, query, accessor, key) {
@@ -73,6 +74,15 @@ class ProductReportModel extends Model {
     return this.makeRequest(
       "product-report-summary",
       query
+    );
+  }
+
+  getTopSoldProducts(query = {}) {
+    return this.makeRequest(
+        "fetch-top-sold-products",
+        query,
+        "topSoldProducts",
+        "topSoldProducts"
     );
   }
 }

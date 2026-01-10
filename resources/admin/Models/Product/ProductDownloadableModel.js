@@ -115,7 +115,7 @@ class ProductDownloadableModel extends Model {
 
     deleteDownloadableFile = (id, index) => {
         Confirmation.ofDelete(
-            translate("Are you sure you want to delete this downloadable file ?")
+            translate("Deleting this asset will break the download link in existing purchase emails. To update the file, edit the asset instead of deleting it.")
         ).then(() => {
             Rest.delete(`products/${id}/delete`).then(() => {
                 Notify.success(translate('Downloadable File Deleted Successfully'))

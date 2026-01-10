@@ -71,6 +71,9 @@ class ProductPageTemplate
 
                             <!-- wp:column -->
                             <div class="wp-block-column"><!-- wp:post-title /-->
+                                <!-- wp:fluent-cart/excerpt /-->
+
+                                <!-- wp:fluent-cart/price-range /-->
 
                                 <!-- wp:fluent-cart/stock /-->
 

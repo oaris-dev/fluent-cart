@@ -7,12 +7,13 @@
 }
 
 .fluent-cart-direct-checkout-button {
+
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.00) 100%), var(--fct-direct-btn-bg-color);
+  box-shadow: inset 0 0.5px 0.5px 0.5px rgba(255, 255, 255, 0.1);
+
   * {
     @apply text-white;
   }
-
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.00) 100%), var(--fct-direct-btn-bg-color);
-  box-shadow: inset 0px 0.5px 0.5px 0.5px rgba(255, 255, 255, 0.1);
 
   @apply relative border-0 py-3 px-5 text-sm font-medium rounded text-center cursor-pointer leading-none flex items-center justify-center gap-2 max-h-10 text-[var(--fct-direct-btn-text-color)];
 

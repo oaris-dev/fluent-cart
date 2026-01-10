@@ -58,7 +58,7 @@ class PayPalHelper
         $paypalPlanId = $product->getProductMeta($planId);
 
         if ($paypalPlanId) {
-            $paypalPlan = API::getResource('billing/plans/' . $planId);
+            $paypalPlan = API::getResource('billing/plans/' . $paypalPlanId);
             if (!is_wp_error($paypalPlan)) {
                 return $paypalPlan;
             }

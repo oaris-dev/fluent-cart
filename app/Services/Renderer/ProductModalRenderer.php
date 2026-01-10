@@ -1,17 +1,20 @@
 <?php
 namespace FluentCart\App\Services\Renderer;
 
+use FluentCart\Api\StoreSettings;
 use FluentCart\App\Models\Product;
 
 class ProductModalRenderer
 {
     protected $product;
     protected $config = [];
+    protected $storeSettings;
 
     public function __construct(Product $product, $config = [])
     {
         $this->product = $product;
         $this->config = $config;
+        $this->storeSettings = new StoreSettings();
     }
 
     public function render()
@@ -43,7 +46,12 @@ class ProductModalRenderer
                     </svg>
                 </button>
 
-                <?php (new ProductRenderer($this->product))->render(); ?>
+                <?php 
+                    (new ProductRenderer($this->product, [
+                        'view_type'   => $this->storeSettings->get('variation_view', 'both'),
+                        'column_type' => $this->storeSettings->get('variation_columns', 'masonry')
+                    ]))->render();
+                ?>
             </div>
         </div>
         <?php

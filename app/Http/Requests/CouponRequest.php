@@ -58,6 +58,7 @@ class CouponRequest extends RequestGuard
             'conditions.excluded_products'   => 'nullable',
             'conditions.included_products'   => 'nullable',
             'conditions.email_restrictions'   => 'nullable',
+            'conditions.is_recurring'   => 'nullable',
             'conditions.max_uses'            => [
                 'nullable',
                 'numeric',
@@ -148,6 +149,7 @@ class CouponRequest extends RequestGuard
                 $sanitizedData['excluded_products'] = is_array(Arr::get($value, 'excluded_products')) ? Arr::get($value, 'excluded_products') : [];
                 $sanitizedData['included_products'] = is_array(Arr::get($value, 'included_products')) ? Arr::get($value, 'included_products') : [];
                 $sanitizedData['email_restrictions'] = sanitize_text_field(Arr::get($value, 'email_restrictions') ?? '');
+                $sanitizedData['is_recurring'] = Arr::get($value, 'is_recurring') === 'yes' ? 'yes' : 'no';
 
 
                 $arrayValues = ['excluded_categories', 'included_categories', 'excluded_products', 'included_products'];

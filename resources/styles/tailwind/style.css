@@ -233,7 +233,7 @@
 
 /*===== form note =====*/
 .form-note p {
-    @apply flex-wrap my-0 text-xs flex items-center gap-2 text-system-dark-light;
+    @apply flex-wrap my-0 text-xs flex items-center gap-2 text-system-dark-light dark:text-gray-300;
 }
 .form-note p .icon svg{
     @apply w-3.5 h-3.5;
@@ -339,4 +339,7 @@ a.fluent_cart_beta {
             @apply pl-2.5 pr-5;
         }
     }
+}
+.components-modal__screen-overlay {
+    @apply hidden !important;
 }

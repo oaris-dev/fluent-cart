@@ -8,9 +8,10 @@
 //}
 
 :root {
-  --fct-single-product-primary-text-color: var(--fct-primary-text-color, #2F3448);
-  --fct-single-product-border-color: var(--fct-border-color, #d6dae1);
-  --fct-single-product-active-border-color: var(--fct-active-border-color, #253241);
+  --fct-single-product-primary-text-color: var(--fct-primary-text-color, theme('colors.system.dark'));
+  --fct-single-product-secondary-text-color: var(--fct-secondary-text-color, theme('colors.system.mid'));
+  --fct-single-product-border-color: var(--fct-border-color, theme('colors.gray.outline'));
+  --fct-single-product-active-border-color: var(--fct-active-border-color, theme('colors.primary.200'));
 
   // qty
   --fct-single-product-qty-bg: #eaecf0;
@@ -390,7 +391,6 @@
     @apply hidden;
   }
 }
-
 
 /*=== quantity ===*/
 .fct-product-quantity-container {

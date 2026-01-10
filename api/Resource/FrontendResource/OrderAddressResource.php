@@ -28,13 +28,30 @@ class OrderAddressResource extends BaseResourceApi
     /**
      * Find order address based on the given ID and parameters.
      *
-     * @param int $id Required. The ID of the order address.
+     * @param int $id Optional. The ID of the order address.
      * @param array $params Optional. Array containing the necessary parameters.
      *
      */
-    public static function find($id, $params = [])
+    public static function find($id = null, $params = [])
     {
-       //
+        $address = null;
+
+        if ($id) {
+            $address = static::getQuery()->find($id);
+        }
+
+        $orderId = Arr::get($params, 'order_id');
+
+        if (empty($address) && !empty($orderId)) {
+            $type = Arr::get($params, 'type', 'billing');
+
+            $address = static::getQuery()
+                ->where('order_id', $orderId)
+                ->where('type', $type)
+                ->first();
+        }
+
+        return $address;
     }
 
     /**
@@ -58,7 +75,7 @@ class OrderAddressResource extends BaseResourceApi
     public static function create($data, $params = [])
     {
         $isCreated = static::getQuery()->create($data);
-        
+
         if ($isCreated) {
             return static::makeSuccessResponse(
                 $isCreated,
@@ -67,7 +84,7 @@ class OrderAddressResource extends BaseResourceApi
         }
 
         return static::makeErrorResponse([
-            [ 'code' => 400, 'message' => __('Order address creation failed.', 'fluent-cart') ]
+            ['code' => 400, 'message' => __('Order address creation failed.', 'fluent-cart')]
         ]);
     }
 
@@ -80,7 +97,29 @@ class OrderAddressResource extends BaseResourceApi
      */
     public static function update($data, $id, $params = [])
     {
-        //
+        if (!$id) {
+            return static::makeErrorResponse([
+                ['code' => 403, 'message' => __('Please edit a valid address!', 'fluent-cart')]
+            ]);
+        }
+
+        $address = static::getQuery()->find($id);
+
+        if (!$address) {
+            return static::makeErrorResponse([
+                ['code' => 404, 'message' => __('Address not found, please reload the page and try again!', 'fluent-cart')]
+            ]);
+        }
+
+        $isUpdated = $address->update($data);
+
+        if ($isUpdated) {
+            static::makeSuccessResponse($isUpdated, __('Order address updated successfully!', 'fluent-cart'));
+        }
+
+        return static::makeErrorResponse([
+            ['code' => 400, 'message' => __('Order address update failed.', 'fluent-cart')]
+        ]);
     }
 
     /**

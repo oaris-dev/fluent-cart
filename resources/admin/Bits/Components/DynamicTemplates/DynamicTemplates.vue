@@ -5,13 +5,14 @@ import * as VueInstance from 'vue';
 
 import Rest from "@/utils/http/Rest";
 import Notify from "@/utils/Notify";
-import VueForm from "@/Bits/Components/Form/VueForm.vue";
 import DynamicFormLoader from "@/Bits/Components/DynamicTemplates/DynamicFormLoader.vue";
 import EChart from "@/Bits/Components/DynamicTemplates/EChart.vue";
+import VueTemplateLoaderLoader from '@/Bits/Components/DynamicTemplates/VueTemplateLoader.vue';
 
 // Registering all components you may need globally
 
 const selfRef = getCurrentInstance().ctx;
+const emit = defineEmits(['change']);
 const props = defineProps({
   widgetsQuery: {
     type: Object,
@@ -115,9 +116,17 @@ const getFormStates = () => {
 
   return data;
 }
+const resetForms = () => {
+  console.log('called')
+  if (Array.isArray(formRefs.value)) {
+    for (let form of formRefs.value) {
+      form.resetForm();
+    }
+  }
+}
 
 
-defineExpose({beforeUpdatingData, afterUpdatingData, getFormStates})
+defineExpose({beforeUpdatingData, afterUpdatingData, getFormStates, resetForms})
 
 const formRefs = ref();
 
@@ -126,8 +135,7 @@ const formRefs = ref();
 
 <template>
   <template v-for="widget in widgets">
-
-    <template v-if="widget.type !== 'vue-component' || widget.use_card == true">
+    <template v-if="(widget.type !== 'vue-component' && widget.type !== 'vue-template') || widget.use_card == true">
       <Card.Container>
         <Card.Header :title="widget.title" :subtitle="widget.subtitle" border_bottom/>
         <Card.Body>
@@ -135,14 +143,15 @@ const formRefs = ref();
             <div v-html="widget.content"></div>
           </template>
           <template v-else-if="widget.type === 'chart'">
-            <EChart :option="widget.data" :height="`${widget.height||400}`" :width="`${widget.width||'100%'}`" />
+            <EChart :option="widget.data" :height="`${widget.height||400}`" :width="`${widget.width||'100%'}`"/>
           </template>
 
           <template v-else-if="widget.type === 'form'">
 
             <DynamicFormLoader :schema="widget.schema" :values="widget.values"
                                :submit_button_text="widget.submit_button_text" :form_name="widget.form_name"
-                               ref="formRefs"/>
+                               ref="formRefs"
+                               @change="() => emit('change')"/>
           </template>
 
           <template v-else-if="typeof widget.component === 'object'">
@@ -180,6 +189,9 @@ const formRefs = ref();
           }"/>
       </template>
 
+    </template>
+    <template v-else-if="widget.type === 'vue-template'">
+      <VueTemplateLoaderLoader :widget="widget" :data="data"/>
     </template>
 
   </template>

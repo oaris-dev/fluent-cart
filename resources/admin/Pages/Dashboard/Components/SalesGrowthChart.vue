@@ -197,7 +197,7 @@ const updateChart = () => {
         axisLabel: {
           color: isDarkTheme.value ? "#ffffff" : "#696778",
           fontSize: 12,
-          formatter: (value) => `${CurrencyFormatter.formatScaled(value)}`,
+          formatter: (value) => `${CurrencyFormatter.scaledChart(value)}`,
         },
         splitLine: {
           show: true,

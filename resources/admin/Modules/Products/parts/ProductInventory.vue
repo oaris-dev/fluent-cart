@@ -318,17 +318,17 @@ const toggleDropdown = (index, type) => {
     </Card.Container>
   </div>
   <div v-else-if="!hasPro">
-    <Card.Container class="overflow-hidden">
-      <Card.Header class="pb-0">
-        <template #action>
-          <div class="flex items-center gap-2">
+    <Card.Container>
+      <Card.Header border_bottom>
+        <template #title>
+          <h2 class="fct-card-header-title">
             <el-switch v-model="proInventory" active-value="1" inactive-value="0" :active-text="translate('Inventory Management')">
             </el-switch>
             <DynamicIcon name="Crown" class="w-4 h-4 text-warning-500" />
-          </div>
+          </h2>
         </template>
       </Card.Header>
-      <Card.Body class="px-5 mt-5 border-[1px] border-r-0 border-l-0 border-b-0 border-solid border-gray-divider dark:border-dark-400">
+      <Card.Body>
         <div class="fct-product-inventory-pro-text">
           <p class="m-0">{{ translate('This feature is only available for pro version.') }}</p>
         </div>

@@ -104,8 +104,11 @@ class TaxCalculator
 
             if ($isSubscription) {
                 $signupFee = Arr::get($lineItem, 'other_info.signup_fee', 0);
-                // as long discount is not recurring discount
+
                 $recurringAmount = Arr::get($lineItem, 'subtotal', 0);
+                if (Arr::get($lineItem, 'recurring_discounts.amount', 0) > 0) {
+                    $recurringAmount -= Arr::get($lineItem, 'recurring_discounts.amount', 0); // remove recurring_discount from recurring amount
+                }
 
                 $havePredefinedTrialDays = Arr::get($lineItem, 'other_info.trial_days', 0) > 0;
                 if ($havePredefinedTrialDays) {

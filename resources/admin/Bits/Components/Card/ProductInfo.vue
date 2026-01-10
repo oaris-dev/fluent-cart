@@ -26,7 +26,7 @@
         </span>
 
         <span v-if="!hideProductId" class="product-id">
-          #{{ product?.ID }}
+          #{{ translateNumber(product?.ID) }}
         </span>
 
         <span v-if="product?.variation_title" class="product-sub-name">
@@ -42,7 +42,7 @@
 import DynamicIcon from "@/Bits/Components/Icons/DynamicIcon.vue";
 import Arr from "@/utils/support/Arr";
 import Image from "@/utils/support/Image";
-import translate from "@/utils/translator/Translator";
+import translate, {translateNumber} from "@/utils/translator/Translator";
 
 export default {
   components: {
@@ -70,6 +70,7 @@ export default {
   },
   methods: {
     translate,
+    translateNumber,
     getImage(detail, dark = false) {
       return Arr.get(detail, 'featured_media.url') ?? Image.emptyImage(dark);
     }

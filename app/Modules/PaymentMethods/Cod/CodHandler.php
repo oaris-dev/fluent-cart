@@ -2,14 +2,13 @@
 
 namespace FluentCart\App\Modules\PaymentMethods\Cod;
 
-use FluentCart\App\Events\Order\OrderStatusUpdated;
-use FluentCart\App\Helpers\CartHelper;
+
 use FluentCart\App\Helpers\Status;
 use FluentCart\App\Helpers\StatusHelper;
 use FluentCart\App\Models\Cart;
 use FluentCart\App\Services\DateTime\DateTime;
 use FluentCart\App\Services\Payments\PaymentHelper;
-use FluentCart\App\Services\Payments\SubscriptionHelper;
+use FluentCart\App\Models\Subscription;
 
 class CodHandler {
 
@@ -40,6 +39,22 @@ class CodHandler {
             throw new \Exception(esc_html__('Order not found!', 'fluent-cart'));
         }
 
+        if ($paymentInstance->order) {
+            if (!$paymentInstance->order->customer) {
+                $paymentInstance->order->customer = $paymentInstance->order->customer()->first();
+            }
+            
+            $paymentInstance->order->load(['customer', 'shipping_address', 'billing_address']);
+            
+            $data = [
+                'order'       => $paymentInstance->order,
+                'customer'    => $paymentInstance->order->customer ?? [],
+                'transaction' => $paymentInstance->transaction ?? []
+            ];
+            
+            do_action('fluent_cart/order_placed_offline', $data);
+        }
+
         $paymentHelper = new PaymentHelper('offline_payment');
 
         $relatedCart = Cart::query()->where('order_id', $order->id)
@@ -65,6 +80,19 @@ class CodHandler {
 
         (new StatusHelper($order))->syncOrderStatuses($transaction);
 
+        // Check if this order has subscriptions with zero or negative recurring_total
+        if ($order->payment_method === 'offline_payment') {
+            $subscription = Subscription::query()
+                ->where('parent_order_id', $order->id)
+                ->where('recurring_total', '<=', 0)
+                ->first();
+
+                if ($subscription) {
+                    $subscription->status = 'active';
+                    $subscription->next_billing_date = null; // No future billing needed
+                    $subscription->save();
+                }
+        }
 
         $paymentHelper = new PaymentHelper('offline_payment');
         return $paymentHelper->successUrl($transaction->uuid);

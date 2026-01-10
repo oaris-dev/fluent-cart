@@ -8,8 +8,6 @@ export default class FluentCartSingleProductPriceTab {
 
     constructor(container) {
         this.#container = container;
-        console.log(this.#container);
-        
         this.#tabButtons = this.#container.querySelectorAll('[data-tab]');
         this.#itemPrice = this.#container.querySelector('[data-fluent-cart-product-item-price]');
         this.#paymentType = this.#container.querySelector('[data-fluent-cart-product-payment-type]');

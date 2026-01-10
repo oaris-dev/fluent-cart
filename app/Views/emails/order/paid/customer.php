@@ -60,5 +60,5 @@ echo '<hr />';
 \FluentCart\App\App::make('view')->render('emails.parts.call_to_action_box', [
     'content'     => __('To download receipt and view your order details, please visit the order details page.', 'fluent-cart'),
     'link'        => $order->getViewUrl('customer'),
-    'button_text' => 'View Details'
+    'button_text' => __('View Details', 'fluent-cart'),
 ]);

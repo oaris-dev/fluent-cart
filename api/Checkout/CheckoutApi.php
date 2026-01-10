@@ -18,6 +18,7 @@ use FluentCart\App\Models\Cart;
 use FluentCart\App\Models\Customer;
 use FluentCart\App\Models\CustomerAddresses;
 use FluentCart\App\Models\Order;
+use FluentCart\App\Models\OrderAddress;
 use FluentCart\App\Models\ShippingMethod;
 use FluentCart\App\Services\CheckoutService;
 use FluentCart\App\Services\Localization\LocalizationManager;
@@ -26,19 +27,22 @@ use FluentCart\App\Services\Payments\PaymentHelper;
 use FluentCart\App\Services\Payments\PaymentInstance;
 use FluentCart\App\Services\Renderer\CheckoutFieldsSchema;
 use FluentCart\Framework\Http\Response;
+use FluentCart\App\Services\RateLimitter;
 use FluentCart\Framework\Support\Arr;
 use FluentCart\Framework\Support\Str;
 use FluentCart\Framework\Validator\Validator;
 
 class CheckoutApi
 {
-
     /**
      * @throws \Exception
      */
 
     public static function placeOrder(array $data, $fromCheckout = false)
     {
+
+        RateLimitter::isSpamming('place_order_attempt', 5, 60, true);
+
         $userTz = Arr::get($data, 'user_tz', 'UTC');
 
         $cart = CartHelper::getCart();
@@ -74,6 +78,16 @@ class CheckoutApi
 
         $data = static::addLoggedUserData($data);
 
+        // Validate using filter hook (allows addons/modules to validate)
+        $validation = apply_filters('fluent_cart/checkout/validate_before_process', true, $data);
+        
+        if (is_wp_error($validation)) {
+            wp_send_json([
+                'status'  => 'failed',
+                'message' => $validation->get_error_message(),
+            ], 403);
+        }
+
         if (empty($data['billing_address_id'])) {
             if ($prevOrder instanceof Order) {
                 $oldCustomer = $prevOrder->customer;
@@ -84,6 +98,8 @@ class CheckoutApi
                     }
                 }
             }
+        } else {
+            $data['order_id'] = $cart->order->id;
         }
 
         $data = static::prepareAddressData($data);
@@ -133,57 +149,56 @@ class CheckoutApi
 
         $shouldCreateUser = static::shouldCreateUser($orderData, Arr::get($orderData, 'billing_address', []));
 
-        $taxTotal = (int)Arr::get($cart->checkout_data, 'tax_data.tax_total', 0); // behavoir not applied here
+        $taxTotal = (int) Arr::get($cart->checkout_data, 'tax_data.tax_total', 0); // behavoir not applied here
 
-        $shippingTax = (int)Arr::get($cart->checkout_data, 'tax_data.shipping_tax', 0);
+        $shippingTax = (int) Arr::get($cart->checkout_data, 'tax_data.shipping_tax', 0);
         $taxBehavior = apply_filters('fluent_cart/cart/tax_behavior', 0, ['cart' => $cart]);
 
         $checkoutProcessor = new CheckoutProcessor($cartCheckoutHelper->getItems(), [
-            'customer_id'               => $customer->id,
-            'user_tz'                   => $userTz,
+            'customer_id' => $customer->id,
+            'user_tz' => $userTz,
             'create_account_after_paid' => $shouldCreateUser ? 'yes' : 'no',
-            'shipping_charge'           => $shippingCharge,
-            'tax_total'                 => $taxTotal,
-            'tax_behavior'              => $taxBehavior,
-            'shipping_tax'              => $shippingTax,
-            'payment_method'            => $paymentMethod,
-            'applied_coupons'           => $cart->getDiscountLines(),
-            'billing_address'           => Arr::get($orderData, 'billing_address', []),
-            'shipping_address'          => Arr::get($orderData, 'shipping_address', []),
-            'cart_hash'                 => $cart->cart_hash,
-            'is_locked'                 => $isLockedCart,
-            'manual_discount_total'     => $cartCheckoutHelper->getManualDiscountAmount(),
-            'ip_address'                => AddressHelper::getIpAddress(),
-            'note'                      => Arr::get($orderData, 'others.order_notes', ''),
-            'tax_id'                    => Arr::get($validatedData, 'billing_tax_id', 0),
+            'shipping_charge' => $shippingCharge,
+            'tax_total' => $taxTotal,
+            'tax_behavior' => $taxBehavior,
+            'shipping_tax' => $shippingTax,
+            'payment_method' => $paymentMethod,
+            'applied_coupons' => $cart->getDiscountLines(),
+            'billing_address' => Arr::get($orderData, 'billing_address', []),
+            'shipping_address' => Arr::get($orderData, 'shipping_address', []),
+            'cart_hash' => $cart->cart_hash,
+            'is_locked' => $isLockedCart,
+            'manual_discount_total' => $cartCheckoutHelper->getManualDiscountAmount(),
+            'ip_address' => AddressHelper::getIpAddress(),
+            'note' => Arr::get($orderData, 'others.order_notes', ''),
+            'tax_id' => Arr::get($validatedData, 'billing_tax_id', 0),
         ]);
 
         $createdOrder = $checkoutProcessor->createDraftOrder($prevOrder);
         if (is_wp_error($createdOrder)) {
             wp_send_json([
-                'status'  => 'failed',
+                'status' => 'failed',
                 'message' => $createdOrder->get_error_message(),
-                'data'    => $createdOrder->get_error_data()
+                'data' => $createdOrder->get_error_data()
             ], 423);
         }
 
         // prepare other data if any module needs to add data to the order data
         do_action('fluent_cart/checkout/prepare_other_data', [
-            'cart'         => $cart,
-            'order'        => $createdOrder,
-            'prev_order'   => $prevOrder,
+            'cart' => $cart,
+            'order' => $createdOrder,
+            'prev_order' => $prevOrder,
             'request_data' => $data,
             'validated_data' => $validatedData
         ]);
 
         static::finalizeOrder($createdOrder, [
-            'billing_address'  => Arr::get($orderData, 'billing_address', []),
+            'billing_address' => Arr::get($orderData, 'billing_address', []),
             'shipping_address' => Arr::get($orderData, 'shipping_address', []),
-            'items'            => $cartCheckoutHelper->getItems(),
-            'from_checkout'    => true,
-            'prev_order'       => $prevOrder
+            'items' => $cartCheckoutHelper->getItems(),
+            'from_checkout' => true,
+            'prev_order' => $prevOrder
         ]);
-
     }
 
     private static function getOrCreateCustomer(CartCheckoutHelper $cartCheckoutHelper, $orderData)
@@ -206,35 +221,67 @@ class CheckoutApi
     {
         $shippingAddressId = Arr::get($data, 'shipping_address_id');
         $billingAddressId = Arr::get($data, 'billing_address_id');
+        $orderId = Arr::get($data, 'order_id', null);
 
         $shipToDifferent = Arr::get($data, 'ship_to_different', 'no');
 
-        $datKeys = ['country', 'address_1', 'address_2', 'city', 'state', 'postcode', 'phone'];
-
+        $datKeys = ['country', 'address_1', 'address_2', 'city', 'state', 'postcode', 'phone', 'label'];
 
         if ($billingAddressId) {
-            $billingAddress = CustomerAddresses::query()
-                ->where('id', $billingAddressId)
-                ->where('type', 'billing')
-                ->first();
+            $prevBillingAddress = Order::find($orderId)->billing_address;
+            $prevBillingId = Arr::get($prevBillingAddress, 'id', null);
+            $billingAddress = null;
+            if ($orderId && $prevBillingId == $billingAddressId) {
+                $billingAddress = OrderAddress::query()
+                    ->where('id', $billingAddressId)
+                    ->where('type', 'billing')
+                    ->first();
+            }
+            if(empty($billingAddress)) {
+                $billingAddress = CustomerAddresses::query()
+                    ->where('id', $billingAddressId)
+                    ->where('type', 'billing')
+                    ->first();
+            }
 
             if ($billingAddress) {
                 foreach ($datKeys as $key) {
-                    $data['billing_' . $key] = $billingAddress->{$key};
+                    // Guest user, take data from form
+                    if (!is_user_logged_in()) {
+                        $data['billing_' . $key] = Arr::get($data, 'billing_' . $key, '');
+                    } else {
+                        $data['billing_' . $key] = $billingAddress->{$key};
+                    }
                 }
             }
         }
 
         if ($shippingAddressId && $shipToDifferent === 'yes') {
-            $shippingAddress = CustomerAddresses::query()
-                ->where('id', $shippingAddressId)
-                ->where('type', 'shipping')
-                ->first();
+            $prevShippingAddress = Order::find($orderId)->shipping_address;
+            $prevShippingId = Arr::get($prevShippingAddress, 'id', null);
+            $shippingAddress = null;
+            if ($orderId && $prevShippingId == $shippingAddressId) {
+                $shippingAddress = OrderAddress::query()
+                    ->where('id', $shippingAddressId)
+                    ->where('type', 'billing')
+                    ->first();
+            }
+            if(empty($shippingAddress)) {
+                $shippingAddress = CustomerAddresses::query()
+                    ->where('id', $shippingAddressId)
+                    ->where('type', 'shipping')
+                    ->first();
+            }
 
             if ($shippingAddress) {
                 $data['shipping_full_name'] = $shippingAddress->name;
                 foreach ($datKeys as $key) {
-                    $data['shipping_' . $key] = $shippingAddress->{$key};
+                    // Guest user, take data from form
+                    if (!is_user_logged_in()) {
+                        $data['shipping_' . $key] = Arr::get($data, 'shipping_' . $key, '');
+                    } else {
+                        $data['shipping_' . $key] = $shippingAddress->{$key};
+                    }
                 }
             }
         } else if ($shipToDifferent !== 'yes') {
@@ -292,9 +339,9 @@ class CheckoutApi
 
         if (!$gateway) {
             wp_send_json([
-                'status'  => 'failed',
+                'status' => 'failed',
                 'message' => __('Payment method not found!', 'fluent-cart'),
-                'data'    => []
+                'data' => []
             ], 404);
         }
 
@@ -304,9 +351,9 @@ class CheckoutApi
 
         if (is_wp_error($data)) {
             wp_send_json([
-                'status'  => 'failed',
+                'status' => 'failed',
                 'message' => $data->get_error_message(),
-                'data'    => $data->get_error_data()
+                'data' => $data->get_error_data()
             ], 422);
         }
 
@@ -326,7 +373,7 @@ class CheckoutApi
 
         $customer->update([
             'first_name' => $firstName,
-            'last_name'  => $lastName,
+            'last_name' => $lastName,
         ]);
 
         $user = get_user_by('email', $customer->email);
@@ -470,8 +517,8 @@ class CheckoutApi
     {
         $baseRules = [
             'billing_full_name' => 'required|sanitizeText|maxLength:255',
-            'billing_email'     => 'required|sanitizeText|email|maxLength:255',
-            'order_notes'       => 'nullable|sanitizeTextArea|maxLength:200',
+            'billing_email' => 'required|sanitizeText|email|maxLength:255',
+            'order_notes' => 'nullable|sanitizeTextArea|maxLength:200',
         ];
 
         return static::generateAddressRules('billing', $data, $baseRules, 'getBillingAddressFields');
@@ -508,7 +555,6 @@ class CheckoutApi
 
         $billingValidations = array_filter(CheckoutFieldsSchema::getCheckoutFieldsRequirements('billing', $fulfillmentType, !$isDifferentShipping));
 
-
         if (!isset($billingValidations['country'])) {
             // get store country
             $data['billing_country'] = (new StoreSettings())->get('store_country');
@@ -532,7 +578,7 @@ class CheckoutApi
             }
         }
 
-        if (Arr::get($data,'ship_to_different', 'no') === 'yes') {
+        if (Arr::get($data, 'ship_to_different', 'no') === 'yes') {
             if (!isset($data['shipping_country'])) {
                 // get store country
                 $data['shipping_country'] = (new StoreSettings())->get('store_country');
@@ -548,11 +594,15 @@ class CheckoutApi
 
         $agreeTermsRequired = CheckoutFieldsSchema::isTermsRequired();
 
+        $customTitles = [
+            'address_1' => 'Street Address',
+            'address_2' => 'Apt, Suite, Unit',
+        ];
 
         foreach ($billingValidations as $key => $rule) {
             $value = Arr::get($billingAddress, $key, '');
             $prefixedKey = 'billing_' . $key;
-            $titledKey = Str::headline($key);
+            $titledKey = $customTitles[$key] ?? Str::headline($key);
 
             if ($key === 'country') {
                 $countries = LocalizationManager::getInstance()->countries();
@@ -562,8 +612,10 @@ class CheckoutApi
                         $errors[$prefixedKey] = [];
                     }
                     $errors[$prefixedKey]['required'] = sprintf(
-                    /* translators: %s attribute name */
-                        __('%s is required.', 'fluent-cart'), $titledKey);
+                        /* translators: %s attribute name */
+                        __('%s is required.', 'fluent-cart'),
+                        $titledKey
+                    );
                     continue;
                 }
 
@@ -573,7 +625,9 @@ class CheckoutApi
                     }
                     $errors[$prefixedKey]['invalid'] = sprintf(
                         /* translators: %s attribute name */
-                        __('%s is invalid.', 'fluent-cart'), $titledKey);
+                        __('%s is invalid.', 'fluent-cart'),
+                        $titledKey
+                    );
                     continue;
                 }
             }
@@ -589,25 +643,31 @@ class CheckoutApi
                     continue;
                 }
 
-                if ($rule === 'required' && empty($value)) {
-                    if (!isset($errors[$key])) {
-                        $errors[$prefixedKey] = [];
-                    }
-                    $errors[$prefixedKey]['required'] = sprintf(
-                    /* translators: %s attribute name */
-                        __('%s is required.', 'fluent-cart'), $titledKey);
-                    continue;
-                }
-
-                if (!in_array($value, array_column($states, 'value'))) {
-                    if (!isset($errors[$key])) {
-                        $errors[$prefixedKey] = [];
-                    }
-                    $errors[$prefixedKey]['invalid'] = sprintf(
+                if ($rule === 'required') {
+                    if (empty($value)) {
+                        if (!isset($errors[$key])) {
+                            $errors[$prefixedKey] = [];
+                        }
+                        $errors[$prefixedKey]['required'] = sprintf(
                         /* translators: %s attribute name */
-                        __('%s is invalid.', 'fluent-cart'), $titledKey);
+                            __('%s is required.', 'fluent-cart'),
+                            $titledKey
+                        );
+                        continue;
+                    }
 
-                    continue;
+                    if (!in_array($value, array_column($states, 'value'))) {
+                        if (!isset($errors[$key])) {
+                            $errors[$prefixedKey] = [];
+                        }
+                        $errors[$prefixedKey]['invalid'] = sprintf(
+                        /* translators: %s attribute name */
+                            __('%s is invalid.', 'fluent-cart'),
+                            $titledKey
+                        );
+
+                        continue;
+                    }
                 }
             }
 
@@ -617,15 +677,16 @@ class CheckoutApi
                 }
                 $errors[$prefixedKey]['required'] = sprintf(
                     /* translators: %s attribute name */
-                    __('%s is required.', 'fluent-cart'), $titledKey);
+                    __('%s is required.', 'fluent-cart'),
+                    $titledKey
+                );
             }
         }
 
         foreach ($shippingValidations as $key => $rule) {
             $value = Arr::get($shippingAddress, $key, '');
             $prefixedKey = 'shipping_' . $key;
-            $titledKey = Str::headline($key);
-
+            $titledKey = $customTitles[$key] ?? Str::headline($key);
 
             if ($key === 'country') {
                 $countries = LocalizationManager::getInstance()->countries();
@@ -635,8 +696,10 @@ class CheckoutApi
                         $errors[$prefixedKey] = [];
                     }
                     $errors[$prefixedKey]['required'] = sprintf(
-                    /* translators: %s attribute name */
-                        __('%s is required.', 'fluent-cart'), $titledKey);
+                        /* translators: %s attribute name */
+                        __('%s is required.', 'fluent-cart'),
+                        $titledKey
+                    );
 
                     continue;
                 }
@@ -647,7 +710,9 @@ class CheckoutApi
                     }
                     $errors[$prefixedKey]['invalid'] = sprintf(
                         /* translators: %s attribute name */
-                        __('%s is invalid.', 'fluent-cart'), $titledKey);
+                        __('%s is invalid.', 'fluent-cart'),
+                        $titledKey
+                    );
                     continue;
                 }
             }
@@ -663,27 +728,34 @@ class CheckoutApi
                 }
 
 
-                if ($rule === 'required' && empty($value)) {
-                    if (!isset($errors[$key])) {
-                        $errors[$prefixedKey] = [];
-                    }
-                    $errors[$prefixedKey]['required'] = sprintf(
-                    /* translators: %s attribute name */
-                        __('%s is required.', 'fluent-cart'), $titledKey);
-
-                    continue;
-                }
-
-                if (!in_array($value, array_column($states, 'value'))) {
-                    if (!isset($errors[$key])) {
-                        $errors[$prefixedKey] = [];
-                    }
-                    $errors[$prefixedKey]['invalid'] = sprintf(
+                if ($rule === 'required') {
+                    if (empty($value)) {
+                        if (!isset($errors[$key])) {
+                            $errors[$prefixedKey] = [];
+                        }
+                        $errors[$prefixedKey]['required'] = sprintf(
                         /* translators: %s attribute name */
-                        __('%s is invalid.', 'fluent-cart'), $titledKey);
+                            __('%s is required.', 'fluent-cart'),
+                            $titledKey
+                        );
 
-                    continue;
+                        continue;
+                    }
+
+                    if (!in_array($value, array_column($states, 'value'))) {
+                        if (!isset($errors[$key])) {
+                            $errors[$prefixedKey] = [];
+                        }
+                        $errors[$prefixedKey]['invalid'] = sprintf(
+                        /* translators: %s attribute name */
+                            __('%s is invalid.', 'fluent-cart'),
+                            $titledKey
+                        );
+
+                        continue;
+                    }
                 }
+
             }
 
             if ($rule === 'required' && empty($value)) {
@@ -692,21 +764,25 @@ class CheckoutApi
                 }
                 $errors[$prefixedKey]['required'] = sprintf(
                     /* translators: %s attribute name */
-                    __('%s is required.', 'fluent-cart'), $titledKey);
+                    __('%s is required.', 'fluent-cart'),
+                    $titledKey
+                );
             }
         }
 
         $basicInfoFields = (CheckoutFieldsSchema::getNameEmailFieldsSchema())['fields'];
 
         foreach ($basicInfoFields as $field) {
-            $fieldName = (string)Arr::get($field, 'name', '');
+            $fieldName = (string) Arr::get($field, 'name', '');
             $isRequired = Arr::get($field, 'required', 'no') === 'yes';
             if ($fieldName && $isRequired) {
                 $value = Arr::get($data, $fieldName, '');
                 if (empty($value)) {
                     Arr::set($errors, $fieldName . '.required', sprintf(
                         /* translators: %s attribute name */
-                        __('%s is required.', 'fluent-cart'), Arr::get($field, 'aria-label')));
+                        __('%s is required.', 'fluent-cart'),
+                        Arr::get($field, 'aria-label')
+                    ));
                 }
             }
         }
@@ -718,7 +794,6 @@ class CheckoutApi
         if (empty($data['billing_email']) || !is_email($data['billing_email'])) {
             $errors['billing_email']['invalid'] = __('Email must be a valid email address.', 'fluent-cart');
         }
-
 
         if (empty($data['billing_full_name'])) {
             $errors['billing_full_name']['required'] = __('Full name is required.', 'fluent-cart');
@@ -808,20 +883,20 @@ class CheckoutApi
     public static function messages(): array
     {
         return [
-            'billing_full_name.required'  => esc_html__('Full name field is required.', 'fluent-cart'),
-            'billing_email.required'      => esc_html__('Email field is required.', 'fluent-cart'),
-            'billing_email.email'         => esc_html__('Email must be a valid email address.', 'fluent-cart'),
-            'billing_address.required'    => esc_html__('Address field is required.', 'fluent-cart'),
-            'billing_country.required'    => esc_html__('Country field is required.', 'fluent-cart'),
-            'billing_address_1.required'  => esc_html__('Address field is required.', 'fluent-cart'),
-            'billing_city.required'       => esc_html__('City field is required.', 'fluent-cart'),
-            'billing_postcode.required'   => esc_html__('Postcode field is required.', 'fluent-cart'),
+            'billing_full_name.required' => esc_html__('Full name field is required.', 'fluent-cart'),
+            'billing_email.required' => esc_html__('Email field is required.', 'fluent-cart'),
+            'billing_email.email' => esc_html__('Email must be a valid email address.', 'fluent-cart'),
+            'billing_address.required' => esc_html__('Address field is required.', 'fluent-cart'),
+            'billing_country.required' => esc_html__('Country field is required.', 'fluent-cart'),
+            'billing_address_1.required' => esc_html__('Street Address field is required.', 'fluent-cart'),
+            'billing_city.required' => esc_html__('City field is required.', 'fluent-cart'),
+            'billing_postcode.required' => esc_html__('Postcode field is required.', 'fluent-cart'),
             'shipping_full_name.required' => esc_html__('Full name field is required.', 'fluent-cart'),
             // 'shipping_email.required' => esc_html__('Email field is required.', 'fluent-cart'),
             // 'shipping_email.email' => esc_html__('Email must be a valid email address.', 'fluent-cart'),
-            'shipping_address.required'   => esc_html__('Address field is required.', 'fluent-cart'),
-            'shipping_city.required'      => esc_html__('City field is required.', 'fluent-cart'),
-            'shipping_postcode.required'  => esc_html__('Postcode field is required.', 'fluent-cart'),
+            'shipping_address.required' => esc_html__('Address field is required.', 'fluent-cart'),
+            'shipping_city.required' => esc_html__('City field is required.', 'fluent-cart'),
+            'shipping_postcode.required' => esc_html__('Postcode field is required.', 'fluent-cart'),
         ];
     }
 

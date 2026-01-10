@@ -122,11 +122,13 @@ export default {
         filteredPaymentMethods() {
           if (this.subscription.can_switch_payment_method === true) {
             return (this.getAllPaymentMethods || []).filter(
-                method => method && method.supported_features?.includes('switch_payment_method')
+                method => {
+                    return this.subscription?.switchable_payment_methods?.includes(method.slug) || method.slug === this.subscription.current_payment_method;
+                }
             );
           }
 
-          return methods.filter(method => method.slug === this.subscription.current_payment_method);
+          return (this.getAllPaymentMethods || []).filter(method => method.slug === this.subscription.current_payment_method);
         },
     },
     methods: {

@@ -24,7 +24,7 @@ class DefaultReportService extends ReportService
 
         $query = $this->applyFilters($query, $params);
 
-        $topSoldProducts = $query->limit(10)->get()->map(fn ($item) => [
+        $topSoldProducts = $query->limit(20)->get()->map(fn ($item) => [
             'product_id'    => (int) $item->product_id,
             'product_name'  => $item->product_name,
             'quantity_sold' => (int) $item->quantity_sold,

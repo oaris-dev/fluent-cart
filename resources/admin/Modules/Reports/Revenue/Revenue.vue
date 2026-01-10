@@ -11,6 +11,8 @@ import { liabilityClass, maybeLiability } from "../Utils/liability";
 </script>
 
 <script>
+import CurrencyFormatter from "@/utils/support/CurrencyFormatter";
+
 export default {
   name: "Revenue",
   props: {
@@ -147,20 +149,21 @@ export default {
                 min-width="150"
               >
                 <template #default="scope">
-                  <div class="inline-flex">
-                    {{ formatCurrency(Number(scope.row.total_sales)) }}
+
+                  <div class="inline-flex" v-html="formatCurrency(Number(scope.row.total_sales)) ">
+
                   </div>
                 </template>
               </el-table-column>
 
               <el-table-column
-                prop="total_refunds"
+
                 :label="translate('Refunds')"
                 min-width="150"
               >
                 <template #default="scope">
-                  <div class="inline-flex" :class="liabilityClass(scope.row.total_refunds)">
-                    {{ maybeLiability(scope.row.total_refunds) }}
+                  <div class="inline-flex" :class="liabilityClass(scope.row.total_refunds)" v-html="maybeLiability(scope.row.total_refunds)">
+
                   </div>
                 </template>
               </el-table-column>
@@ -197,8 +200,8 @@ export default {
                 min-width="180"
               >
                 <template #default="scope">
-                  <div class="inline-flex">
-                    {{ formatCurrency(Number(scope.row.net_revenue)) }}
+                  <div class="inline-flex" v-html="formatCurrency(Number(scope.row.net_revenue))">
+
                   </div>
                 </template>
               </el-table-column>
@@ -229,28 +232,27 @@ export default {
           min-width="150"
         >
           <template #default="scope">
-            <div class="inline-flex">
-              {{ formatCurrency(scope.row.gross_sale) }}
+            <div class="inline-flex" v-html="formatCurrency(scope.row.gross_sale)">
+
             </div>
           </template>
         </el-table-column>
 
         <el-table-column
-          prop="total_refunded_amount"
           :label="translate('Refunds')"
           min-width="150"
         >
           <template #default="scope">
-            <div class="inline-flex" :class="liabilityClass(scope.row.total_refunded_amount)">
-              {{ maybeLiability(scope.row.total_refunded_amount) }}
+            <div class="inline-flex" :class="liabilityClass(scope.row.total_refunded_amount)" v-html="maybeLiability(scope.row.total_refunded_amount)">
+
             </div>
           </template>
         </el-table-column>
 
         <el-table-column prop="tax_total" :label="translate('Taxes')" min-width="150" v-if="tax_total > 0">
           <template #default="scope">
-            <div class="inline-flex">
-              {{ formatCurrency(scope.row.tax_total) }}
+            <div class="inline-flex" v-html="formatCurrency(scope.row.tax_total)">
+
             </div>
           </template>
         </el-table-column>
@@ -262,8 +264,8 @@ export default {
           v-if="shipping_total > 0"
         >
           <template #default="scope">
-            <div class="inline-flex">
-              {{ formatCurrency(scope.row.shipping_total) }}
+            <div class="inline-flex" v-html="formatCurrency(scope.row.shipping_total)">
+
             </div>
           </template>
         </el-table-column>
@@ -274,8 +276,7 @@ export default {
           min-width="180"
         >
           <template #default="scope">
-            <div class="inline-flex">
-              {{ formatCurrency(scope.row.net_revenue) }}
+            <div class="inline-flex" v-html="formatCurrency(scope.row.net_revenue)">
             </div>
           </template>
         </el-table-column>

@@ -138,7 +138,7 @@ class OrderService
         if (
             empty($currentVariation) ||
             empty($currentVariation['product']) ||
-            $currentVariation['product']['post_status'] !== 'publish'
+            !in_array($currentVariation['product']['post_status'], ['publish', 'private'])
         ) {
             throw new \Exception(sprintf(
                 /* translators: %s: product title */

@@ -252,7 +252,7 @@ const updateChart = () => {
           color: isDarkTheme.value ? "#ffffff" : "#696778",
           fontSize: 12,
           formatter: (value) => {
-            return CurrencyFormatter.formatScaled(value);
+            return CurrencyFormatter.formatScaledChart(value);
           },
         },
         splitLine: {

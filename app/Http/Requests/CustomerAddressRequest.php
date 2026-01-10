@@ -33,6 +33,7 @@ class CustomerAddressRequest extends RequestGuard
             'address_2'  => 'nullable|sanitizeText',
             'city'       => 'required|sanitizeText|maxLength:255',
             'is_primary' => 'nullable|numeric',
+            'company_name' => 'nullable|sanitizeText|maxLength:255',
         ]);
     }
 
@@ -45,7 +46,7 @@ class CustomerAddressRequest extends RequestGuard
             'name.required'      => esc_html__('Name field is required.', 'fluent-cart'),
             'email.required'     => esc_html__('Email field is required.', 'fluent-cart'),
             'email.email'        => esc_html__('Email must be a valid email address.', 'fluent-cart'),
-            'address_1.required' => esc_html__('Address 1 field is required.', 'fluent-cart'),
+            'address_1.required' => esc_html__('Street Address field is required.', 'fluent-cart'),
             'city.required'      => esc_html__('City field is required.', 'fluent-cart'),
             'postcode.required'  => esc_html__('Postcode field is required.', 'fluent-cart'),
             'country.required'   => esc_html__('Country field is required.', 'fluent-cart'),
@@ -78,7 +79,8 @@ class CustomerAddressRequest extends RequestGuard
 
                 return sanitize_email($value);
             },
-            'is_primary' => 'intval'
+            'is_primary' => 'intval',
+            'company_name' => 'sanitize_text_field',
         ];
     }
 }

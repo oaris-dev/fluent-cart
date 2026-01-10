@@ -1,4 +1,6 @@
 import blocktranslate from "@/BlockEditor/BlockEditorTranslator";
+import { ProductContainerContext } from "@/BlockEditor/ShopApp/Context/ProductContainerContext";
+const {useContext} = wp.element;
 
 const {useBlockProps, InspectorControls, InnerBlocks} = wp.blockEditor;
 const {ToggleControl, TextControl} = wp.components
@@ -16,17 +18,17 @@ const ProductNoResultBlock = {
         'fluent-cart/order_by',
         'fluent-cart/live_filter',
         'fluent-cart/price_format',
-        'fluent-cart/enable_wildcard_filter'
     ],
     edit: (props) => {
-        const {attributes, setAttributes} = props;
+        const { context } = props;
+
+        const { simulateNoResults } = useContext(ProductContainerContext);
+
+        let isShown = simulateNoResults ? 'show' : '';
 
         const blockProps = useBlockProps({
-            className: 'fluent-cart-shop-no-result-wrap',
+            className: 'fluent-cart-shop-no-result-wrap' + ' ' + isShown,
         });
-
-        // get context
-        const {context} = props;
 
         return <div {...blockProps} >
                 <InnerBlocks />
@@ -35,7 +37,7 @@ const ProductNoResultBlock = {
 
     save: (props) => {
         const blockProps = useBlockProps.save();
-        return <div {...blockProps} className="fct-product-block-filter-item">
+        return <div {...blockProps} className="fluent-cart-shop-no-result-wrap">
             <InnerBlocks.Content/>
         </div>;
     },

@@ -143,7 +143,7 @@
     @apply flex gap-4.5 flex-1;
   }
   .fct-cart-item-image{
-    @apply w-[80px] h-full rounded;
+    @apply w-[60px] h-full rounded flex-shrink-0;
     a{
       @apply h-full rounded-[inherit] block no-underline focus-within:outline-none focus-within:shadow-none focus:outline-none focus:shadow-none;
       &:focus-within{
@@ -155,17 +155,17 @@
     }
   }
   .fct-cart-item-details {
-    @apply max-w-[250px];
+    @apply pr-10;
     .fct-cart-item-title{
-      @apply text-base font-medium text-[var(--fct-cart-drawer-primary-text-color)] block truncate leading-[1.1] mb-1.5;
+      @apply text-base font-normal text-[var(--fct-cart-drawer-primary-text-color)] block leading-[1.3] mb-1.5;
       a{
         @apply no-underline text-[var(--fct-cart-drawer-primary-text-color)] hover:underline;
       }
     }
 
     .fct-cart-item-variant {
-      @apply text-sm text-system-mid leading-[20px] mb-1;
-      &.is-variation-title-hidden{
+      @apply text-sm text-system-mid leading-[20px] mb-1 mt-0;
+      &.variant-title-hidden{
         @apply hidden;
       }
     }
@@ -177,6 +177,9 @@
       }
       + .fluent-cart-cart-list-item-quantity{
         @apply mt-3;
+      }
+      &.item-price-hidden {
+        @apply hidden;
       }
     }
 
@@ -220,7 +223,7 @@
 
 /*== qty ==*/
 .fct-cart-item-quantity {
-  @apply inline-flex items-center border border-solid border-[var(--fct-cart-drawer-quantity-border-color)] rounded bg-[var(--fct-cart-drawer-quantity-bg-color)];
+  @apply mt-1 inline-flex items-center border border-solid border-[var(--fct-cart-drawer-quantity-border-color)] rounded bg-[var(--fct-cart-drawer-quantity-bg-color)];
   .qty-btn {
     @apply shadow-none m-0 outline-0 w-8 h-8 p-0 flex justify-center items-center transition-all bg-[var(--fct-cart-drawer-quantity-btn-bg)] text-[var(--fct-cart-drawer-quantity-btn-color)];
     cursor: pointer;
@@ -366,31 +369,31 @@
 
 
 /*== loader ==*/
-.fct-cart-drawer-loader {
+.fct-loader-wrap {
     background: rgba(255, 255, 255, 0.5);
     backdrop-filter: blur(2px);
-    @apply absolute top-0 left-0 w-full h-full hidden items-center justify-center invisible z-[2];
+    @apply absolute top-0 left-0 w-full h-full hidden items-center justify-center z-[2];
     &.show {
-        @apply flex visible;
+        @apply flex;
     }
 }
 
-.fct-cart-drawer-loader-spin-wrap {
+.fct-loader-spinner {
   @apply w-[50px] h-[50px] flex-none relative;
   &:after,
   &:before {
     content: '';
     @apply absolute top-0 left-0 w-full h-full rounded-full border-[2px] border-solid border-primary-500 border-t-transparent border-r-transparent;
-    animation: fluentCartCartDrawerSpin 1.3s linear infinite;
+    animation: fluentCartSpin 1.3s linear infinite;
   }
   &:after {
     transform: rotate(30deg);
     @apply w-[80%] h-[80%] top-[10%] left-[10%];
-    animation: fluentCartCartDrawerSpin 1s linear infinite;
+    animation: fluentCartSpin 1s linear infinite;
   }
 }
 
-@keyframes fluentCartCartDrawerSpin {
+@keyframes fluentCartSpin {
     0% {
         transform: rotate(0deg);
     }
@@ -413,4 +416,57 @@
         }
     }
 
+}
+@media (max-width: 768px){
+  .fct-cart-drawer.admin_bar_enabled {
+    height: 100vh;
+  }
+}
+
+/*=== bundle products ===*/
+.fct-bundle-products {
+  @apply mt-5;
+  &.is-hidden{
+    @apply hidden;
+  }
+  .fct-bundle-products-title {
+    @apply text-sm leading-[20px] font-medium text-[var(--fct-cart-drawer-primary-text-color)] mb-1.5;
+  }
+  .fct-bundle-products-list {
+    @apply text-[13px] text-[var(--fct-cart-drawer-secondary-text-color)];
+    p {
+      @apply mt-0 mb-0.5;
+    }
+  }
+  .fct-bundle-products-more {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.2s ease-out;
+  }
+  .fct-bundle-products-more-list {
+    overflow: hidden;
+  }
+  .fct-see-more-btn {
+    @apply text-[13px] text-[var(--fct-cart-drawer-secondary-text-color)] no-underline font-medium leading-[20px] hover:text-[var(--fct-cart-drawer-primary-text-color)];
+    span {
+      @apply inline-flex items-center gap-1.5;
+    }
+    .see-less-text {
+      @apply hidden;
+    }
+    svg {
+      @apply w-2.5 h-[6px];
+    }
+  }
+  &.show-all {
+    .fct-bundle-products-more {
+      grid-template-rows: 1fr;
+    }
+    .fct-see-more-btn .see-more-text {
+      @apply hidden;
+    }
+    .fct-see-more-btn .see-less-text {
+      @apply inline-flex;
+    }
+  }
 }

@@ -6,9 +6,10 @@
       <div class="summary-item-inner">
         <div class="value">
           <div class="inner-value">
-            <span>
-              {{ !summary.no_currency ? CurrencyFormatter.scaled(summary.value) : formatNumber(summary.value) }}{{ summary.is_percentage ? '%' : '' }}
-            </span>
+
+            <span v-html="formatSummary(summary)"></span>
+
+            
           </div><!-- inner-value -->
 
           <Fluctuation 
@@ -83,4 +84,12 @@ const summaryCards = computed(() => [
 const dataLoader = computed(() => {
   return refundReport.data.isBusy.chartData;
 });
+
+const formatSummary = (summary) => {
+  const value = !summary.no_currency
+      ? CurrencyFormatter.scaled(summary.value)
+      : formatNumber(summary.value)
+
+  return summary.is_percentage ? `${value}%` : value
+}
 </script>

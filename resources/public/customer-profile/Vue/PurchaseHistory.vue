@@ -9,7 +9,7 @@
             <div>
                 <div class="fct-customer-dashboard-header">
                     <h4 :id="purchaseHistoryTitleId" class="fct-customer-dashboard-title">
-                        {{ $t(purchaseHistoryTitle) }}
+                        {{ $t('Purchase History') }}
                     </h4>
                     <div class="actions">
                         <div class="fct-collapsible-search-wrap">
@@ -90,6 +90,7 @@ import DynamicIcon from "@/Bits/Components/Icons/DynamicIcon.vue";
 import OrderTableLoader from "./parts/OrderTableLoader.vue";
 import EmptyState from './EmptyState.vue';
 import Pagination from "./parts/Pagination.vue";
+import { formatOrderItems } from "@/Bits/common";
 
 export default {
     name: 'PurchaseHistory',
@@ -114,10 +115,10 @@ export default {
             },
             loading: true,
             app_loaded: false,
-          purchaseHistoryTitle: window.fluentcart_customer_profile_vars?.section_titles?.purchaseHistory
         }
     },
     methods: {
+      formatOrderItems,
         fetchOrders() {
             this.loading = true;
             this.$get("customer-profile/orders", {
@@ -128,6 +129,9 @@ export default {
                 .then((response) => {
                     this.orders = response.orders.data;
                     this.paginate.total = response.orders.total;
+                    this.orders.forEach((order) => {
+                      order.order_items = this.formatOrderItems(order.order_items);
+                    });
                 })
                 .catch((error) => {
                     this.handleError(error);

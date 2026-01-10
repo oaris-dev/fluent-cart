@@ -4,6 +4,7 @@ namespace FluentCart\App\Http\Controllers;
 
 use FluentCart\Api\Resource\ProductVariationResource;
 use FluentCart\App\Http\Requests\ProductVariationRequest;
+use FluentCart\App\Models\Product;
 use FluentCart\App\Models\ProductVariation;
 use FluentCart\Framework\Http\Request\Request;
 use FluentCart\Framework\Support\Arr;
@@ -31,8 +32,16 @@ class ProductVariationController extends Controller
     {
 
         $data = $request->getSafe($request->sanitize());
+        $productId = Arr::get($data, 'variants.post_id');
 
-        $isCreated = ProductVariationResource::create(Arr::get($data, 'variants', []));
+
+        $product = Product::query()->with('detail')->findOrFail($productId);
+
+        $variationData = Arr::get($data, 'variants', []);
+        $variationData['other_info']['is_bundle_product'] = $product->isBundleProduct()?'yes':'no';
+        $variationData['detail_id'] = Arr::get($product, 'detail.id', null);
+
+        $isCreated = ProductVariationResource::create($variationData);
 
         if (is_wp_error($isCreated)) {
             return $isCreated;
@@ -45,7 +54,16 @@ class ProductVariationController extends Controller
 
         $data = $request->getSafe($request->sanitize());
 
-        $isUpdated = ProductVariationResource::update(Arr::get($data, 'variants', []), $variantId);
+        $productId = Arr::get($data, 'variants.post_id');
+
+        $product = Product::query()->with('detail')->findOrFail($productId);
+
+        $isUpdated = ProductVariationResource::update(
+            Arr::get($data, 'variants', []), 
+            $variantId, 
+            [
+                'detail_id' => Arr::get($product, 'detail.id', null)
+            ]);
 
         if (is_wp_error($isUpdated)) {
             return $isUpdated;

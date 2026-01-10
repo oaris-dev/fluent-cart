@@ -31,6 +31,7 @@
           <ul class="fct-collapsible-list">
             <li class="fct-collapsible-list-item" v-for="(product, productIndex) in availableProducts"
                 :key="productIndex">
+
               <div class="fct-collapsible-list-item-inner">
                 <div class="fct-collapsible-item">
                   <div class="fct-collapsible-content-wrapper">
@@ -91,16 +92,19 @@
                     <li v-for="(productChildren, productChildrenIndex) in product.children" :key="productChildrenIndex">
                       <div class="fct-collapsible-item">
                         <div class="fct-collapsible-content-wrapper">
-                          <div class="content-checkbox">
-                            <el-checkbox v-model="productChildren.checked"
-                                         @change="handleCheckboxChange(productChildrenIndex, productChildren)"
-                                         :disabled="productChildren.disable === true || isAlreadyAdded(productChildren.object_id)"/>
+                          <div class="fct-collapsible-content-group">
+                            <div class="content-checkbox">
+                              <el-checkbox v-model="productChildren.checked"
+                                           @change="handleCheckboxChange(productChildrenIndex, productChildren)"
+                                           :disabled="productChildren.disable === true || isAlreadyAdded(productChildren.object_id)"/>
+                            </div>
+                            <div class="content-img">
+                              <img
+                                  :src="productChildren.featured_media != null ? productChildren.featured_media : appVars.asset_url + 'images/placeholder-small.svg' "
+                                  :alt="productChildren.title"/>
+                            </div>
                           </div>
-                          <div class="content-img">
-                            <img
-                                :src="productChildren.featured_media != null ? productChildren.featured_media : appVars.asset_url + 'images/placeholder-small.svg' "
-                                :alt="productChildren.title"/>
-                          </div>
+
                           <div class="content-title">
                             <div class="title">{{ productChildren.title }}</div>
                             <small v-if="productChildren?.other_info?.payment_type === 'subscription' && productChildren.other_info?.billing_summary !== ''" class="text">
@@ -114,6 +118,12 @@
                             <div class="text already-added" v-if="isAlreadyAdded(productChildren.object_id)">
                               {{ translate('Item already added') }}
                             </div>
+
+                            <BundleProducts
+                                v-if="productChildren.bundle_items.length > 0"
+                                :product="productChildren"
+                                title-key="variation_title"
+                            />
                           </div>
                         </div>
                         <div class="fct-collapsible-stock-wrapper">
@@ -178,9 +188,10 @@ import translate, {translateNumber} from "@/utils/translator/Translator";
 import Notify from "@/utils/Notify";
 import Rest from "@/utils/http/Rest";
 import CurrencyFormatter from "@/utils/support/CurrencyFormatter";
+import BundleProducts from "@/Bits/Components/BundleProducts.vue";
 
 export default {
-  components: {Empty, Pagination, Badge, DynamicIcon},
+  components: {BundleProducts, Empty, Pagination, Badge, DynamicIcon},
   props: ['searchQueryParent', 'orderParent', 'order_id'],
   data() {
     return {
@@ -230,7 +241,7 @@ export default {
     translate,
     translateNumber,
     initializeCollapsedStates() {
-      // Initialize collapsedStates array with false for all items
+      // Initialize a collapsedStates array with false for all items
       this.collapsedStates = Array.from({length: this.availableProducts.length}, () => false);
     },
     handleToggleCollapse(index) {
@@ -420,7 +431,7 @@ export default {
         "search": this.searchQuery,
         'filter_type': 'simple',
         'sort_by': 'ID',
-        'with': ['detail.variants.media', 'categories']
+        'with': ['detail.variants.media','detail.variants.bundleChildren', 'categories']
       };
       Rest.get('products/', {
         ...queryParams

@@ -1,4 +1,4 @@
-<?php if ( ! defined( 'ABSPATH' ) ) exit; ?>
+<?php if (!defined('ABSPATH')) exit; ?>
 <?php
 
 /**
@@ -64,6 +64,14 @@ $router->prefix('products')->withPolicy('ProductPolicy')->group(function (Router
 
     $router->get('/', [ProductController::class, 'index'])->meta([
         'permissions' => 'products/view'
+    ]);
+
+    $router->get('/get-bundle-info/{productId}', [ProductController::class, 'getBundleInfo'])->meta([
+        'permissions' => 'products/view'
+    ]);
+
+    $router->post('/save-bundle-info/{variationId}', [ProductController::class, 'saveBundleInfo'])->meta([
+        'permissions' => 'products/edit'
     ]);
 
     $router->get('/fetch-term', [ProductController::class, 'getProductTermsList'])->meta([
@@ -137,6 +145,16 @@ $router->prefix('products')->withPolicy('ProductPolicy')->group(function (Router
     $router->post('/{postId}/tax-class/remove', [ProductController::class, 'removeTaxClass'])->meta([
         'permissions' => 'products/edit'
     ]);
+
+    $router->post('/{postId}/shipping-class', [ProductController::class, 'updateShippingClass'])->meta([
+        'permissions' => 'products/edit'
+    ]);
+    $router->post('/{postId}/shipping-class/remove', [ProductController::class, 'removeShippingClass'])->meta([
+        'permissions' => 'products/edit'
+    ]);
+
+
+
 
 
     $router->post('/{postId}/sync-downloadable-files', [ProductDownloadablesController::class, 'syncDownloadableFiles'])->meta([
@@ -298,7 +316,7 @@ $router->prefix('settings/')
         $router->get('payment-methods/all', [PaymentMethodController::class, 'index'])->meta([
             'permissions' => 'is_super_admin'
         ]);
-        
+
         $router->post('payment-methods/reorder', [PaymentMethodController::class, 'reorder'])->meta([
             'permissions' => 'is_super_admin'
         ]);
@@ -319,6 +337,14 @@ $router->prefix('settings/')
         ]);
 
         $router->post('payment-methods/activate-addon', [PaymentMethodController::class, 'activateAddon'])->meta([
+            'permissions' => 'is_super_admin'
+        ]);
+
+        $router->post('payment-methods/check-addon-update', [PaymentMethodController::class, 'checkAddonUpdate'])->meta([
+            'permissions' => 'is_super_admin'
+        ]);
+
+        $router->post('payment-methods/update-addon', [PaymentMethodController::class, 'updateAddon'])->meta([
             'permissions' => 'is_super_admin'
         ]);
 
@@ -435,7 +461,7 @@ $router->prefix('orders')->withPolicy('OrderPolicy')->group(function (Router $ro
 
     $router->delete('/{order_id}', [OrderController::class, 'deleteOrder'])->meta([
         'permissions' => 'orders/delete'
-    ])->int('order_id');;
+    ])->int('order_id');
 
     $router->put('/{order}/statuses', [OrderController::class, 'updateStatuses'])->meta([
         'permissions' => 'orders/manage_statuses'

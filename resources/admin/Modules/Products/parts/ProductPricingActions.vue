@@ -100,9 +100,9 @@ const actionMenuHandler = (command) => {
               {{ $t('Duplicate') }}
             </el-dropdown-item>
 
-            <el-dropdown-item :disabled="product.post_status !== 'publish' && variant.id != ''">
+            <el-dropdown-item :disabled="(product.post_status !== 'publish' && product.post_status !== 'private') && variant.id != ''">
               <CopyToClipboard
-                  v-if="product.post_status === 'publish' && variant.id"
+                  v-if="(product.post_status === 'publish' || product.post_status === 'private') && variant.id"
                   class="fct-copy-wrap-inline"
                   :text="appVars?.frontend_url +'=instant_checkout&item_id=' + variant.id + '&quantity=1'"
                   showMode="icon_with_text"

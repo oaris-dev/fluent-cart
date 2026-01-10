@@ -16,6 +16,7 @@
       <slot></slot>
 
       <el-button type="primary" tag="a" href="https://fluentcart.com/discount-deal" target="_blank">
+        <DynamicIcon name="Crown"/>
         {{translate('Upgrade to Pro')}}
       </el-button>
     </div>

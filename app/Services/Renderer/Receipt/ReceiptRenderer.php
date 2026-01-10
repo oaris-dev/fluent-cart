@@ -2,6 +2,7 @@
 
 namespace FluentCart\App\Services\Renderer\Receipt;
 
+use FluentCart\App\Helpers\Helper;
 use FluentCart\App\Models\OrderMeta;
 use FluentCart\Framework\Support\Arr;
 
@@ -22,6 +23,8 @@ class ReceiptRenderer
 
     protected $vat_tax_id = null;
 
+    protected $orderTz;
+
     public function __construct($config = [])
     {
         $this->config = $config;
@@ -31,6 +34,7 @@ class ReceiptRenderer
 
         $this->settings = new StoreSettings();
 
+        $this->orderTz = Arr::get($this->config, 'user_tz', 'UTC');
     }
 
     public function wrapperStart()
@@ -228,13 +232,12 @@ class ReceiptRenderer
         </p>
         <p style="white-space: nowrap; font-weight: bold; color: #000; text-align: right; margin: 0;font-size:14px;">
             <?php
-            echo esc_html(
-                date_i18n(
-                /* translators: Date format for order creation date */
-                    __('M d, Y', 'fluent-cart'),
-                    DateTime::anyTimeToGmt($order->created_at)->getTimestamp()
-                )
-            );
+                $date = wp_date(
+                    get_option('date_format'),
+                    DateTime::anyTimeToGmt($order->created_at)->getTimestamp(),
+                    new \DateTimeZone($this->orderTz)
+                );
+                echo esc_html(Helper::translateNumber($date));
             ?>
         </p>
         <?php
@@ -493,10 +496,10 @@ class ReceiptRenderer
                             <?php endif; ?>
                         </td>
                         <td style="padding: 12px 8px;border: none;border-bottom: 1px solid #dee2e6;text-align: right;">
-                            <?php echo esc_html($item['quantity']); ?>
+                            <?php echo esc_html(Helper::translateNumber($item['quantity'])); ?>
                         </td>
                         <td style="padding: 12px 8px;border: none;border-bottom: 1px solid #dee2e6;text-align: right">
-                            <?php echo esc_html(\FluentCart\Api\CurrencySettings::getFormattedPrice($item['unit_price'])); ?>
+                            <?php echo esc_html(\FluentCart\Api\CurrencySettings::getFormattedPrice($item['unit_price'], null, false, true, true)); ?>
                         </td>
                         <td style="padding: 12px 8px;border: none;border-bottom: 1px solid #dee2e6;text-align: right">
                             <?php echo esc_html($item['formatted_total']); ?>
@@ -637,7 +640,7 @@ class ReceiptRenderer
                 <?php echo esc_html__('Total', 'fluent-cart'); ?>
             </td>
             <td style="padding: 8px 8px 8px 0;width: 100px;text-align: right;border:none;">
-                <?php echo esc_html(\FluentCart\Api\CurrencySettings::getFormattedPrice($order->total_amount - $order->total_refund)); ?>
+                <?php echo esc_html(\FluentCart\Api\CurrencySettings::getFormattedPrice(($order->total_amount - $order->total_refund), null, false, true, true)); ?>
             </td>
         </tr>
         <?php
@@ -652,7 +655,7 @@ class ReceiptRenderer
                 <?php echo esc_html__('Amount Paid', 'fluent-cart'); ?>
             </td>
             <td style="padding: 8px 8px 8px 0;width: 100px;text-align: right;border:none;">
-                <?php echo esc_html(\FluentCart\Api\CurrencySettings::getFormattedPrice($order->total_paid - $order->total_refund)); ?>
+                <?php echo esc_html(\FluentCart\Api\CurrencySettings::getFormattedPrice(($order->total_paid - $order->total_refund), null, false, true, true)); ?>
             </td>
         </tr>
         <?php
@@ -712,17 +715,16 @@ class ReceiptRenderer
                             </td>
                             <td style="padding: 10px;border:none;border-bottom: 1px solid #dee2e6;text-align: center;">
                                 <?php
-                                echo esc_html(
-                                    date_i18n(
-                                    /* translators: Date format for order creation date */
-                                        __('M d, Y', 'fluent-cart'),
-                                        DateTime::anyTimeToGmt($transaction->created_at)->getTimestamp()
-                                    )
-                                );
+                                    $date = wp_date(
+                                        get_option('date_format'),
+                                        DateTime::anyTimeToGmt($transaction->created_at)->getTimestamp(),
+                                        new \DateTimeZone($this->orderTz)
+                                    );
+                                    echo esc_html(Helper::translateNumber($date));
                                 ?>
                             </td>
                             <td style="padding: 10px;border:none;border-bottom: 1px solid #dee2e6;text-align: right;">
-                                <?php echo esc_html(\FluentCart\Api\CurrencySettings::getFormattedPrice($transaction->total)); ?>
+                                <?php echo esc_html(\FluentCart\Api\CurrencySettings::getFormattedPrice($transaction->total, null, false, true, true)); ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>

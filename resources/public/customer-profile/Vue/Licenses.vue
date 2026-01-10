@@ -8,7 +8,7 @@
         <div class="fct-customer-dashboard-license-inner">
             <div>
                 <div class="fct-customer-dashboard-header">
-                    <h4 :id="licensesTitleId" class="fct-customer-dashboard-title">{{ licensesTitle }}</h4>
+                    <h4 :id="licensesTitleId" class="fct-customer-dashboard-title">{{ $t('Licenses') }}</h4>
                 </div>
 
                 <div v-if="loading && !appLoaded" aria-live="polite">
@@ -64,7 +64,6 @@ export default {
             },
             search: '',
             appLoaded: false,
-          licensesTitle: window.fluentcart_customer_profile_vars?.section_titles?.licenses
         };
     },
     methods: {

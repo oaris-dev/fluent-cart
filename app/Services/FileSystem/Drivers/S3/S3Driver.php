@@ -144,7 +144,10 @@ class S3Driver extends BaseDriver
         $credentialScope = "{$dateStamp}/{$this->region}/s3/aws4_request";
 
         // Canonical request components
-        $canonicalUri = '/' . ltrim($filePath, '/');
+        $canonicalUri = '/' . implode('/', array_map(
+            'rawurlencode',
+            explode('/', ltrim($filePath, '/'))
+        ));
 
         $canonicalQueryString = [
             'X-Amz-Algorithm' => 'AWS4-HMAC-SHA256',

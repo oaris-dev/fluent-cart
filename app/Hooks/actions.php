@@ -15,6 +15,7 @@
  */
 
 use FluentCart\App\App;
+use FluentCart\App\Models\Cart;
 use FluentCart\App\Services\FileSystem\Drivers\Local\LocalDriver;
 use FluentCart\Framework\Support\Arr;
 
@@ -24,6 +25,7 @@ use FluentCart\Framework\Support\Arr;
 (new \FluentCart\App\Hooks\Handlers\MenuHandler)->register();
 (new \FluentCart\App\Hooks\Handlers\AdminMenuBarHandler)->register();
 (new \FluentCart\App\Hooks\Handlers\FluentCartHandler)->register();
+(new \FluentCart\App\Hooks\Handlers\RetentionSnapshotHandler)->register();
 
 (new \FluentCart\App\Hooks\Handlers\ShortCodes\ShopAppHandler)->register();
 (new \FluentCart\App\Hooks\Handlers\ExportHandler)->register();
@@ -32,6 +34,9 @@ use FluentCart\Framework\Support\Arr;
 
 // Tax Module Init
 (new \FluentCart\App\Modules\Tax\TaxModule())->register();
+
+// Turnstile Module Init
+(new \FluentCart\App\Modules\Turnstile\TurnstileInit())->register(\FluentCart\App\App::getInstance());
 
 // Register Pro Gateways Promo
 (new \FluentCart\App\Hooks\Handlers\PromoGatewaysHandler())->register();
@@ -50,7 +55,7 @@ use FluentCart\Framework\Support\Arr;
 \FluentCart\App\Hooks\Handlers\BlockEditors\PricingTableBlockEditor::register();
 \FluentCart\App\Hooks\Handlers\BlockEditors\CustomerProfileBlockEditor::register();
 \FluentCart\App\Hooks\Handlers\ShortCodes\CustomerProfileHandler::register();
-\FluentCart\App\Hooks\Handlers\BlockEditors\CheckoutBlockEditor::register();
+\FluentCart\App\Hooks\Handlers\BlockEditors\Checkout\CheckoutBlockEditor::register();
 \FluentCart\App\Hooks\Handlers\ShortCodes\CartShortcode::register();
 \FluentCart\App\Hooks\Handlers\ShortCodes\PricingTableShortCode::register();
 \FluentCart\App\Hooks\Handlers\ShortCodes\Checkout\CheckoutPageHandler::register();
@@ -58,6 +63,8 @@ use FluentCart\Framework\Support\Arr;
 \FluentCart\App\Hooks\Handlers\BlockEditors\ProductGalleryBlockEditor::register();
 \FluentCart\App\Hooks\Handlers\BlockEditors\ProductInfoBlockEditor::register();
 \FluentCart\App\Hooks\Handlers\BlockEditors\BuySectionBlockEditor::register();
+\FluentCart\App\Hooks\Handlers\BlockEditors\PriceRangeBlockEditor::register();
+\FluentCart\App\Hooks\Handlers\BlockEditors\ExcerptBlockEditor::register();
 \FluentCart\App\Hooks\Handlers\ShortCodes\ProductCardShortCode::register();
 
 if (\FluentCart\Api\ModuleSettings::isActive('stock_management')) {
@@ -141,7 +148,6 @@ if (defined('WP_CLI') && WP_CLI) {
 \FluentCart\App\Modules\Subscriptions\SubscriptionModule::register();
 \FluentCart\App\Modules\Shipping\ShippingModule::register();
 
-
 $app->ready(function () use ($app) {
     \FluentCart\App\Models\Connection\ConnectionManager::connect($this->app);
 });
@@ -173,9 +179,10 @@ add_action('after_setup_theme', function () {
     (new \FluentCart\App\Modules\Templating\Bricks\BricksLoader())->register();
 });
 
-add_action('init', function () {
-});
-
 /**
  * Development Hooks
  */
+
+add_action('init', function () {
+
+});

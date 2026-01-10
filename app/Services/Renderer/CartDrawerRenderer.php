@@ -80,8 +80,8 @@ class CartDrawerRenderer
     public function renderCartLoader()
     {
         ?>
-        <div class="fct-cart-drawer-loader" data-fluent-cart-cart-drawer-loader aria-hidden="true">
-            <div class="fct-cart-drawer-loader-spin-wrap"></div>
+        <div class="fct-loader-wrap" data-fluent-cart-cart-drawer-loader aria-hidden="true">
+            <div class="fct-loader-spinner"></div>
         </div>
         <?php
     }

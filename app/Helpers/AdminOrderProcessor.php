@@ -44,6 +44,7 @@ class AdminOrderProcessor
     {
         $this->storeSettings = new StoreSettings();
         $this->checkoutItems = $checkoutItems;
+        $this->checkoutItems = Helper::loadBundleChild($checkoutItems, ['*']);
         $this->args = $args;
 
         $this->prepareData();
@@ -149,6 +150,46 @@ class AdminOrderProcessor
                 Arr::set($item, 'other_info.signup_discount', $childDiscontTotal);
             }
 
+            if (Arr::get($checkoutItem, 'other_info.is_bundle_product', 'no') == 'yes') {
+                $bundleItems = Arr::get($checkoutItem, 'child_variants', []);
+
+                foreach ($bundleItems as $bundleItem) {
+                    $bundleChildItem = [
+                        'payment_type'        => 'bundle',
+                        'post_id'             => Arr::get($bundleItem, 'post_id', 0),
+                        'object_id'           => Arr::get($bundleItem, 'id', 0),
+                        'post_title'          => Arr::get($bundleItem, 'post_title', ''),
+                        'title'               => Arr::get($bundleItem, 'variation_title', ''),
+                        'fulfillment_type'    => Arr::get($bundleItem, 'fulfillment_type', 'digital'),
+                        'quantity'            => $quantity,
+                        'cost'                => 0,
+                        'unit_price'          => 0,
+                        'subtotal'            => 0,
+                        'tax_amount'          => 0,
+                        'shipping_charge'     => 0,
+                        'discount_total'      => 0,
+                        'other_info'          => [
+                            'bundle_parent_product_id' => Arr::get($checkoutItem, 'post_id', 0),
+                            'bundle_parent_variation_id' => Arr::get($checkoutItem, 'object_id', 0)
+                        ],
+                    ];
+
+                    //TODO: if bundleItem price is included on for the bundle, then we need to set the price to the bundleItem price
+                    // if (Arr::get($bundleItem, 'other_info.is_price_included', 'no') == 'yes') {
+                    //     $bundleChildItem['unit_price'] = Arr::get($bundleItem, 'unit_price', 0);
+                    //     $bundleChildItem['subtotal'] = Arr::get($bundleItem, 'subtotal', 0);
+                    //     $bundleChildItem['tax_amount'] = Arr::get($bundleItem, 'tax_amount', 0);
+                    //     $bundleChildItem['shipping_charge'] = Arr::get($bundleItem, 'shipping_charge', 0);
+                    //     $bundleChildItem['discount_total'] = Arr::get($bundleItem, 'discount_total', 0);
+                    // }
+
+                    $item['bundle_items'][] = $bundleChildItem;
+
+                }
+
+            }
+
+
             $formattedItems[] = $item;
             if ($childItem) {
                 $formattedItems[] = $childItem;
@@ -157,7 +198,7 @@ class AdminOrderProcessor
 
         $this->formattedIOrderItems = $formattedItems;
     }
-    
+
     private function prepareOrderData()
     {
         $hasPhysical = array_filter($this->formattedIOrderItems, function ($item) {
@@ -236,15 +277,22 @@ class AdminOrderProcessor
             $orderItem['order_id'] = $this->orderModel->id;
             $orderItem['line_total'] = $orderItem['subtotal'] - $orderItem['discount_total'];
             $additionalItems = [];
+            $bundleItems = [];
             if ($orderItem['payment_type'] == 'subscription') {
                 // this is a subscription type. We may have additional_items
                 $additionalItems = Arr::get($orderItem, 'additional_items', []);
                 unset($orderItem['additional_items']);
             }
 
+            if (Arr::get($orderItem, 'other_info.is_bundle_product', 'no') == 'yes') {
+                $bundleItems = Arr::get($orderItem, 'bundle_items', []);
+                unset($orderItem['bundle_items']);
+            }
+
             $createdItem = OrderItem::query()->create($orderItem);
 
             if ($additionalItems) {
+                $additionalItemIds = [];
                 foreach ($additionalItems as $additionalItem) {
                     $additionalItem['order_id'] = $this->orderModel->id;
                     $additionalItem['line_total'] = $additionalItem['subtotal'] - $additionalItem['discount_total'];
@@ -253,6 +301,38 @@ class AdminOrderProcessor
                     $additionalItem['line_meta'] = $mata;
                     OrderItem::query()->create($additionalItem);
                 }
+
+                $createdItem->fill([
+                    'line_meta' => array_merge(
+                        $createdItem->line_meta,
+                        [
+                            'additional_item_ids' => $additionalItemIds
+                        ]
+                    )
+                ])->save();
+            }
+
+            if ($bundleItems) {
+                $bundleItemIds = [];
+                foreach ($bundleItems as $bundleItem) {
+                    $bundleItem['order_id'] = $this->orderModel->id;
+                    $bundleItem['line_total'] = Arr::get($bundleItem, 'subtotal', 0) - Arr::get($bundleItem, 'discount_total', 0);
+                    $bundleItem['payment_type'] = 'bundle';
+                    $meta = Arr::get($bundleItem, 'line_meta', []);
+                    $meta['bundle_parent_item_id'] = $createdItem->id;
+                    $bundleItem['line_meta'] = $meta;
+                    $bundleItem = OrderItem::query()->create($bundleItem);
+                    $bundleItemIds[] = $bundleItem->id;
+                }
+
+                $createdItem->fill([
+                    'line_meta' => array_merge(
+                        $createdItem->line_meta,
+                        [
+                            'bundle_item_ids' => $bundleItemIds
+                        ]
+                    )
+                ])->save();
             }
         }
 

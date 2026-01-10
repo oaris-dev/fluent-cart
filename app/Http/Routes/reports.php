@@ -13,6 +13,7 @@ use FluentCart\App\Http\Controllers\Reports\RevenueReportController;
 use FluentCart\App\Http\Controllers\Reports\CustomerReportController;
 use FluentCart\App\Http\Controllers\Reports\OverviewReportController;
 use FluentCart\App\Http\Controllers\Reports\SubscriptionReportController;
+use FluentCart\App\Http\Controllers\Reports\RetentionSnapshotController;
 
 /**
  * @var $router Router
@@ -83,6 +84,10 @@ $router->prefix('reports')
         $router->get('daily-signups', [SubscriptionReportController::class, 'getDailySignups']); //d
         $router->get('retention-chart', [SubscriptionReportController::class, 'getRetentionChart']); //d
         $router->get('future-renewals', [SubscriptionReportController::class, 'getFutureRenewals']); //d
+        $router->get('subscription-retention', [SubscriptionReportController::class, 'getRetentionData']);
+        $router->get('subscription-cohorts', [SubscriptionReportController::class, 'getCohortData']);
+        $router->post('retention-snapshots/generate', [RetentionSnapshotController::class, 'generate']);
+        $router->get('retention-snapshots/status', [RetentionSnapshotController::class, 'checkStatus']);
 
         //Product (y)
         $router->get('product-report', [ProductReportController::class, 'getProductReport']); //d

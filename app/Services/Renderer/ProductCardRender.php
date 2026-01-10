@@ -129,6 +129,11 @@ class ProductCardRender
                 /* translators: %s: product title */
                         __('Placeholder image for %s', 'fluent-cart'), $this->product->post_title)
                 : $this->product->post_title;
+
+        do_action('fluent_cart/product/group/before_image_block', [
+                'product'       => $this->product,
+                'scope'         => 'product_card'
+        ]);
         ?>
         <a class="fct-product-card-image-wrap"
            href="<?php echo esc_url($this->viewUrl); ?>"
@@ -145,6 +150,11 @@ class ProductCardRender
                  height="300"/>
         </a>
         <?php
+
+        do_action('fluent_cart/product/group/after_image_block', [
+                'product'       => $this->product,
+                'scope'         => 'product_card'
+        ]);
     }
 
     public function renderPrices($wrapper_attributes = '')
@@ -261,7 +271,7 @@ class ProductCardRender
                 $buttonHref = $firstVariant->getPurchaseUrl();
                 $isInstantCheckout = true;
             } else {
-                $buttonText = __('Add to Cart', 'fluent-cart');
+                $buttonText = __('Add To Cart', 'fluent-cart');
                 $ariaLabel = sprintf(
                 /* translators: %s: product title */
                         __('Add %s to cart', 'fluent-cart'), $this->product->post_title);

@@ -203,7 +203,7 @@ const updateChart = () => {
         min: 0,
         max: "dataMax",
         splitLine: {
-          show: true,
+          show: false,
           lineStyle: {
             color: isDarkTheme.value ? "#253241" : "#D6DAE1",
             type: "dashed",

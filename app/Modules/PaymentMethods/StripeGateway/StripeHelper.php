@@ -2,11 +2,15 @@
 
 namespace FluentCart\App\Modules\PaymentMethods\StripeGateway;
 
+use FluentCart\App\Helpers\CurrenciesHelper;
 use FluentCart\App\Helpers\Status;
 use FluentCart\App\Models\Customer;
 use FluentCart\App\Models\OrderTransaction;
+use FluentCart\App\Models\Order;
 use FluentCart\App\Modules\PaymentMethods\StripeGateway\API\API;
 use FluentCart\App\Services\Payments\PaymentHelper;
+use FluentCart\Api\StoreSettings;
+use FluentCart\App\App;
 use FluentCart\Framework\Support\Arr;
 
 class StripeHelper
@@ -123,9 +127,16 @@ class StripeHelper
             return new \WP_Error('invalid_refund', __('Invalid transaction ID for refund.', 'fluent-cart'));
         }
 
+        $refundAmount = (int)$amount;
+        $refundCurrency = $transaction->currency;
+
+        if ($refundCurrency && CurrenciesHelper::isZeroDecimal($refundCurrency)) {
+            $refundAmount = (int)($refundAmount / 100);
+        }
+
         $refundData = [
             'payment_intent' => $intentId,
-            'amount'         => $amount,
+            'amount'         => $refundAmount,
         ];
 
         $reason = Arr::get($args, 'reason', '');
@@ -197,6 +208,46 @@ class StripeHelper
 
         PaymentHelper::updateTransactionRefundedTotal($parentTransaction, $createdRefund->total);
         return $createdRefund;
+    }
+
+        /*
+     * To validate by session, id
+     *
+      */
+      public static function validateBySession($id)
+      {
+          $apiKey = (new StripeSettingsBase())->getApiKey();
+  
+          $session = (new API())->makeRequest('checkout/sessions/' . $id, [], $apiKey, 'GET');
+  
+          if (!$session || is_wp_error($session)) {
+              return null;
+          }
+  
+  
+          $order = Order::query()
+              ->where('uuid', Arr::get($session, 'client_reference_id'))
+              ->first();
+          
+          if (!$order) {
+              return null;
+          }
+  
+          return $order;
+  
+      }
+
+    public static function getCancelUrl(): string
+    {
+        $checkoutPage = (new StoreSettings())->getCheckoutPage();
+        // get cart hash from url
+        $cartHash = App::request()->get('fct_cart_hash', '');
+        if ($cartHash) {
+            return add_query_arg([
+                'fct_cart_hash' => $cartHash
+            ], $checkoutPage);
+        }
+        return $checkoutPage;
     }
 
 }

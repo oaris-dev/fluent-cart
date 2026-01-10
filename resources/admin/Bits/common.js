@@ -537,3 +537,27 @@ export const isSummaryLastItem = (data, index) => {
         return index === totalItems - 1;
     }
 };
+
+export const formatOrderItems = (items) => {
+    const map = {};
+    const result = [];
+
+    // create a map of all items
+    items.forEach(item => {
+        item.bundle_items = [];
+        map[item.id] = item;
+    });
+
+    // attach bundle items to parent
+    items.forEach(item => {
+        const parentId = item?.line_meta?.bundle_parent_item_id;
+
+        if (parentId && map[parentId]) {
+            map[parentId].bundle_items.push(item);
+        } else {
+            result.push(item); // parent / normal item
+        }
+    });
+
+    return result;
+};

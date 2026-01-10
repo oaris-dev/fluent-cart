@@ -193,10 +193,6 @@
             }
         }
         .fct-shop-app-preview-wrap {
-            /*grid-template-columns: repeat(5,minmax(0,1fr));*/
-            /*display: grid;*/
-            /*--grid-columns: 3;*/
-            /*--col-span: 4;*/
             grid-column: span 4 / span 4;
             .fct-product-block-editor-product-card {
                 .fct-product-block-editor-product-card-image {
@@ -206,6 +202,9 @@
                         @apply w-full object-cover;
                     }
                 }
+            }
+            &.not-enable-filter {
+                grid-column: span 5 / span 5;
             }
         }
     }
@@ -303,6 +302,19 @@
     }
 }
 
+.fluent-cart-shop-no-result-wrap,
+.fluent-cart-product-loader,
+.fct-product-paginator-info,
+.fct-product-paginator-number-wrap{
+    @apply hidden;
+    &.show {
+        @apply block;
+    }
+}
+
+.fct-shop-app-preview-wrap.hide {
+    @apply hidden;
+}
 
 .fluent-cart-product-spinner {
     @apply w-[50px] h-[50px] mx-auto relative;

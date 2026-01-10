@@ -21,6 +21,8 @@
     width: 100%;
     max-width: 300px;
     margin-bottom: 35px;
+    margin-left: auto;
+    margin-right: auto;
 }
 .fct-not-found-title{
     font-weight: 600;

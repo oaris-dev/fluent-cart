@@ -56,7 +56,7 @@ class PaymentHelper
     {
         $paymentMethod = Arr::get($orderData, 'others._fct_pay_method');
         $isZeroPayment = $cartCheckoutHelper->getItemsAmountTotal(false, false) + $extraCharge <= 0;
-        if ($isZeroPayment && $cartCheckoutHelper->hasSubscription() !== 'yes') {
+        if ($isZeroPayment && $cartCheckoutHelper->getCart()->getEstimatedRecurringTotal() <= 0) {
             $paymentMethod = apply_filters('fluent_cart/default_payment_method_for_zero_payment', 'offline_payment', []);
         }
 

@@ -14,8 +14,8 @@
 
           <el-table-column :label="translate('Current Revenue')">
             <template #default="scope">
-              <div class="inline-flex">
-                {{  formatCurrency(scope.row.net_revenue) }}
+              <div class="inline-flex" v-html="formatCurrency(scope.row.net_revenue)">
+
               </div>
             </template>
           </el-table-column>
@@ -23,8 +23,8 @@
           <template v-if="hasComparison">
             <el-table-column :label="translate('Compare Revenue')">
               <template #default="scope">
-                <div class="inline-flex">
-                  {{ formatCurrency(scope.row.previous_revenue) }}
+                <div class="inline-flex" v-html="formatCurrency(scope.row.previous_revenue)">
+
                 </div>
               </template>
             </el-table-column>
@@ -96,12 +96,16 @@ export default {
 
         if (this.hasComparison) {
           const previousPeriod = this.previousMetrics[index];
-          const previousRevenue = parseFloat(previousPeriod.net_revenue);
-          const percentChange = previousRevenue ? (((currentRevenue - previousRevenue) / previousRevenue) * 100).toFixed(2) : 'n/a';
+          if(previousPeriod){
+            const previousRevenue = parseFloat(previousPeriod.net_revenue);
+            const percentChange = previousRevenue ? (((currentRevenue - previousRevenue) / previousRevenue) * 100).toFixed(2) : 'n/a';
 
-          item.previous_revenue = previousRevenue;
-          item.percent_change = percentChange;
-          item.group = `${this.formatDate(period.group)} vs ${this.formatDate(previousPeriod.group)}`
+            item.previous_revenue = previousRevenue;
+            item.percent_change = percentChange;
+            item.group = `${this.formatDate(period.group)} vs ${this.formatDate(previousPeriod.group)}`
+          }
+
+
         }
         
         comparisonData.push(item);

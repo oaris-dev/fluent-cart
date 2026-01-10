@@ -66,6 +66,9 @@
                     }
                 }
             }
+          .file-name {
+            white-space: pre-wrap
+          }
         }
         .el-table__body-wrapper {
             @apply max-h-[284px] overflow-x-hidden overflow-y-auto;

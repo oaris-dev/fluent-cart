@@ -143,9 +143,13 @@ class ProductVariationResource extends BaseResourceApi
             'payment_type'     => $hasSubscription ? 'subscription' : 'onetime',
         ];
 
-        $isCreated = static::getQuery()->create($variantData);
-
+        $isCreated = static::getQuery()->create($variantData); 
         if ($isCreated) {
+            ProductDetailResource::update(
+                [], 
+                Arr::get($variant, 'detail_id'), 
+                ['action' => 'variant_modified']
+            );
             $media = Arr::get($variant, 'media', []);
             if (!empty($media)) {
                 static::setImage($media, $isCreated->id);
@@ -211,10 +215,16 @@ class ProductVariationResource extends BaseResourceApi
         $variantId = Arr::get($variant, 'id');
         $otherInfo = Arr::get($variant, 'other_info');
 
+
+        // Get existing variation to preserve other_info values
+        $existingVariation = static::getQuery()->find($variantId);
+        $existingOtherInfo = $existingVariation->other_info ?? [];
+
         if (Arr::get($otherInfo, 'payment_type') == 'onetime') {
             $otherInfo = Arr::only($otherInfo, [
                 'payment_type',
                 'description',
+                'bundle_child_ids'
             ]);
         }
         if (Arr::get($otherInfo, 'payment_type') == 'subscription') {
@@ -228,6 +238,9 @@ class ProductVariationResource extends BaseResourceApi
                 Arr::set($otherInfo, 'signup_fee', $signupFee);
             }
         }
+
+        $otherInfo['is_bundle_product'] = Arr::get($existingOtherInfo, 'is_bundle_product', 'no');
+        $otherInfo['bundle_child_ids'] = Arr::get($existingOtherInfo, 'bundle_child_ids', []);
 
         $isDownloadable = Arr::get($variant, 'downloadable', true);
         $itemPrice = Arr::get($variant, 'item_price', 1);
@@ -267,6 +280,11 @@ class ProductVariationResource extends BaseResourceApi
         $isUpdated = static::getQuery()->find($variantId);
         $isUpdated->update($variantData);
         if ($isUpdated) {
+            ProductDetailResource::update(
+                [], 
+                Arr::get($params, 'detail_id'), 
+                ['action' => 'variant_modified']
+            );
             $media = Arr::get($variant, 'media', []);
             if (!empty($media)) {
                 static::setImage($media, $variantId);

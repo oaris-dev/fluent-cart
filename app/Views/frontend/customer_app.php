@@ -15,7 +15,8 @@
          aria-label="<?php esc_attr_e('Customer profile', 'fluent-cart'); ?>"
     >
         <div id="fct-customer-loader"
-             style="position: absolute; left: 0;top: 0;width: 100%;height: 100%;z-index: 4;background: #ffffff;display: flex;gap: 16px;" aria-hidden="true">
+             style="position: absolute; left: 0;top: 0;width: 100%;height: 100%;z-index: 4;background: #ffffff;display: flex;gap: 16px;"
+             aria-hidden="true">
             <div class="fct-customer-loader-left" style="max-width: 272px;width: 100%;flex: none;">
                 <div class="el-skeleton is-animated">
                     <div class="el-skeleton__item el-skeleton__p is-first"></div>
@@ -103,11 +104,18 @@
             }
         });
 
-        if(navCompactToggle){
+        if (navCompactToggle) {
             navCompactToggle.addEventListener('click', function (e) {
                 e.stopPropagation(); // prevent click from bubbling to document
                 this.classList.toggle('is-active');
                 navCompactWrap.classList.toggle('is-compact');
+
+                if (!this.classList.contains('is-active')) {
+                    navCompactWrap.classList.add('expanding');
+                    setTimeout(function () {
+                        navCompactWrap.classList.remove('expanding');
+                    }, 200);
+                }
             });
         }
     });

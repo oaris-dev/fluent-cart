@@ -3,9 +3,9 @@ import {useFormModel} from "@/utils/model/form/FormModel";
 import {inject, onMounted} from "vue";
 import VueForm from "@/Bits/Components/Form/VueForm.vue";
 
-
-
 let form = useFormModel();
+
+const emit = defineEmits(["change"]);
 
 const props = defineProps(["schema", "values", 'submit_button_text', 'form_name']);
 
@@ -19,21 +19,23 @@ const getState = () => {
   return data;
 }
 
+const resetForm = () => {
+  form.reset();
+}
+
 const triggerChange = inject('triggerChange')
 
 onMounted(() => {
 
   form.setSchema(props.schema).setDefaults(props.values).initForm();
 
-  if (typeof triggerChange === 'function') {
     form.onDataChanged((data) => {
-      triggerChange()
+      triggerChange?.()
+      emit("change");
     })
-  }
-
 })
 
-defineExpose({getState})
+defineExpose({getState, resetForm})
 </script>
 
 <template>

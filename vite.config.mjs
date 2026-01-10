@@ -26,6 +26,7 @@ const inputs = [
     "resources/admin/BlockEditor/CustomerProfile/CustomerProfileBlockEditor.jsx",
     "resources/admin/BlockEditor/CustomerProfile/style/customer-profile-block-editor.scss",
     "resources/admin/BlockEditor/Checkout/CheckoutBlockEditor.jsx",
+    "resources/admin/BlockEditor/Checkout/InnerBlocks/InnerBlocks.jsx",
     "resources/admin/BlockEditor/Checkout/style/checkout-block-editor.scss",
 
     "resources/admin/BlockEditor/ProductCard/ProductCardBlockEditor.jsx",
@@ -40,6 +41,10 @@ const inputs = [
 
     'resources/admin/BlockEditor/BuySection/BuySectionBlockEditor.jsx',
     'resources/admin/BlockEditor/BuySection/style/buy-section-block-editor.scss',
+    'resources/admin/BlockEditor/Excerpt/ExcerptBlockEditor.jsx',
+    'resources/admin/BlockEditor/Excerpt/style/excerpt-block-editor.scss',
+    'resources/admin/BlockEditor/PriceRange/PriceRangeBlockEditor.jsx',
+    'resources/admin/BlockEditor/PriceRange/style/price-range-block-editor.scss',
     'resources/admin/BlockEditor/ProductInfo/ProductInfoBlockEditor.jsx',
     'resources/admin/BlockEditor/ProductInfo/style/product-info-block-editor.scss',
     'resources/admin/BlockEditor/ProductGallery/ProductGalleryBlockEditor.jsx',
@@ -94,6 +99,7 @@ const inputs = [
     "resources/public/single-product/similar-product.scss",
     "resources/public/payment-methods/paypal-checkout.js",
     "resources/public/payment-methods/stripe-checkout.js",
+    "resources/public/payment-methods/stripe-hosted-checkout.js",
     "resources/public/payment-methods/cod-checkout.js",
     "resources/public/receipt/style/thank_you.scss",
     // Order Bump

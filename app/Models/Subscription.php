@@ -374,11 +374,22 @@ class Subscription extends Model
     public function canSwitchPaymentMethod()
     {
         $gateway = App::gateway($this->current_payment_method);
-        if ($gateway && !in_array('switch_payment_method', $gateway->supportedFeatures)) {
+
+        if (!$gateway || empty(Arr::get($gateway->supportedFeatures, 'switch_payment_method'))) {
             return false;
         }
 
         return in_array($this->status, [Status::SUBSCRIPTION_ACTIVE, Status::SUBSCRIPTION_TRIALING, Status::SUBSCRIPTION_PAUSED]);
+    }
+
+    public function switchablePaymentMethods()
+    {
+        $gateway = App::gateway($this->current_payment_method);
+        if ($gateway && empty($gateway->supportedFeatures['switch_payment_method'])) {
+            return [];
+        }
+
+        return Arr::get($gateway->supportedFeatures, 'switch_payment_method.supported_gateways', []);
     }
 
     public function canReactive()

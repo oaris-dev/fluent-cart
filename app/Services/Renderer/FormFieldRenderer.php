@@ -128,6 +128,7 @@ class FormFieldRenderer
                     </div>
                 </div>
             <?php endif; ?>
+            <div class="fct_form_error fct_error_<?php echo esc_attr($sectionId); ?>"></div>
             <?php
             if (!empty($sectionData['after_callback'])) {
                 call_user_func($sectionData['after_callback'], $sectionData);

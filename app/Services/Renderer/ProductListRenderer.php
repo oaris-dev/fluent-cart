@@ -29,6 +29,12 @@ class ProductListRenderer
 
     public function render()
     {
+        if (
+            (is_array($this->products) && empty($this->products)) ||
+            ($this->products instanceof \FluentCart\Framework\Pagination\CursorPaginator && $this->products->count() === 0)
+        ) {
+            return '';
+        }
         ?>
         <section class="fct-product-list-container <?php echo esc_attr($this->wrapperClass); ?>" aria-label="<?php echo esc_attr($this->listTitle ?: __('Product List', 'fluent-cart')); ?>">
             <?php $this->renderTitle(); ?>

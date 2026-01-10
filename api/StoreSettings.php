@@ -1248,7 +1248,7 @@ class StoreSettings implements ArrayableInterface
      */
     public function getCartButtonText(): string
     {
-        return esc_html(Arr::get($this->storeSettings, 'cart_button_text', __('Add to cart', 'fluent-cart')));
+        return esc_html(Arr::get($this->storeSettings, 'cart_button_text', __('Add To Cart', 'fluent-cart')));
     }
 
     public function toArray(): array

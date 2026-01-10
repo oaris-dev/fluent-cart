@@ -167,12 +167,17 @@ onMounted(() => {
               <template #default="scope">
                 <div class="fct-all-notification-actions flex items-center gap-3">
                   <el-switch
+                      v-if="scope.row?.manage_toggle !== 'no'"
                       autocomplete="rutjfkde"
                       @change="value => enableNotification(value, scope.row.name)"
                       v-model="scope.row.settings.active"
                       active-value="yes"
                       inactive-value="no"
                   ></el-switch>
+                  <!-- Show a text indicator for order_placed notifications -->
+                  <span v-if="scope.row?.manage_toggle === 'no'" class="text-gray-500 text-sm">
+                    {{ translate('Auto-enabled for offline payments') }}
+                  </span>
                   <div class="fct-btn-group sm">
                     <el-tooltip effect="dark" :content="translate('Edit')" placement="top"
                                 popper-class="fct-tooltip">

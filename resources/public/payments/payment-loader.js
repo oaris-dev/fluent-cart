@@ -36,6 +36,9 @@ export default class PaymentLoader {
             const firstPaymentMethod = this.#form.querySelector('input[name="_fct_pay_method"]');
             if (firstPaymentMethod) {
                 this.payMethod = firstPaymentMethod.value;
+            } else {
+                this.payMethod = 'offline_payment';
+                window['is_offline_payment_ready'] = true;
             }
         }
 
@@ -187,7 +190,6 @@ export default class PaymentLoader {
                 this.#isZeroPayment = true;
             }
             this.#checkoutTotal = checkoutSummary?.total;
-            this.togglePaymentMethods(checkoutSummary);
         }
     }
 
@@ -196,57 +198,6 @@ export default class PaymentLoader {
         txt.innerHTML = html;
         return txt.value;
     };
-
-    togglePaymentMethods(checkoutSummary, forceZeroPayment = false) {
-        let total = 0;
-
-        if (forceZeroPayment) {
-            total = 0;
-            this.#hasSubscriptions = false;
-        } else {
-            total = checkoutSummary?.total;
-            this.#hasSubscriptions = checkoutSummary?.has_subscriptions ? true : false;
-        }
-
-        if (!this.#hasSubscriptions && total <= 0) {
-            // check if any payment method is available, if not then return
-            const paymentMethods = this.#form.querySelectorAll('input[name="_fct_pay_method"]');
-            if (paymentMethods.length === 0) {
-                return;
-            }
-            const paymentMethodsWrapper = this.#form.querySelector('[data-fluent-cart-checkout-payment-methods]');
-            paymentMethodsWrapper.style.display = 'none';
-
-            this.payMethod = 'offline_payment';
-            this.#form.querySelector('input[name="_fct_pay_method"]').checked = false;
-
-            this.#form.querySelectorAll('input[name="_fct_pay_method"]').forEach(input => {
-                input.checked = false;
-                input.removeAttribute('checked');
-            });
-
-            window['is_offline_payment_ready'] = true;
-            this.#checkoutUiService.showCheckoutButton();
-            this.#checkoutUiService.enableCheckoutButton();
-        } else {
-            const paymentMethodsWrapper = this.#form.querySelector('[data-fluent-cart-checkout-payment-methods]');
-            paymentMethodsWrapper.style.display = 'block';
-
-            let selectedPaymentMethod = this.#form.querySelector('input[name="_fct_pay_method"]:checked')?.value;
-            this.payMethod = selectedPaymentMethod;
-            if (!selectedPaymentMethod) {
-                // Always select and load the first payment method when no specific method is selected
-                const firstPaymentMethod = this.#form.querySelector('input[name="_fct_pay_method"]');
-                if (firstPaymentMethod) {
-                    firstPaymentMethod.checked = true;
-                    this.payMethod = firstPaymentMethod.value;
-                    this.load();
-                }
-            } else {
-                this.load(selectedPaymentMethod);
-            }
-        }
-    }
 
     disableCheckoutButton(message) {
         this.#form.classList.add('fluent-cart-checkout-order-processing');
@@ -331,9 +282,6 @@ export default class PaymentLoader {
         }
 
         this.payMethod = paymentMethod;
-        if (this.#isZeroPayment && !this.#hasSubscriptions) {
-            return this.togglePaymentMethods({}, true);
-        }
 
         window['is_' + paymentMethod + '_ready'] = true;
 

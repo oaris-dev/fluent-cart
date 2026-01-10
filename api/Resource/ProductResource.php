@@ -260,7 +260,7 @@ class ProductResource extends BaseResourceApi
 
         $defaultVariationId = Arr::get($detail, 'default_variation_id');
         $detail['default_variation_id'] = $defaultVariationId;
-        ProductDetailResource::update($detail, Arr::get($detail, 'id'), ['triggerable_action' => 'all_column']);
+        ProductDetailResource::update($detail, Arr::get($detail, 'id'), ['action' => 'variant_modified']);
 
         (new StockChanged([$postId]))->dispatch();
 

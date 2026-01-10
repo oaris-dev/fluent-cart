@@ -59,7 +59,26 @@ class PaymentInstance
 
     public function getExtraAddonAmount()
     {
-        return 0;
+        if (empty($this->subscription)) {
+            return 0;
+        }
+
+        $extraItems = $this->order->order_items->filter(function ($item) {
+            return $item->payment_type !== 'subscription' && $item->payment_type !== 'signup_fee';
+        });
+
+        $extraAmount = 0;
+        foreach ($extraItems as $item) {
+            $extraAmount += $item->line_total;
+        }
+
+        // shipping charge, in case addons are physical products
+        $shippingCharge = $this->order->shipping_total;
+        if ($shippingCharge) {
+            $extraAmount += $shippingCharge;
+        }
+
+        return $extraAmount;
     }
 
 

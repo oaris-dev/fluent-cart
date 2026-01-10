@@ -20,6 +20,8 @@ class ProductTable extends Table {
             //simple: translate("Simple"),
             //simple_variations: translate("Simple Variations"),
             subscribable: translate("Subscribable"),
+            bundle: translate("Bundle"),
+            non_bundle: translate("Non Bundle"),
         }
     }
 

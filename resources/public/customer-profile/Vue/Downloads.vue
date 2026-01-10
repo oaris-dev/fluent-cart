@@ -6,7 +6,7 @@
         :aria-busy="loading || !appLoaded"
     >
         <div class="fct-customer-dashboard-header">
-            <h4 :id="downloadsTitleId" class="fct-customer-dashboard-title">{{ downloadsTitle }}</h4>
+            <h4 :id="downloadsTitleId" class="fct-customer-dashboard-title">{{ $t('Downloads') }}</h4>
             <div class="actions" v-if="isLimited">
                 <router-link class="is-link" :to="{ name: 'downloads' }" :aria-label="$t('View all downloads')">
                     {{ $t('View all') }}
@@ -75,7 +75,6 @@ export default {
                 per_page: this.per_page,
                 total: 0
             },
-          downloadsTitle: window.fluentcart_customer_profile_vars?.section_titles?.downloads
         };
     },
     methods: {

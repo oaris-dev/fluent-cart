@@ -25,9 +25,9 @@
               </span>
             </h3>
             <span class="fct-dashboard-stat-widget__value inner-value">
-              <template v-if="stat.has_currency">
-                {{ CurrencyFormatter.scaled(stat.current_count) }}
-              </template>
+              <span v-if="stat.has_currency" v-html="CurrencyFormatter.scaled(stat.current_count)">
+
+              </span>
               <template v-else>
                 {{ translateNumber(formatNumber(stat.current_count)) || 0 }}
               </template>

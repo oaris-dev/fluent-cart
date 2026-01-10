@@ -180,7 +180,8 @@ class SwitchCustomerMethod
             'metadata'               => [
                 'fct_ref_id' => $order->uuid,
                 'email'      => $order->customer->email,
-                'name'       => $order->full_name
+                'name'       => $order->full_name,
+                'order_reference' => 'fct_order_id_' . $order->id,
             ]
         ];
 

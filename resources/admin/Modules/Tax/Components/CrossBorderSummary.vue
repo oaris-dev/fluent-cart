@@ -15,7 +15,7 @@
                 </span>
 
                 <span v-if="summary?.vat" class="summary-box-vat">
-                    - VAT {{ summary?.vat }}
+                    - {{ $t('VAT') }} {{ summary?.vat }}
                 </span>
             </div>
 

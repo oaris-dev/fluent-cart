@@ -1,11 +1,7 @@
 <template>
     <UserCan :permission="'reports/view'">
         <div class="fct-refund-report-page">
-            <div class="page-heading-wrap inline-flex gap-1 items-center">
-                <h1 class="page-title">
-                    {{ translate('Subscription Future Revenue') }}
-                </h1>
-            </div>
+          <PageHeading :title="translate('Subscription Future Revenue')"></PageHeading>
         </div>
 
 
@@ -26,9 +22,7 @@
                 <div class="summary-item-inner">
                     <div class="value">
                         <div class="inner-value">
-                            <span>
-                                {{ summary.value }}
-                            </span>
+                            <span v-html="summary.value"/>
                         </div>
                     </div>
 
@@ -134,6 +128,7 @@ import {
     getEmphasisColor,
     getXAxisConfig,
 } from '../Utils/decorator';
+import PageHeading from "@/Bits/Components/Layout/PageHeading.vue";
 
 /**
  * ----------------------------------------------------------------------------
@@ -315,7 +310,7 @@ const updateChart = () => {
                 axisLabel: {
                     color: isDarkTheme.value ? "#ffffff" : "#000000",
                     fontSize: 12,
-                    formatter: (value) => `${CurrencyFormatter.formatScaled(value)}`,
+                    formatter: (value) => `${CurrencyFormatter.formatScaledChart(value)}`,
                 },
                 splitLine: {
                     show: true,

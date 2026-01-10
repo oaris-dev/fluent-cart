@@ -12,11 +12,14 @@ import DataWatcher from "./DataWatcher";
 import CheckoutUIService from "./CheckoutUIService";
 import TaxService from "./TaxService";
 
+import TurnstileHandler from './TurnstileHandler';
+
 class FluentCartCheckoutHandler {
     static #instance = null;
     #paymentLoader = null;
     #cartData;
     #appliedCoupons = [];
+    #turnstileHandler = null;
 
     #timezone = null;
     #baseUrl;
@@ -29,6 +32,35 @@ class FluentCartCheckoutHandler {
     #hasSubscriptions = false;
     checkoutUiService;
     translate = window.fluentcart.$t;
+    #errorConfig = {
+        '.fct_error_billing_personal_information_section': [
+            'billing_full_name',
+            'billing_email',
+            'billing_company_name'
+        ],
+        '.fct_error_billing_address_section_section': [
+            'billing_address_1',
+            'billing_address_2',
+            'billing_city',
+            'billing_postcode',
+            'billing_country',
+            'billing_state',
+            'billing_phone'
+        ],
+        '.fct_error_shipping_address_section_section': [
+            'shipping_full_name',
+            'shipping_address_1',
+            'shipping_address_2',
+            'shipping_city',
+            'shipping_postcode',
+            'shipping_country',
+            'shipping_state',
+            'shipping_phone'
+        ],
+        '.fct_error_agree_terms_section': [
+            'agree_terms'
+        ]
+    };
 
     get #fluentCartCart() {
         return window.fluentCartCart;
@@ -71,6 +103,8 @@ class FluentCartCheckoutHandler {
             checkoutHandler: this
         });
 
+        // Initialize Turnstile Handler
+        this.#turnstileHandler = new TurnstileHandler(this);
 
         new AddressField(this).init();
         new CouponService(this.form).init();
@@ -209,6 +243,7 @@ class FluentCartCheckoutHandler {
 
     init() {
 
+        this.bindErrorCleanupListeners();
 
         this.form.addEventListener("submit", (e) => {
             e.preventDefault();
@@ -305,14 +340,13 @@ class FluentCartCheckoutHandler {
 
         this.#paymentLoader.disableCheckoutButton(this.translate("Processing Order..."));
 
-        const loaderElement = '<div class="loader"></div>';
+        const loaderElement = '<div class="fct-loader-spinner"></div>';
         let processingDiv = document.querySelector('.fct-order-processing');
         if (!processingDiv) {
             processingDiv = this.createProcessingDiv(loaderElement);
             document.body.appendChild(processingDiv);
         } else {
-            processingDiv.classList.remove('hidden');
-            processingDiv.style.display = '';
+            processingDiv.classList.remove('fct-loader-hidden');
         }
 
         this.removeValidationErrors();
@@ -338,9 +372,18 @@ class FluentCartCheckoutHandler {
         try {
             const formData = this.prepareFormData();
 
+            if (!await this.#turnstileHandler.handleCheckoutSecurityVerification(formData)) {
+                return false;
+            }
+
             this.removeValidationErrors();
             const response = await this.submitCheckoutForm(formData);
             const data = await response.json();
+
+            // Reset Turnstile widget for next verification
+            if (this.#turnstileHandler) {
+                this.#turnstileHandler.reset();
+            }
 
             if (data.status === 'success') {
                 window.fluentCartUtmManager?.clear();
@@ -350,6 +393,7 @@ class FluentCartCheckoutHandler {
                 if (data?.errors && typeof data?.errors === 'object') {
                     let message = '';
                     for (const fieldKey in data.errors) {
+                        this.handleErrorMessage(data.errors, fieldKey);
                         const errorData = data.errors[fieldKey];
                         const firstError = Object.values(errorData)[0];
                         message += firstError + ' \n';
@@ -374,6 +418,110 @@ class FluentCartCheckoutHandler {
             this.cleanupAfterProcessing();
             return false;
         }
+    }
+
+    handleErrorMessage(errors, fieldKey) {
+
+        const formSections = document.querySelectorAll('.fct_checkout_form_section');
+
+        formSections.forEach(section => {
+            // Loop through each error configuration
+            Object.entries(this.#errorConfig).forEach(([selector, fieldKeys]) => {
+                const errorElement = section.querySelector(selector);
+
+                if (!errorElement) return;
+
+                const messages = this.getFieldsPriorityBaseErrors(errors, fieldKeys);
+
+
+                if (Array.isArray(messages) && messages.length) {
+                    errorElement.classList.add('show_error');
+                    errorElement.innerHTML = messages
+                        .map(err =>
+                            `<span data-fct-error-field="${err.field}">${err.message}</span>`
+                        )
+                        .join('');
+                } else {
+                    errorElement.classList.remove('show_error');
+                    errorElement.innerHTML = '';
+                }
+            });
+        });
+
+    }
+
+    getFieldsPriorityBaseErrors(errors, fieldKeys) {
+        const messages = [];
+
+        fieldKeys.forEach(key => {
+            const fieldErrors = errors[key];
+            if (!fieldErrors) return;
+
+            // Take Required error as per key
+            if (fieldErrors.required) {
+                messages.push({
+                    field: key,
+                    message: fieldErrors.required
+                });
+                return;
+            }
+
+            // Otherwise take invalid and other errors as per key
+            Object.entries(fieldErrors).forEach(([type, message]) => {
+                if (type !== 'required') {
+                    messages.push({
+                        field: key,
+                        message
+                    });
+                }
+            });
+        });
+
+        return messages;
+    }
+
+    clearFieldError(fieldName) {
+        Object.entries(this.#errorConfig).forEach(([selector, fields]) => {
+            if (!fields.includes(fieldName)) return;
+
+            const errorEl = document.querySelector(selector);
+            if (!errorEl) return;
+
+            const fieldError = errorEl.querySelector(
+                `[data-fct-error-field="${fieldName}"]`
+            );
+
+            if (!fieldError) return;
+
+            fieldError.classList.add('fct-error-leave');
+
+            fieldError.addEventListener(
+                'transitionend',
+                () => {
+                    fieldError.remove();
+
+                    // hide container if empty
+                    if (!errorEl.querySelector('span')) {
+                        errorEl.classList.remove('show_error');
+                    }
+                },
+                { once: true }
+            );
+        });
+    }
+
+    bindErrorCleanupListeners() {
+        const handler = (e) => {
+            const field = e.target;
+            if (!field.name) return;
+            if (!field.value?.trim()) return;
+
+            this.clearFieldError(field.name);
+        };
+
+        document.addEventListener('input', handler);
+
+        document.addEventListener('change', handler);
     }
 
     createProcessingDiv(loaderElement) {
@@ -404,8 +552,14 @@ class FluentCartCheckoutHandler {
 
         // Convert object to URLSearchParams
         const params = new URLSearchParams();
+
+        const addedKeys = new Set();
+
         for (const [key, value] of formData.entries()) {
-            params.append(key, value);
+            if (!addedKeys.has(key)) {
+                params.append(key, value);
+                addedKeys.add(key);
+            }
         }
 
         let url = this.checkoutUrl.toString();
@@ -460,8 +614,7 @@ class FluentCartCheckoutHandler {
     cleanupAfterProcessing() {
         const processingDiv = document.querySelector('.fct-order-processing');
         if (processingDiv) {
-            processingDiv.classList.add('hidden');
-            processingDiv.style.display = 'none';
+            processingDiv.classList.add('fct-loader-hidden');
         }
         this.#paymentLoader.enableCheckoutButton(this.translate("Place Order"));
     }

@@ -22,8 +22,8 @@
         </el-table-column>
 
         <el-table-column prop="refunds" :label="translate('Refunds')" min-width="150">
-          <template #default="scope">
-            {{ scope.row.totalRefunded }}
+          <template #default="scope" v-html="scope.row.totalRefunded">
+
           </template>
         </el-table-column>
 

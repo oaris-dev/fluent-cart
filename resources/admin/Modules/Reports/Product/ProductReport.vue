@@ -5,6 +5,9 @@ import Summary from "@/Modules/Reports/Product/Summary.vue";
 import productReport from "@/Models/Reports/ProductReportModel";
 import ProductTopChart from "@/Modules/Reports/Product/ProductTopChart.vue";
 import UserCan from "@/Bits/Components/Permission/UserCan.vue";
+import TopSoldProducts from "@/Modules/Reports/Default/Components/TopSoldProducts.vue";
+import PageHeading from "@/Bits/Components/Layout/PageHeading.vue";
+import translate from "@/utils/translator/Translator";
 
 const props = defineProps({
   reportFilter: {
@@ -22,6 +25,8 @@ const getData = (params) => {
       groupKey: chartGroupKey.value,
     },
   });
+
+  productReport.getTopSoldProducts(params);
 };
 
 const filterChartData = (groupKey) => {
@@ -49,11 +54,7 @@ onUnmounted(() => {
 <template>
   <UserCan :permission="'reports/view'">
     <div class="fct-revenue-report-page">
-      <div class="page-heading-wrap flex items-center justify-between">
-        <h1 class="page-title">
-          {{ $t('Products') }}
-        </h1>
-      </div>
+      <PageHeading :title="translate('Products')"></PageHeading>
       
       <Summary :reportFilter="reportFilter"/>
 
@@ -65,6 +66,11 @@ onUnmounted(() => {
           @filter-data="filterChartData"
           :is-empty="!productReport.data.summary.gross_sale"
           :loading="productReport.data.isBusy"
+      />
+
+      <TopSoldProducts
+        :data="productReport.data.topSoldProducts"
+        :loading="productReport.data.isBusy"
       />
 
       <ProductTopChart :reportFilter="reportFilter" />
@@ -79,3 +85,11 @@ onUnmounted(() => {
     </div>
   </UserCan>
 </template>
+
+<style lang="scss">
+.fct-revenue-report-page {
+  .top-sold-products {
+    margin-bottom: 30px;
+  }
+}
+</style>

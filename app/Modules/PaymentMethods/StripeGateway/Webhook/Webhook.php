@@ -97,6 +97,9 @@ class Webhook
             $isSubscriptionCycle = $vendorDataObject->billing_reason === 'subscription_cycle';
             if ($isSubscriptionCycle) {
                 if ($eventType === 'invoice.paid') {
+
+                    $vendorDataObject = (new API())->getStripeObject('invoices/' . $vendorDataObject->id, ['expand' => ['payment_intent']]);
+                    
                     $this->processSubscriptionRenewal($vendorDataObject);
                 }
                 return false;
@@ -151,6 +154,12 @@ class Webhook
             return null;
         }
 
+        // Handle checkout.session.completed for hosted checkout
+        if ($eventType === 'checkout.session.completed') {
+            $sessionId = $vendorDataObject->id;
+            return StripeHelper::validateBySession($sessionId);
+        }
+
         $metaData = (array)$vendorDataObject->metadata;
         $orderHash = Arr::get($metaData, 'fct_ref_id', false);
 
@@ -166,7 +175,8 @@ class Webhook
         $subscription = null;
         $parentOrder = null;
 
-        $vendorSubscriptionId = $vendorInvoiceObject->subscription;
+        $vendorSubscriptionId = Arr::get($vendorInvoiceObject, 'subscription', null)
+        ?: (Arr::get($vendorInvoiceObject, 'parent.subscription_details.subscription', null) ?? null);
 
         if ($vendorSubscriptionId) {
             $subscription = Subscription::query()->where('vendor_subscription_id', $vendorSubscriptionId)
@@ -180,8 +190,8 @@ class Webhook
 
         if ($parentOrder) {
             // let's try to find from the meta ref id
-            if (!empty($vendorInvoiceObject->subscription_details->metadata->fct_ref_id)) {
-                $refId = $vendorInvoiceObject->subscription_details->metadata->fct_ref_id;
+            if (!Arr::get($vendorInvoiceObject, 'subscription_details.metadata.fct_ref_id', null)) {
+                $refId = Arr::get($vendorInvoiceObject, 'subscription_details.metadata.fct_ref_id', null);
                 $parentOrder = Order::query()->where('uuid', $refId)->first();
             }
         }
@@ -197,11 +207,18 @@ class Webhook
             fluent_cart_error_log('Stripe Webhook Error: Subscription Renewal - Order or Subscription not found.', 'Vendor Subscription ID: ' . $vendorSubscriptionId);
             return false; // this is not our order
         }
+;
+        $paymentIntent = Arr::get($vendorInvoiceObject, 'payment_intent', null);
+        if (is_array($paymentIntent)) {
+            $paymentIntentId = Arr::get($paymentIntent, 'id', null);
+        } else {
+            $paymentIntentId = $paymentIntent;
+        }
 
-        if ($vendorInvoiceObject->payment_intent) {
+        if ($paymentIntent) {
             $alreadyRecorded = OrderTransaction::query()
                 ->where('subscription_id', $subscription->id)
-                ->where('vendor_charge_id', $vendorInvoiceObject->payment_intent)
+                ->where('vendor_charge_id', $paymentIntentId)
                 ->exists();
             if ($alreadyRecorded) {
                 return false;
@@ -210,11 +227,12 @@ class Webhook
 
         $transactionData = [
             'payment_method'   => 'stripe',
-            'total'            => $vendorInvoiceObject->amount_paid,
-            'vendor_charge_id' => $vendorInvoiceObject->payment_intent
+            'total'            => Arr::get($vendorInvoiceObject, 'amount_paid', 0),
+            'vendor_charge_id' => $paymentIntentId
         ];
 
-        $paymentIntent = (new API())->getStripeObject('payment_intents/' . $vendorInvoiceObject->payment_intent, [], $parentOrder->mode);
+        $paymentIntent = (new API())->getStripeObject('payment_intents/' . $paymentIntentId, [], $parentOrder->mode);
+
         if (!is_wp_error($paymentIntent)) {
             $transactionData['card_last_4'] = Arr::get($paymentIntent, 'charges.data.0.payment_method_details.card.last4', '');
             $transactionData['card_brand'] = (string)Arr::get($paymentIntent, 'charges.data.0.payment_method_details.card.brand', '');

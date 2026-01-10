@@ -47,6 +47,9 @@ class DiscountService
             $item['discount_total'] = Arr::get($item, 'manual_discount', 0);
             $item['coupon_discount'] = 0;
             $item['line_total'] = (int)($item['subtotal'] - $item['discount_total']);
+            if (isset($item['recurring_discounts'])) {
+                unset($item['recurring_discounts']);
+            }
         }
 
         $this->cartItems = array_values($this->cartItems);
@@ -132,6 +135,20 @@ class DiscountService
             } else {
                 $validCoupons = $intermediateValidCoupons;
             }
+        }
+
+        // Ensure stackable coupons are applied in priority order (lower value = higher priority)
+        if (count($validCoupons) >= 2) {
+            usort($validCoupons, function ($a, $b) {
+                $priorityA = isset($a->priority) ? (int)$a->priority : 0;
+                $priorityB = isset($b->priority) ? (int)$b->priority : 0;
+
+                if ($priorityA === $priorityB) {
+                    return 0;
+                }
+
+                return ($priorityA < $priorityB) ? -1 : 1;
+            });
         }
 
         // Now we have all the valid and stackable coupons. Let's apply them to the cart.
@@ -270,7 +287,7 @@ class DiscountService
                 }
 
                 $allowedEmails = array_filter(array_map('trim', explode(',', $emailRestrictions)));
-                if($allowedEmails) {
+                if ($allowedEmails) {
                     foreach ($allowedEmails as $email) {
                         // match with regex pattern
                         $pattern = '/^' . str_replace('\*', '.*', preg_quote($email, '/')) . '$/i';
@@ -321,13 +338,22 @@ class DiscountService
         $couponDiscountTotal = 0;
 
         foreach ($preValidatedItems as $index => $item) {
-            $existingAmount = (int)Arr::get($item, 'coupon_discount', 0);
-            $itemTotal = (int)($item['subtotal'] - $existingAmount);
-            $currentDiscount = (int)round($itemTotal * ($percent / 100));
-            $discountTotal = (int)($existingAmount + $currentDiscount);
+            $existingAmount = (int) Arr::get($item, 'coupon_discount', 0);
+            $itemSubtotal   = (int) Arr::get($item, 'subtotal', 0);
 
-            if ($discountTotal > $itemTotal) {
-                $discountTotal = $itemTotal;
+            // Remaining amount this coupon can still discount on this line
+            $remainingTotal = $itemSubtotal - $existingAmount;
+            if ($remainingTotal < 0) {
+                $remainingTotal = 0;
+            }
+
+            // Apply this coupon on the remaining amount only
+            $currentDiscount = (int) round($remainingTotal * ($percent / 100));
+            $discountTotal   = (int) ($existingAmount + $currentDiscount);
+
+            // Absolute guard: total discount for this line can never exceed the line subtotal
+            if ($discountTotal > $itemSubtotal) {
+                $discountTotal = $itemSubtotal;
             }
 
             $netDiscount = $discountTotal - $existingAmount;
@@ -335,6 +361,42 @@ class DiscountService
             $couponDiscountTotal += ($netDiscount < 0) ? 0 : $netDiscount;
 
             $preValidatedItems[$index]['coupon_discount'] = $discountTotal;
+
+            // check if it's a recurring item or not
+            if (Arr::get($item, 'other_info.payment_type') === 'subscription') {
+                if (!isset($preValidatedItems[$index]['recurring_discounts'])) {
+                    $preValidatedItems[$index]['recurring_discounts'] = [
+                        'signup' => 0,
+                        'amount' => 0
+                    ];
+                }
+
+                if ($coupon->isRecurringDiscount()) {
+                    $unitPrice = (int) Arr::get($item, 'unit_price', 0);
+                    if ($unitPrice > 0) {
+                        $previousAmount    = (int) Arr::get($item, 'recurring_discounts.amount', 0);
+                        $remainingRecurring = $unitPrice - $previousAmount;
+                        if ($remainingRecurring < 0) {
+                            $remainingRecurring = 0;
+                        }
+
+                        // Apply this recurring coupon only on the remaining recurring amount
+                        $recurringDiscount      = (int) round($remainingRecurring * ($percent / 100));
+                        $totalRecurringDiscount = $previousAmount + $recurringDiscount;
+
+                        // Guard: total recurring discount for this line can never exceed the unit price
+                        if ($totalRecurringDiscount > $unitPrice) {
+                            $totalRecurringDiscount = $unitPrice;
+                        }
+
+                        Arr::set(
+                            $preValidatedItems,
+                            $index . '.recurring_discounts.amount',
+                            $totalRecurringDiscount
+                        );
+                    }
+                }
+            }
         }
 
         if ($coupon->type === 'fixed') {

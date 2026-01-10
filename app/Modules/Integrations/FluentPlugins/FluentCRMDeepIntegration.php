@@ -28,6 +28,28 @@ class FluentCRMDeepIntegration
 
         add_filter('fluent_crm/subscriber_info_widgets', [$this, 'pushInfoWidgetToContact'], 1, 2);
 
+
+        // temp
+        // @todo: Remove after FluentCRM version 3 release
+        add_filter('fluent_crm/purchase_history_fluent_cart', function ($data) {
+
+            if (!$data || empty($data['data'])) {
+                return $data;
+            }
+
+            $dataItems = $data['data'];
+
+            foreach ($dataItems as $index => $item) {
+                $action = $item['action'];
+                $action = str_replace('fluent-crm#/orders/', 'fluent-cart#/orders/', $action);
+                $dataItems[$index]['action'] = $action;
+            }
+
+            $data['data'] = $dataItems;
+
+            return $data;
+        }, 99, 1);
+
     }
 
     /**

@@ -428,6 +428,9 @@ class AssetLoader
             ]
         ];
 
+        // Apply filters to allow modules to modify localized data
+        $data = apply_filters('fluent_cart/checkout/localize_data', $data, $cart);
+
         foreach ($data as $key => $datum) {
             wp_localize_script('fct-checkout', $key, $datum);
         }

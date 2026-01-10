@@ -16,7 +16,7 @@
                             <template v-if="subscription.status === 'expired'">
                                 <p class="p-0 m-0 mb-3">
                                   <!-- translators: %s is the expiration date -->
-                                    {{ $t('Your subscription has expired at %s. Please renew to keep things running smoothly.', formatDate(subscription.expire_at)) }}
+                                    {{ $t('Your subscription has expired at %s. Please renew to keep things running smoothly.', dateTimeI18(subscription.expire_at)) }}
                                 </p>
                                 <a :href="subscription.reactivate_url" class="el-button el-button--primary" :aria-label="$t('Renew Subscription Plan')">
                                     {{ $t('Renew Subscription Plan') }}
@@ -131,7 +131,7 @@
                                  class="fct-customer-dashboard-content-table-item border-0 pb-0">
                                 <div class="left-content">
                                     <div class="title">{{ $t('Next Charge') }}</div>
-                                    <span class="text" :aria-label="$t('Next Charge')">{{ formatDate(subscription.next_billing_date) }}</span>
+                                    <span class="text" :aria-label="$t('Next Charge')">{{ dateTimeI18(subscription.next_billing_date) }}</span>
                                 </div>
                             </div>
 
@@ -208,7 +208,7 @@
 
 <script type="text/babel">
 import {ArrowRight} from "@element-plus/icons-vue";
-import Badge from "@/Bits/Components/Badge.vue";
+import Badge from "../parts/Badge.vue";
 import DynamicIcon from "@/Bits/Components/Icons/DynamicIcon.vue";
 import UpgradePlan from "./UpdatePaymentInfos/UpgradePlan.vue";
 import UpdatePaymentInfos from "./UpdatePaymentInfos/index.vue";
@@ -216,6 +216,7 @@ import LicenseTable from "../parts/LicenseTable.vue";
 import IconButton from "@/Bits/Components/Buttons/IconButton.vue";
 import TransactionsTable from "../parts/TransactionTable.vue";
 import {pluralizeTranslate} from "../../translator/Translator";
+import {dateTimeI18} from "../../translator/Translator";
 
 export default {
     name: "SingleSubscription",
@@ -247,6 +248,7 @@ export default {
     }
   },
     methods: {
+        dateTimeI18,
         fetchSubscription() {
             this.loading = true;
             this.$get(`customer-profile/subscriptions/${this.subscription_uuid}`)

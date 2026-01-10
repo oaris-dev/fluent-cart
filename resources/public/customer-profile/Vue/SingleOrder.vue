@@ -84,8 +84,9 @@
                                                            :aria-label="$t('View product') + ' ' + filteredOrderItem.title"
                                                         >
                                                             <span class="text-gray-600"
-                                                                v-if="filteredOrderItem.quantity > 1">{{
-                                                                    filteredOrderItem.quantity
+                                                                v-if="filteredOrderItem.quantity > 1">
+                                                                {{
+                                                                    translateNumber(filteredOrderItem.quantity)
                                                                 }} x</span>
                                                             {{ filteredOrderItem.post_title }}
                                                         </a>
@@ -104,6 +105,12 @@
                                                             :aria-label="line.label + ': ' + line.value"
                                                         ></span>
                                                     </div>
+
+                                                  <BundleProducts
+                                                      class="!mt-2.5"
+                                                      v-if="filteredOrderItem?.bundle_items?.length"
+                                                      :product="filteredOrderItem"
+                                                  />
                                                 </div>
                                             </div>
                                         </div>
@@ -181,10 +188,11 @@
                 <div v-if="sectionParts.after_subscriptions" v-html="sectionParts.after_subscriptions"></div>
             </article>
 
-            <article v-if="order.downloads && order.downloads.length && order.payment_status !=='pending'" class="fct-single-order-box" role="region" aria-labelledby="downloads-title">
+
+            <article v-if="order.downloads && Object.entries(order.downloads).length && order.payment_status !=='pending'" class="fct-single-order-box" role="region" aria-labelledby="downloads-title">
                 <header class="fct-single-order-header">
                     <h2 id="downloads-title" class="title">
-                        {{ pluralizeTranslate('Download', 'Downloads', order.downloads.length) }}
+                        {{ pluralizeTranslate('Download', 'Downloads', Object.entries(order.downloads).length) }}
                     </h2>
                 </header>
                 <DownloadsTable :show-table-header="false" :downloads="order.downloads"/>
@@ -258,8 +266,10 @@ import DownloadsTable from "./parts/DownloadsTable.vue";
 import LicenseTable from "./parts/LicenseTable.vue";
 import TransactionsTable from "./parts/TransactionTable.vue";
 import OrderTableLoader from "./parts/OrderTableLoader.vue";
-import translate, {pluralizeTranslate} from '../translator/Translator'
+import translate, {pluralizeTranslate, translateNumber} from '../translator/Translator'
 import Str from "@/utils/support/Str";
+import { formatOrderItems } from "@/Bits/common";
+import BundleProducts from "@/Bits/Components/BundleProducts.vue";
 
 export default {
     name: 'SingleOrderDetails',
@@ -280,7 +290,8 @@ export default {
         LicenseTable,
         SubscriptionTable,
         Badge,
-        DownloadsTable
+        DownloadsTable,
+        BundleProducts
     },
     data() {
         return {
@@ -297,9 +308,10 @@ export default {
         }
     },
     methods: {
-      orderBillingAddressUpdated(address) {
-        this.order.billing_address_text = address;
-      },
+        formatOrderItems,
+        orderBillingAddressUpdated(address) {
+            this.order.billing_address_text = address;
+        },
         getImage(item) {
             if(item.variant_image) {
                 return item.variant_image;
@@ -313,6 +325,7 @@ export default {
             this.$get("customer-profile/orders/" + this.order_id)
                 .then((response) => {
                     this.order = response.order;
+                    this.order.order_items = this.formatOrderItems(response.order.order_items);
                     if(response.section_parts) {
                         this.sectionParts = response.section_parts;
                     }
@@ -335,72 +348,73 @@ export default {
                 });
         },
         pluralizeTranslate,
-      getStatusText(status) {
-        switch (status) {
-          case 'completed':
-            return translate('Completed');
-          case 'paid':
-            return translate('Paid');
-          case 'active':
-            return translate('Active');
-          case 'publish':
-            return translate('Published');
-          case 'draft':
-            return translate('Draft');
-          case 'shipped':
-            return translate('Shipped');
-          case 'success':
-            return translate('Success');
-          case 'licensed':
-            return translate('Licensed');
-          case 'succeeded':
-            return translate('Succeeded');
-          case 'failed':
-            return translate('Failed');
-          case 'error':
-            return translate('Error');
-          case 'canceled':
-            return translate('Canceled');
-          case 'expired':
-            return translate('Expired');
-          case 'partially_paid':
-            return translate('Partially Paid');
-          case 'intended':
-            return translate('Intended');
-          case 'scheduled':
-            return translate('Scheduled');
-          case 'on-hold':
-            return translate('On Hold');
-          case 'pending':
-            return translate('Pending');
-          case 'unpaid':
-            return translate('Unpaid');
-          case 'warning':
-            return translate('Warning');
-          case 'processing':
-            return translate('Processing');
-          case 'future':
-            return translate('Future');
-          case 'inactive':
-            return translate('Inactive');
-          case 'dispute':
-            return translate('Dispute');
-          case 'disabled':
-            return translate('Disabled');
-          case 'beta':
-            return translate('Beta');
-          case 'subscription':
-            return translate('Subscription');
-          case 'renewal':
-            return translate('Renewal');
-          case 'payment':
-            return translate('Payment');
-          case 'unshipped':
-            return translate('Unshipped');
-          default:
-            return Str.headline(status);
-        }
-      }
+        getStatusText(status) {
+            switch (status) {
+            case 'completed':
+                return translate('Completed');
+            case 'paid':
+                return translate('Paid');
+            case 'active':
+                return translate('Active');
+            case 'publish':
+                return translate('Published');
+            case 'draft':
+                return translate('Draft');
+            case 'shipped':
+                return translate('Shipped');
+            case 'success':
+                return translate('Success');
+            case 'licensed':
+                return translate('Licensed');
+            case 'succeeded':
+                return translate('Succeeded');
+            case 'failed':
+                return translate('Failed');
+            case 'error':
+                return translate('Error');
+            case 'canceled':
+                return translate('Canceled');
+            case 'expired':
+                return translate('Expired');
+            case 'partially_paid':
+                return translate('Partially Paid');
+            case 'intended':
+                return translate('Intended');
+            case 'scheduled':
+                return translate('Scheduled');
+            case 'on-hold':
+                return translate('On Hold');
+            case 'pending':
+                return translate('Pending');
+            case 'unpaid':
+                return translate('Unpaid');
+            case 'warning':
+                return translate('Warning');
+            case 'processing':
+                return translate('Processing');
+            case 'future':
+                return translate('Future');
+            case 'inactive':
+                return translate('Inactive');
+            case 'dispute':
+                return translate('Dispute');
+            case 'disabled':
+                return translate('Disabled');
+            case 'beta':
+                return translate('Beta');
+            case 'subscription':
+                return translate('Subscription');
+            case 'renewal':
+                return translate('Renewal');
+            case 'payment':
+                return translate('Payment');
+            case 'unshipped':
+                return translate('Unshipped');
+            default:
+                return Str.headline(status);
+            }
+        },
+        translateNumber
     },
     mounted() {
         this.fetchOrder();

@@ -20,6 +20,7 @@ import DynamicIcon from "@/Bits/Components/Icons/DynamicIcon.vue";
 import useKeyboardShortcuts from "@/utils/KeyboardShortcut";
 import {onBeforeRouteLeave} from "vue-router";
 import {inject} from 'vue'
+import ProductBundleSelector from "@/Modules/Products/parts/ProductBundleSelector.vue";
 
 const props = defineProps({
   product: Object,
@@ -114,6 +115,10 @@ onMounted(() => {
     const app = document.querySelector('#fluent_cart_plugin_app');
     app.prepend(header);
   }
+
+  productEditModel.addOnProductUpdatedListener('formreset', function () {
+    dynamicTemplates.value?.resetForms();
+  })
 });
 
 onBeforeRouteLeave(() => {
@@ -237,7 +242,15 @@ onBeforeRouteLeave(() => {
               :product="editableProduct"
               :productEditModel="productEditModel"/>
 
+          <product-bundle-selector
+              v-if="productEditModel.isBundleProduct()"
+              :product="editableProduct"
+              :productEditModel="productEditModel"
+          />
+
+
           <product-download
+              v-if="!productEditModel.isBundleProduct()"
               :product="editableProduct"
               :productEditModel="productEditModel"
               :productDownloadableModel="productDownloadableModel"

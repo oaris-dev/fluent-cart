@@ -8,6 +8,7 @@ import * as Card from "@/Bits/Components/Card/Card.js";
 import WpEditor from "@/Bits/Components/Inputs/WpEditor.vue";
 import MailingSettingsLoader from "@/Modules/Settings/EmailNotification/MailingSettingsLoader.vue";
 import AppConfig from "@/utils/Config/AppConfig";
+import DynamicIcon from "@/Bits/Components/Icons/DynamicIcon.vue";
 
 const settingsForm = ref({
   from_name: '',
@@ -180,7 +181,7 @@ compliance.`)
               </div>
             </div>
 
-            <div class="fct-powered-by-email-footer-checkbox mb-4 pb-4 border-[1px] border-l-0 border-t-0 border-r-0 border-solid border-gray-outline dark:border-dark-400">
+            <div class="fct-powered-by-email-footer-checkbox">
               <el-checkbox
                   v-model="settingsForm.show_email_footer"
                   true-value="yes"
@@ -188,6 +189,18 @@ compliance.`)
                   :disabled="!hasPro"
               >
                 {{ translate('Enable powered by FluentCart in the email footer') }}
+
+                <el-tooltip
+                    v-if="!hasPro"
+                    popper-class="fct-tooltip"
+                    placement="top"
+                >
+                  <template #content>
+                    {{ translate('This feature is available in pro version only.') }}
+                  </template>
+
+                  <DynamicIcon name="Crown" class="fct-pro-icon"/>
+                </el-tooltip>
               </el-checkbox>
             </div>
 

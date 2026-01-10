@@ -277,10 +277,6 @@ onMounted(() => {
   window.addEventListener("onFluentCartThemeChange", onThemeChanged);
   dummyProductInfo.value = AppConfig.get('dummy_product_info');
   jQuery('.fca_admin_menu').hide();
-  jQuery('.fct_admin_menu_row').css({
-    'padding-top': '16px',
-    'padding-bottom': '16px'
-  });
   jQuery('body').addClass('fct-onboarding-body');
   getSettings();
   logo.value = Theme.isDark()? lightLogo : darkLogo;
@@ -291,10 +287,6 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener("onFluentCartThemeChange", onThemeChanged);
   jQuery('.fca_admin_menu').show();
-  jQuery('.fct_admin_menu_row').css({
-    'padding-top': '0',
-    'padding-bottom': '0'
-  });
   jQuery('body').removeClass('fct-onboarding-body');
 })
 

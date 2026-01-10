@@ -43,11 +43,11 @@ if (isset($heading)): ?>
     <tr>
         <td>
             <p style="font-size:14px;font-weight:600;color:rgb(30,58,138);line-height:24px;margin: 0 0 6px 0;">
-                Important
+                <?php echo esc_html__('Important', 'fluent-cart');?>
             </p>
             <p style="font-size:13px;color:rgb(30,64,175);margin-bottom:0;line-height:1.2;margin-top:0">
-                This download link is valid for 7 days. After that, you can download the files again from your account
-                on our website.
+                <?php echo esc_html__('This download link is valid for 7 days. After that, you can download the files again from your account
+                on our website.', 'fluent-cart');?>
             </p>
         </td>
     </tr>

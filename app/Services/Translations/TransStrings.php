@@ -22,7 +22,7 @@ class TransStrings
         return [
             'Also search in Content'            => _x('Also search in Content', 'Shop App Block Editor', 'fluent-cart'),
             'Apply Filter'                      => _x('Apply Filter', 'Shop App Block Editor', 'fluent-cart'),
-            'Add to Cart'                       => _x('Add to Cart', 'Shop App Block Editor', 'fluent-cart'),
+            // 'Add to Cart'                       => _x('Add to Cart', 'Shop App Block Editor', 'fluent-cart'),
             'Default'                           => _x('Default', 'Shop App Block Editor', 'fluent-cart'),
             'Display Name For Filter'           => _x('Display Name For Filter', 'Shop App Block Editor', 'fluent-cart'),
             'Enable Default Filtering'          => _x('Enable Default Filtering', 'Shop App Block Editor', 'fluent-cart'),

@@ -22,7 +22,7 @@ class CustomerAddresses extends Model
 
     protected $table = 'fct_customer_addresses';
 
-    protected $appends = ['formatted_address'];
+    protected $appends = ['formatted_address', 'company_name'];
 
 
     /**
@@ -45,7 +45,8 @@ class CustomerAddresses extends Model
         'country',
         'phone',
         'email',
-        'meta'
+        'meta',
+        'company_name',
     ];
 
 
@@ -72,6 +73,27 @@ class CustomerAddresses extends Model
         return \json_decode($value, true);
     }
 
+    public function setCompanyNameAttribute($value)
+    {
+        if (!$value) {
+            return;
+        }
+
+        $meta = $this->meta;
+
+        if (!is_array($meta)) {
+            $meta = [];
+        }
+
+        Arr::set($meta, 'other_data.company_name', $value);
+
+        $this->attributes['meta'] = json_encode($meta);
+    }
+
+    public function getCompanyNameAttribute()
+    {
+        return Arr::get($this->meta, 'other_data.company_name', '');
+    }
 
     public function scopeOfActive($query)
     {
@@ -91,20 +113,23 @@ class CustomerAddresses extends Model
     public function getFormattedAddressAttribute(): array
     {
         $formattedAddress = [
-            'country'    => AddressHelper::getCountryNameByCode($this->country),
-            'state'      => AddressHelper::getStateNameByCode($this->state, $this->country),
-            'city'       => $this->city,
-            'postcode'   => $this->postcode,
-            'address_1'  => $this->address_1,
-            'address_2'  => $this->address_2,
-            'type'       => $this->type,
-            'name'       => $this->name,
+            'country' => AddressHelper::getCountryNameByCode($this->country),
+            'state' => AddressHelper::getStateNameByCode($this->state, $this->country),
+            'city' => $this->city,
+            'postcode' => $this->postcode,
+            'address_1' => $this->address_1,
+            'address_2' => $this->address_2,
+            'type' => $this->type,
+            'name' => $this->name,
             'first_name' => $this->first_name,
-            'last_name'  => $this->last_name,
-            'full_name'  => $this->full_name
+            'last_name' => $this->last_name,
+            'full_name' => $this->full_name,
+            'company_name' => $this->company_name,
+            'label' => $this->label
         ];
 
         $addressParts = [
+            trim(Arr::get($formattedAddress, 'company_name') ?? ''),
             trim(Arr::get($formattedAddress, 'address_1') ?? ''),
             trim(Arr::get($formattedAddress, 'address_2') ?? ''),
             trim(Arr::get($formattedAddress, 'city') ?? ''),
@@ -127,16 +152,17 @@ class CustomerAddresses extends Model
             '' . $prefix . 'full_name' => $this->name,
             '' . $prefix . 'address_1' => $this->address_1,
             '' . $prefix . 'address_2' => $this->address_2,
-            '' . $prefix . 'city'      => $this->city,
-            '' . $prefix . 'state'     => $this->state,
-            '' . $prefix . 'phone'     => $this->phone,
-            '' . $prefix . 'postcode'  => $this->postcode,
-            '' . $prefix . 'country'   => $this->country,
+            '' . $prefix . 'city' => $this->city,
+            '' . $prefix . 'state' => $this->state,
+            '' . $prefix . 'phone' => $this->phone,
+            '' . $prefix . 'postcode' => $this->postcode,
+            '' . $prefix . 'country' => $this->country,
+            '' . $prefix . 'company_name' => $this->company_name,
         ];
 
-        if ($prefix === 'billing_') {
-            unset($data['billing_full_name']);
-        }
+        // if ($prefix === 'billing_') {
+            // unset($data['billing_full_name']);
+        // }
 
         return $data;
     }

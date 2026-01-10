@@ -84,7 +84,7 @@
 
       <el-table-column v-if="columns.indexOf('bills_count') !== -1" :label="translate('Bills Count')" width="100">
         <template #default="scope">
-          {{ scope.row.bill_count }}
+          {{ translateNumber(scope.row.bill_count) }}
         </template>
       </el-table-column>
 
@@ -100,7 +100,7 @@
               class="link"
               :to="{ name: 'view_order',  params: { order_id: scope.row.parent_order_id } }"
           >
-            #{{ scope.row.parent_order_id }}
+            #{{ translateNumber(scope.row.parent_order_id) }}
           </router-link>
         </template>
       </el-table-column>
@@ -123,7 +123,7 @@ import Badge from "@/Bits/Components/Badge.vue";
 import RouteCell from "@/Bits/Components/TableNew/RouteCell.vue";
 import ConvertedTime from "@/Bits/Components/ConvertedTime.vue";
 import CustomerInfoPopover from "@/Modules/Customers/parts/CustomerInfoPopover.vue";
-import translateNumber from "@/utils/translator/Translator";
+import {translateNumber} from "@/utils/translator/Translator";
 import translate from "@/utils/translator/Translator";
 
 export default {

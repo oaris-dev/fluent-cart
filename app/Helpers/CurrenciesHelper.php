@@ -61,6 +61,7 @@ class CurrenciesHelper
             'FKP' => __('Falkland Islands Pound', 'fluent-cart'),
             'GBP' => __('British Pound', 'fluent-cart'),
             'GEL' => __('Georgian Lari', 'fluent-cart'),
+            'GHS' => __('Ghanaian Cedi', 'fluent-cart'),
             'GIP' => __('Gibraltar Pound', 'fluent-cart'),
             'GMD' => __('Gambian Dalasi', 'fluent-cart'),
             'GNF' => __('Guinean Franc', 'fluent-cart'),
@@ -221,7 +222,7 @@ class CurrenciesHelper
 			'BZD' => '&#36;',
 			'CAD' => '&#36;',
 			'CDF' => 'Fr',
-			'CHF' => '&#67;&#72;&#70;',
+			'CHF' => 'CHF',
 			'CLP' => '&#36;',
 			'CNY' => '&yen;',
 			'COP' => '&#36;',
@@ -395,6 +396,7 @@ class CurrenciesHelper
             'XAF' => esc_html__('Central African Cfa Franc', 'fluent-cart'),
             'XOF' => esc_html__('West African Cfa Franc', 'fluent-cart'),
             'XPF' => esc_html__('Cfp Franc', 'fluent-cart'),
+            'UGX' => esc_html__('Ugandan Shilling', 'fluent-cart'),
         ), []);
     }
 

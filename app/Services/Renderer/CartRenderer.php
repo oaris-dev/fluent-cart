@@ -14,7 +14,7 @@ class CartRenderer
     protected $cartItems;
     protected $storeSettings;
 
-    protected $cartItem = [];
+    protected $currentCartItem = [];
     protected $url = [];
 
     protected $product = [];
@@ -24,6 +24,7 @@ class CartRenderer
     {
         $this->storeSettings = new StoreSettings();
         $this->cartItems = $cartItems;
+        $this->cartItems = Helper::loadBundleChild($this->cartItems, ['*']);
     }
 
     public function render()
@@ -98,6 +99,8 @@ class CartRenderer
     public function renderList($items = [])
     {
         $items = empty($items) ? $this->cartItems : $items;
+
+
         ?>
         <div class="fct-cart-drawer-list" data-fluent-cart-cart-list>
             <ul class="fct-cart-drawer-list-content" data-fluent-cart-items-wrapper role="list">
@@ -105,7 +108,7 @@ class CartRenderer
 
                 if (!empty($items)) {
                     foreach ($items as $cartItem) {
-                        $this->cartItem = $cartItem;
+                        $this->currentCartItem = $cartItem;
                         $this->url = Arr::get($cartItem, 'view_url', '');
                         $this->renderItem();
                     }
@@ -120,7 +123,7 @@ class CartRenderer
 
     public function renderItem()
     {
-        $title = Arr::get($this->cartItem, 'title', '');
+        $title = Arr::get($this->currentCartItem, 'title', '');
 
         ?>
         <li data-cart-items class="fct-cart-item" role="listitem"
@@ -137,8 +140,8 @@ class CartRenderer
 
     public function renderImage()
     {
-        $image = Arr::get($this->cartItem, 'featured_media');
-        $title = Arr::get($this->cartItem, 'title', __('Product Image', 'fluent-cart'));
+        $image = Arr::get($this->currentCartItem, 'featured_media');
+        $title = Arr::get($this->currentCartItem, 'title', __('Product Image', 'fluent-cart'));
 
         if (!$image) {
             $image = Vite::getAssetUrl('images/placeholder.svg');
@@ -166,18 +169,25 @@ class CartRenderer
 
         <div class="fct-cart-item-details" role="group"
              aria-label="<?php esc_attr_e('Product Details', 'fluent-cart'); ?>">
-            <?php $this->renderTitles(); ?>
-            <?php $this->renderItemPrice(); ?>
-            <?php $this->renderQuantity(); ?>
+            <?php
+                $this->renderTitles();
+                $this->renderItemPrice();
+                $this->renderQuantity();
+                (new CartItemRenderer($this->currentCartItem))->renderChildVariants();
+            ?>
+
         </div>
 
         <?php
     }
 
+
+
     public function renderTitles()
     {
-        $postTitle = Arr::get($this->cartItem, 'post_title', '');
-        $variationTitle = Arr::get($this->cartItem, 'title', '');
+        $postTitle = Arr::get($this->currentCartItem, 'post_title', '');
+        $variationTitle = Arr::get($this->currentCartItem, 'title', '');
+        $variationType = Arr::get($this->currentCartItem, 'variation_type', 'simple');
 
         $aria_label = sprintf(
         /* translators: 1: Post or product title */
@@ -198,7 +208,7 @@ class CartRenderer
             </a>
         </h3>
 
-        <p class="fct-cart-item-variant"
+        <p class="fct-cart-item-variant <?php echo $variationType === 'simple' ? 'variant-title-hidden' : ''?>"
            data-fluent-cart-cart-list-item-variation-title>
             - <?php echo esc_html($variationTitle); ?>
         </p>
@@ -208,11 +218,12 @@ class CartRenderer
 
     public function renderItemPrice()
     {
-        $price = Helper::toDecimal(Arr::get($this->cartItem, 'unit_price', 0));
+        $price = Helper::toDecimal(Arr::get($this->currentCartItem, 'unit_price', 0));
+        $quantity = Arr::get($this->currentCartItem, 'quantity', 1);
 
         ?>
-        <div class="fct-cart-item-price">
-            <span><?php esc_html_e('Price:', 'fluent-cart'); ?></span>
+        <div class="fct-cart-item-price <?php echo $quantity <= 1 ? 'item-price-hidden' : '' ?>">
+            <span><?php esc_html_e('Unit Price:', 'fluent-cart'); ?></span>
             <span data-fluent-cart-cart-list-item-price aria-live="polite">
                 <?php echo esc_html($price); ?>
             </span>
@@ -223,9 +234,9 @@ class CartRenderer
 
     public function renderQuantity()
     {
-        $quantity = Arr::get($this->cartItem, 'quantity', 0);
+        $quantity = Arr::get($this->currentCartItem, 'quantity', 0);
 
-        $productId = Arr::get($this->cartItem, 'post_id');
+        $productId = Arr::get($this->currentCartItem, 'post_id');
         $this->product = Product::query()->with(['detail'])->find($productId);
         $soldIndividually = false;
         if ($this->product) {
@@ -246,7 +257,7 @@ class CartRenderer
 
             <button
                     class="qty-btn decrease-btn"
-                    data-item-id="<?php echo esc_attr($this->cartItem['object_id']); ?>"
+                    data-item-id="<?php echo esc_attr($this->currentCartItem['object_id']); ?>"
                     data-fluent-cart-cart-list-item-decrease-button
                     title="<?php esc_attr_e('Decrease Quantity', 'fluent-cart'); ?>"
                     aria-label="<?php esc_attr_e('Decrease Quantity', 'fluent-cart'); ?>"
@@ -260,7 +271,7 @@ class CartRenderer
             <input
                     class="qty-value"
                     min="1"
-                    data-item-id="<?php echo esc_attr($this->cartItem['object_id']); ?>"
+                    data-item-id="<?php echo esc_attr($this->currentCartItem['object_id']); ?>"
                     data-fluent-cart-cart-list-item-quantity-input
                     value="<?php echo esc_attr($quantity); ?>"
                     aria-label="<?php esc_attr_e('Product Quantity', 'fluent-cart'); ?>"
@@ -270,7 +281,7 @@ class CartRenderer
             <button
                     class="qty-btn increase-btn"
                     data-fluent-cart-cart-list-item-increase-button
-                    data-item-id="<?php echo esc_attr($this->cartItem['object_id']); ?>"
+                    data-item-id="<?php echo esc_attr($this->currentCartItem['object_id']); ?>"
                     title="<?php esc_attr_e('Increase Quantity', 'fluent-cart'); ?>"
                     aria-label="<?php esc_attr_e('Increase Quantity', 'fluent-cart'); ?>"
             >
@@ -299,15 +310,15 @@ class CartRenderer
 
     public function renderItemTotal()
     {
-        $quantity = Arr::get($this->cartItem, 'quantity', 0);
-        $totalPrice = Arr::get($this->cartItem, 'unit_price', 0) * $quantity;
+        $quantity = Arr::get($this->currentCartItem, 'quantity', 0);
+        $totalPrice = Arr::get($this->currentCartItem, 'unit_price', 0) * $quantity;
 
-        if (Arr::get($this->cartItem, 'other_info.payment_type', 'onetime') == 'subscription') {
-            if (Arr::get($this->cartItem, 'other_info.manage_setup_fee') == 'yes') {
-                $signupFee = Arr::get($this->cartItem, 'other_info.signup_fee', 0);
+        if (Arr::get($this->currentCartItem, 'other_info.payment_type', 'onetime') == 'subscription') {
+            if (Arr::get($this->currentCartItem, 'other_info.manage_setup_fee') == 'yes') {
+                $signupFee = Arr::get($this->currentCartItem, 'other_info.signup_fee', 0);
 
-                if (Arr::get($this->cartItem, 'other_info.setup_fee_per_item', 'no') == 'yes') {
-                    $signupFee = Arr::get($this->cartItem, 'other_info.signup_fee', 0) * $quantity;
+                if (Arr::get($this->currentCartItem, 'other_info.setup_fee_per_item', 'no') == 'yes') {
+                    $signupFee = Arr::get($this->currentCartItem, 'other_info.signup_fee', 0) * $quantity;
                 }
 
                 $totalPrice += $signupFee;
@@ -375,7 +386,7 @@ class CartRenderer
                     type="button"
                     class="fct-cart-item-delete-button"
                     data-fluent-cart-cart-list-item-delete-button
-                    data-item-id="<?php echo esc_attr($this->cartItem['object_id']); ?>"
+                    data-item-id="<?php echo esc_attr($this->currentCartItem['object_id']); ?>"
                     aria-label="<?php esc_attr_e('Remove this item from cart', 'fluent-cart'); ?>"
                     title="<?php esc_attr_e('Remove From Cart', 'fluent-cart'); ?>"
             >

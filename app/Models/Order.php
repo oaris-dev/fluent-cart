@@ -119,6 +119,7 @@ class Order extends Model
         'shipping_total'        => 'double',
         'tax_total'             => 'double',
         'total_amount'          => 'double',
+        'customer_id'           => 'integer',
     ];
 
     public function parentOrder(): BelongsTo
@@ -746,8 +747,8 @@ class Order extends Model
     {
         $canBeDeleted = true;
 
-        // Only canceled orders can be deleted
-        if ($this->status === Status::ORDER_CANCELED) {
+        // Only canceled or on-hold orders can be deleted
+        if ($this->status === Status::ORDER_CANCELED || $this->status === Status::ORDER_ON_HOLD) {
 
             $isFreeOrder = ((int)$this->total_amount) === 0;
             $isPaidOrder = in_array($this->payment_status, Status::getOrderPaymentSuccessStatuses(), true);

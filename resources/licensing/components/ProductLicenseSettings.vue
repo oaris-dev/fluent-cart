@@ -4,7 +4,8 @@
       <Card.Header border_bottom :title="translate('License Settings')">
         <template #action>
           <el-switch v-if="settings" v-model="settings.enabled" active-value="yes" inactive-value="no"
-                     :active-text="translate('Enable Licensing for this product')"></el-switch>
+                     :active-text="translate('Enable Licensing for this product')"
+                     :disabled="isBundleProduct"></el-switch>
         </template>
       </Card.Header>
       <Card.Body>
@@ -207,14 +208,28 @@
             </div>
           </el-form>
 
-          <Empty v-if="settings.enabled !== 'yes'" icon="Empty/WebPage"
+          <Empty v-if="settings.enabled !== 'yes' && !isBundleProduct" icon="Empty/WebPage"
                  :text="translate('License for this product has not been enabled')"/>
+          
+          <div v-if="isBundleProduct" class="fct-bundle-license-info" style="padding: 40px 20px;">
+            <div class="flex items-center justify-center mb-4">
+              <DynamicIcon name="Empty/WebPage" class="w-[100px]"/>
+            </div>
+            <div style="max-width: 600px; margin: 0 auto; color: #606266; line-height: 1.6; text-align: left;">
+              <p style="font-size: 16px; font-weight: 500; margin-bottom: 12px; color: #303133;">
+                {{ translate('License Settings Not Available for Bundle Products') }}
+              </p>
+              <p style="font-size: 14px;">
+                {{ translate('Licenses are managed by bundle items themselves. Only pricing follows the bundle product (e.g., yearly bundle pricing results in yearly licenses for child bundle items).') }}
+              </p>
+            </div>
+          </div>
 
         </div>
       </Card.Body>
     </Card.Container>
 
-    <template v-if="settings">
+    <template v-if="settings && !isBundleProduct">
       <div class="setting-save-action">
         <el-button @click="updateSettings()" :loading="saving" :disabled="saving" type="primary">
           {{ translate(' Update Settings') }}
@@ -229,6 +244,7 @@ import * as Card from '@/Bits/Components/Card/Card.js';
 import LabelHint from "@/Bits/Components/LabelHint.vue";
 import WpEditor from "@/Bits/Components/Inputs/WpEditor.vue";
 import Empty from "../../admin/Bits/Components/Table/Empty.vue";
+import DynamicIcon from "@/Bits/Components/Icons/DynamicIcon.vue";
 import translate from "../../admin/utils/translator/Translator";
 </script>
 
@@ -244,10 +260,12 @@ export default {
       product: {},
       globalUpdateFile: {},
       selectedFile: null,
-      fetchSettings: false
+      fetchSettings: false,
+      isBundleProduct: false
     }
   },
   methods: {
+    translate,
     fetchProduct() {
       this.loading = true;
       this.$get('products/' + this.product_id + '/pricing', {})
@@ -266,6 +284,7 @@ export default {
       this.$get(`licensing/products/${this.product_id}/settings`)
           .then((response) => {
             this.settings = response.settings;
+            this.isBundleProduct = response.is_bundle_product || false;
             this.selectedFile = response.settings.global_update_file?.id ? parseInt(response.settings.global_update_file?.id) : '';
           })
           .catch((error) => {
@@ -276,6 +295,13 @@ export default {
           });
     },
     updateSettings() {
+      if (this.isBundleProduct) {
+        this.handleError({
+          message: this.translate('License settings cannot be saved for bundle products. Licenses are generated according to bundle items\' license settings.')
+        });
+        return;
+      }
+      
       this.saving = true;
       this.$post(`licensing/products/${this.product_id}/settings`, {
         settings: this.settings

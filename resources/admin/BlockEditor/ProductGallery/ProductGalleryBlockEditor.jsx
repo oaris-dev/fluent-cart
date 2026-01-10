@@ -83,7 +83,7 @@ registerBlockType(blockEditorData.slug + '/' + blockEditorData.name, {
         const fetchProduct = () => {
             apiFetch({
                 path: addQueryArgs(fetchUrl, {
-                    with: ['variants']
+                    with: ['detail', 'variants']
                 }),
                 headers: {
                     'X-WP-Nonce': rest.nonce

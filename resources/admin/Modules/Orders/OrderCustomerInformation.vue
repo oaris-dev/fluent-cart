@@ -442,7 +442,7 @@ onMounted(() => {
             <div class="user-info mt-2" v-if="order.customer.user_link">
               {{translate('WP User:')}} <a :href="order.customer.user_link" target="_blank"
                           class="inline-flex items-center gap-1 dark:text-gray-100 text-primary-500 focus:shadow-none hover:!underline">
-              #{{ order.customer.user_id }}
+              #{{ translateNumber(order.customer.user_id) }}
               <DynamicIcon name="Redirect" class="w-2.5 h-2.5 text-primary-500 dark:text-gray-200"/>
             </a>
             </div>

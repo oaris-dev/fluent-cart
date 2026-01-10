@@ -73,8 +73,8 @@ const formatDate = (date) => {
               <div class="list-value">
                 {{ translateNumber(product.quantity_sold) }} {{ translate(" Sold") }}
               </div>
-              <div class="list-price">
-                {{ CurrencyFormatter.scaled(product.total_amount) }}
+              <div class="list-price" v-html="CurrencyFormatter.scaled(product.total_amount)">
+
               </div>
             </div>
           </router-link>

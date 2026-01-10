@@ -1,4 +1,3 @@
-import AddToCartButton from "../buttons/add-to-cart/script";
 import ProductDetailsButton from "../buttons/product-details/script";
 import SingleProductModal from "../product-page/SingleProductModal";
 
@@ -9,7 +8,7 @@ class FluentCartProductCard {
         if (FluentCartProductCard.#instance !== null) {
             return FluentCartProductCard.#instance;
         }
-        AddToCartButton.init();
+
         ProductDetailsButton.init();
         FluentCartProductCard.#instance = this;
         return this;
@@ -19,5 +18,4 @@ class FluentCartProductCard {
 window.addEventListener("load", function () {
     FluentCartProductCard.init();
     window.FluentCartSingleProductModal = new SingleProductModal();
-    console.log('called')
 });

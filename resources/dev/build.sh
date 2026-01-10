@@ -41,6 +41,7 @@ IGNORE_PATTERNS=(
     "jsconfig.json"
     "node_modules/*"
     "builds/*"
+    "svn/*"
     "storage/session/*"
     "vendor/fakerphp.zip"
     "fluent-cart.zip"
@@ -49,7 +50,7 @@ IGNORE_PATTERNS=(
     "svn/*"
     "research/*"
     "resources/*"
-    "node_modules"
+    "node_modules/*"
     "logs/*"
     ".*"
     "dev-docs/*"
@@ -60,7 +61,7 @@ IGNORE_PATTERNS=(
     "vite.config.js"
     "pnpm-lock.yaml"
     "postcss.config.js"
-    "tailwind.config.js",
+    "tailwind.config.js"
     "globals_dev.php"
 )
 
@@ -103,9 +104,17 @@ show_progress() {
     local completed=$(( current * width / total ))
     local remaining=$(( width - completed ))
 
-    local bar
-    bar=$(printf '█%.0s' $(seq 1 $completed))
-    bar+=$(printf '░%.0s' $(seq 1 $remaining))
+
+
+    local bar=""
+        if [[ "$current" -eq "$total" ]]; then
+            # When complete, fill entire bar with solid blocks
+            bar=$(printf '█%.0s' $(seq 1 $width))
+        else
+            # Normal progress bar with filled and empty blocks
+            bar=$(printf '█%.0s' $(seq 1 $completed))
+            bar+=$(printf '░%.0s' $(seq 1 $remaining))
+        fi
 
     printf "\r${BLUE}📦 Zipping [${NC}%s${BLUE}] %3d%% (${current}/${total})${NC}" "$bar" "$percentage"
 }
@@ -140,6 +149,6 @@ else
     exit 1
 fi
 
-echo ""
-echo -e "${YELLOW}💡 One-liner alternative:${NC}"
-echo 'mkdir -p builds && zip -r9 builds/fluent-cart.zip . -x "composer.lock" "package*.json" "jsconfig.json" "node_modules/*" "builds/*" "storage/session/*" "vendor/fakerphp.zip" "fluent-cart.zip" ".git/*" "build.sh" "research/*" "resources/*" "logs/*" ".*" "dev-docs/*" "dev/*" "fallBackCheck.js" "yarn.lock" "wpf/*" "vite.config.js" "*lock.yaml" "postcss.config.js" "tailwind.config.js" && echo "✅ ZIP created: $(ls -lh builds/fluent-cart.zip | awk "{print \$5}")"'
+#echo ""
+#echo -e "${YELLOW}💡 One-liner alternative:${NC}"
+#echo 'mkdir -p builds && zip -r9 builds/fluent-cart.zip . -x "composer.lock" "package*.json" "jsconfig.json" "node_modules/*" "builds/*" "storage/session/*" "vendor/fakerphp.zip" "fluent-cart.zip" ".git/*" "build.sh" "research/*" "resources/*" "logs/*" ".*" "dev-docs/*" "dev/*" "fallBackCheck.js" "yarn.lock" "wpf/*" "vite.config.js" "*lock.yaml" "postcss.config.js" "tailwind.config.js" && echo "✅ ZIP created: $(ls -lh builds/fluent-cart.zip | awk "{print \$5}")"'

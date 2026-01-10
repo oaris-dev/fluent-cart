@@ -152,7 +152,7 @@ class StripeSubscriptions extends AbstractSubscriptionModule
 
         return [
             'status'      => StripeHelper::transformSubscriptionStatus($response),
-            'canceled_at' => $canceledAt ? gmdate('Y-m-d H:i:s', strtotime(Arr::get($response, 'canceled_at'))) : NULL
+            'canceled_at' => $canceledAt ? gmdate('Y-m-d H:i:s', $canceledAt) : NULL
         ];
     }
 

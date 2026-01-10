@@ -17,6 +17,8 @@ import {translateNumber} from "@/utils/translator/Translator";
 import AppConfig from "@/utils/Config/AppConfig";
 import Arr from "@/utils/support/Arr";
 import CustomColumnRenderer from "@/Bits/Components/CustomColumnRenderer.vue";
+import {formatOrderItems} from "@/Bits/common";
+import BundleProducts from "@/Bits/Components/BundleProducts.vue";
 
 
 
@@ -109,7 +111,17 @@ const getOrderTypeText = (type) => {
   }
 }
 
-// Expose selected rows to parent component if needed
+// Format all orders on a load
+const formattedOrders = (props.orders ?? []).map(order => {
+  return {
+    ...order,
+    order_items: order?.order_items?.length
+        ? formatOrderItems(order.order_items)
+        : []
+  };
+});
+
+// Expose selected rows to the parent component if needed
 defineExpose({
   selectedOrders,
 });
@@ -128,7 +140,7 @@ defineExpose({
 
 
       <el-table class="w-full compact-table"
-                  :data="orders"
+                  :data="formattedOrders"
                   :tooltip-options="{ popperClass: 'fct-tooltip-long' }"
                   @selection-change="handleSelectionChange"
         >
@@ -172,11 +184,14 @@ defineExpose({
                           <div class="fct-popover-content">
                             <div class="fct-product-orders-items is-scroll">
                               <p v-for="item in getFilteredItems(scope.row.order_items)" :key="item.id">
-                                <router-link class="title"
+                                <router-link v-if="item?.post_title" class="title"
                                              :to="{ name: 'product_edit', params: { product_id: item?.post_id } }">
                                   {{ item.post_title }}
                                 </router-link>
-                                <span class="variation-title"><b>{{ item.quantity }} </b> x {{ item.title }}</span>
+                                <span class="variation-title"><b>{{ translateNumber(item.quantity) }} </b> x {{ item.title }}</span>
+
+                                <!-- Bundle Products -->
+                                <BundleProducts v-if="item.bundle_items.length > 0" :product="item"/>
                               </p>
 
                               <p v-if="getFilteredItems(scope.row.order_items).length === 0">

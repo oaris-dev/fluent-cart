@@ -1,17 +1,53 @@
-const {InnerBlocks, useBlockProps} = wp.blockEditor;
+import blocktranslate from "@/BlockEditor/BlockEditorTranslator";
+import { ProductContainerContext } from "@/BlockEditor/ShopApp/Context/ProductContainerContext";
+
+
+const {InnerBlocks, useBlockProps, InspectorControls} = wp.blockEditor;
+const { PanelBody, ToggleControl } = wp.components;
+
 const ProductContainerBlock = {
-    attributes: {},
+    attributes: {
+        simulate_no_results: { type: 'boolean', default: false },
+        simulate_loading: { type: 'boolean', default: false },
+    },
+    category: "fluent-cart",
     edit: (props) => {
         const blockProps = useBlockProps({
             className: 'fluent-cart-product-container',
         });
-        const {context} = props;
+
+        const { simulate_no_results, simulate_loading } = props.attributes;
+
         return (
-            <div {...blockProps} >
-                <div  className="shop-app-preview">
-                    <InnerBlocks/>
-                </div>
-            </div>
+            <>
+                {/* Inspector Controls */}
+                <InspectorControls>
+                    <PanelBody title={blocktranslate('Simulation')}>
+                        <ToggleControl
+                            label={blocktranslate('Simulate No Results')}
+                            checked={simulate_no_results}
+                            onChange={(v) => props.setAttributes({ simulate_no_results: v })}
+                        />
+
+                        <ToggleControl
+                            label={blocktranslate('Simulate Loading')}
+                            checked={simulate_loading}
+                            onChange={(v) => props.setAttributes({ simulate_loading: v })}
+                        />
+                    </PanelBody>
+                </InspectorControls>
+
+                <ProductContainerContext.Provider value={{
+                    simulateNoResults: simulate_no_results,
+                    simulateLoading: simulate_loading,
+                }}>
+                    <div {...blockProps} >
+                        <div  className="shop-app-preview">
+                            <InnerBlocks/>
+                        </div>
+                    </div>
+                </ProductContainerContext.Provider>
+            </>
         );
     },
 

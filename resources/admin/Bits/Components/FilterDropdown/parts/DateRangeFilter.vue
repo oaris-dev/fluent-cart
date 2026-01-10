@@ -11,7 +11,6 @@
         :clearable="clearable"
         :shortcuts="dateShortcuts"
         @change="onChange"
-        @visible-change="onPanelVisible"
         :placement="placement"
         :disabled="disabled || !hasPro"
         v-translate-numbers="'translate-numbers'"

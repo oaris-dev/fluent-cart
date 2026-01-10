@@ -26,12 +26,6 @@
     <ul v-if="features.length" class="fct-feature-list">
       <li v-for="feature in features" :key="feature" v-html="feature"></li>
     </ul>
-
-    <div class="fct-feature-list-footer">
-      <el-button @click="()=>{
-      ElMessageBox.close()
-    }">{{ translate('Close') }}</el-button>
-    </div>
   </div>
 </template>
 

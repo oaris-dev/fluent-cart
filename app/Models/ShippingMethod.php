@@ -68,13 +68,31 @@ class ShippingMethod extends Model
             $query->whereIn('region', [$country, 'all']);
         });
 
-        $query = $query->where(function ($q) use ($state) {
-            $q->whereJsonLength('states', 0);
+        // SQLite-compatible substring extraction
+        $isSqlite = defined('DB_ENGINE') && DB_ENGINE === 'sqlite';
+        // SQLite: Use simple string search instead of JSON functions
+        if ($isSqlite) {
+            $query = $query->where(function ($q) use ($state) {
+            // Handle empty states
+            $q->where('states', '[]')
+                ->orWhereNull('states'); // fallback if states column is NULL
 
             if ($state) {
-                $q->orWhereJsonContains('states', $state);
+                // Check if the state exists in the array (simple string search)
+                $q->orWhere('states', 'LIKE', '%"' . $state . '"%');
             }
         });
+        } else {
+            // MySQL: Use JSON functions for filtering
+            $query = $query->where(function ($q) use ($state) {
+                $q->whereJsonLength('states', 0);
+
+                if ($state) {
+                    // Shipping methods containing the state
+                    $q->orWhereJsonContains('states', $state);
+                }
+            });
+        }
         $query->orderBy('amount', 'DESC');
 
         return $query->where('is_enabled', 1);

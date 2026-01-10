@@ -48,11 +48,21 @@ class  PaymentMethods
 
         $hasSubscription = $cart ? $cart->hasSubscription() : false;
 
+        $hasZeroRecurring = false;
+        if ($hasSubscription && $cart) {
+            foreach ($cart->cart_data as $item) {
+                if (Arr::get($item, 'is_recurring_coupon') === 'yes' && Arr::get($item, 'line_total') === 0) {
+                    $hasZeroRecurring = true;   
+                    break;
+                }
+            }
+        }
+
         foreach ($paymentMethods as $paymentMethod) {
             $settings = $paymentMethod->settings->get();
             if (Arr::get($settings, 'is_active') === 'yes') {
                 $isCurrencySupported = $paymentMethod->isCurrencySupported();
-                if (!$isCurrencySupported || ($hasSubscription && !$paymentMethod->has('subscriptions'))) {
+                if (!$isCurrencySupported || ($hasSubscription && !$paymentMethod->has('subscriptions')) || ($hasZeroRecurring && !$paymentMethod->has('zero_recurring'))) {
                     continue;
                 }
                 $activePaymentMethods[] = $paymentMethod;

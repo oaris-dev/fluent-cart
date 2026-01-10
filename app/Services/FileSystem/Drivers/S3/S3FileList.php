@@ -120,10 +120,18 @@ class S3FileList
         $files = [];
         $contents = Arr::get($array, 'Contents', []);
 
+        $decodeFileKey = function ($key) {
+            // convert + back to space first
+            $key = str_replace('+', ' ', $key);
+
+            // Then decode %XX safely
+            return rawurldecode($key);
+        };
+
         if (!Arr::has($contents, 'Key')) {
             foreach ($contents as $file) {
                 $files[] = [
-                    'name'   => $file['Key'],
+                    'name'   => $decodeFileKey($file['Key']),
                     'size'   => $file['Size'],
                     'driver' => 's3',
                     'bucket' => $this->bucket,
@@ -131,7 +139,7 @@ class S3FileList
             }
         } else {
             $files[] = [
-                'name'   => $contents['Key'],
+                'name'   => $decodeFileKey($contents['Key']),
                 'size'   => $contents['Size'],
                 'driver' => 's3',
                 'bucket' => $this->bucket,
