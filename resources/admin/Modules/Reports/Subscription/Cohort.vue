@@ -17,8 +17,8 @@
 
           <Card.Container class="overflow-hidden">
             <Card.Header>
-              <div class="fct-cohort-settings flex items-center gap-2 justify-between flex-1">
-                <div class="flex gap-2 items-center">
+              <div class="fct-cohort-settings">
+                <div class="fct-cohort-settings-group">
                   <el-button-group>
                     <el-button :type="groupBy === 'year' ? 'primary' : ''" size="small" @click="groupBy = 'year'">
                       {{ translate('Year') }}

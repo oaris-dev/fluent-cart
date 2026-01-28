@@ -7,7 +7,8 @@ let form = useFormModel();
 
 const emit = defineEmits(["change"]);
 
-const props = defineProps(["schema", "values", 'submit_button_text', 'form_name']);
+const props = defineProps(["schema", "values", 'submit_button_text', 'form_name', 'widget']);
+
 
 
 const getState = () => {
@@ -23,6 +24,10 @@ const resetForm = () => {
   form.reset();
 }
 
+const resetOnSave = ()=>{
+  return props.widget?.reset_on_save == true;
+}
+
 const triggerChange = inject('triggerChange')
 
 onMounted(() => {
@@ -35,7 +40,7 @@ onMounted(() => {
     })
 })
 
-defineExpose({getState, resetForm})
+defineExpose({getState, resetForm, resetOnSave})
 </script>
 
 <template>

@@ -68,9 +68,13 @@ export default {
       bulkOptionValue: '',
       bulkOptions: [
         {
+          value: 'duplicate_products',
+          label: 'Duplicate products',
+        },
+        {
           value: 'delete_products',
           label: 'Delete selected products',
-        },
+        }
       ],
     }
   },
@@ -95,6 +99,14 @@ export default {
           message: 'Please select product',
           type: 'error'
         });
+      }
+
+      if (this.bulkOptionValue === 'duplicate_products') {
+        this.doBulkAction({
+          action: 'duplicate_products',
+          product_ids: productIds
+        })
+        return;
       }
 
       this.$confirm('Are you sure you want to delete these ' + productIds.length + ' products. This action is not recoverable',

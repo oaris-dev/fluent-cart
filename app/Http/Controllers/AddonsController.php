@@ -2,6 +2,7 @@
 
 namespace FluentCart\App\Http\Controllers;
 
+use FluentCart\App\App;
 use FluentCart\App\Services\PluginInstaller\BackgroundInstaller;
 use FluentCart\App\Vite;
 use FluentCart\Framework\Http\Request\Request;
@@ -81,10 +82,35 @@ class AddonsController extends Controller
             ]
         ];
 
+        $addons = array_merge($addons, $this->getPremiumIntegrations());
+
         $addons = apply_filters('fluent_cart/integration/addons', $addons);
 
         return [
             'addons' => $addons
+        ];
+    }
+
+    public function getPremiumIntegrations() {
+        return [
+            'webhook' => [
+                'title'       => __('Webhook', 'fluent-cart'),
+                'description' => __('Send data anywhere via webhook', 'fluent-cart'),
+                'logo'        => Vite::getAssetUrl('images/integrations/webhook.svg'),
+                'enabled'     => App::isProActive() ? true : false,
+                'is_pro'      => true,
+                'is_pro_active' => App::isProActive(),
+                'categories'  => ['core'],
+            ],
+            'wp_user' => [
+                'title'       => __('WP User Create/Update', 'fluent-cart'),
+                'description' => __('Create / Update WP User with Custom Roles on order events', 'fluent-cart'),
+                'logo'        => Vite::getAssetUrl('images/integrations/wp_user.svg'),
+                'enabled'     => App::isProActive() ? true : false,
+                'is_pro_active' => App::isProActive(),
+                'is_pro'      => true,
+                'categories'  => ['core'],
+            ],
         ];
     }
 

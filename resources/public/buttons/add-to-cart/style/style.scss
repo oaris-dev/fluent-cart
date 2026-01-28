@@ -44,3 +44,20 @@
     }
   }
 }
+
+.fct-loader {
+  @apply relative;
+  .fluent-cart-loader {
+    @apply duration-300 pointer-events-none justify-center items-center absolute inset-0 w-full h-full hidden;
+    background-color: inherit;
+    border-radius: inherit;
+    svg {
+      @apply w-5 h-5 mr-2 text-gray-200 animate-spin fill-blue-600;
+    }
+  }
+  &.fct-loading {
+    .fluent-cart-loader {
+      @apply flex;
+    }
+  }
+}

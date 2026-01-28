@@ -119,7 +119,7 @@ export default {
         this.$emit('setAddressPrimary', data);
       } else if (action === 'remove') {
         ElMessageBox.confirm(
-            translate('Are you sure want to delete this address?'),
+            translate('Are you sure you want to delete this address?'),
             translate('Warning'), {
               customClass: 'fluent-cart-customer-profile-app',
               confirmButtonText: translate('Yes, Delete!'),

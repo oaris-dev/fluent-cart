@@ -391,6 +391,7 @@ class MenuHandler
             'light' => Vite::getAssetUrl('images/logo/logo-full.svg'),
         ];
         $appConfig['isModuleTabEnabled'] = $settings->isModuleTabEnabled();
+        $appConfig['upgrade_url'] = 'https://fluentcart.com/pricing/';
 
         $max_upload_size = wp_max_upload_size(); // Returns size in bytes
         $adminLocalizeData = apply_filters('fluent_cart/admin_app_data', [

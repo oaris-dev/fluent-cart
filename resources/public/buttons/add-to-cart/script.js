@@ -29,7 +29,9 @@ export default class AddToCartButton {
 
             target.setAttribute('data-quantity', '1');
 
-            window.fluentCartCart?.addProduct(detailsId, quantity, false, true).then((response) => {
+            const isCustom = target.getAttribute('data-is-custom');
+
+            window.fluentCartCart?.addProduct(detailsId, quantity, false, true, isCustom).then((response) => {
                 setTimeout(() => {
                     target.classList.remove('fct-loading');
                 }, 300);

@@ -422,28 +422,28 @@ class FluentCartCheckoutHandler {
 
     handleErrorMessage(errors, fieldKey) {
 
-        const formSections = document.querySelectorAll('.fct_checkout_form_section');
+        const formSections = document.querySelectorAll('[data-fct-checkout-form-section]');
 
-        formSections.forEach(section => {
+        formSections.forEach(formSection => {
             // Loop through each error configuration
-            Object.entries(this.#errorConfig).forEach(([selector, fieldKeys]) => {
-                const errorElement = section.querySelector(selector);
+            Object.entries(this.#errorConfig).forEach(([errorSelector, fieldKeys]) => {
+                const errorContainer = formSection.querySelector(errorSelector);
 
-                if (!errorElement) return;
+                if (!errorContainer) return;
 
                 const messages = this.getFieldsPriorityBaseErrors(errors, fieldKeys);
 
 
                 if (Array.isArray(messages) && messages.length) {
-                    errorElement.classList.add('show_error');
-                    errorElement.innerHTML = messages
+                    errorContainer.classList.add('show_error');
+                    errorContainer.innerHTML = messages
                         .map(err =>
                             `<span data-fct-error-field="${err.field}">${err.message}</span>`
                         )
                         .join('');
                 } else {
-                    errorElement.classList.remove('show_error');
-                    errorElement.innerHTML = '';
+                    errorContainer.classList.remove('show_error');
+                    errorContainer.innerHTML = '';
                 }
             });
         });
@@ -592,7 +592,14 @@ class FluentCartCheckoutHandler {
                 this.translate("Please wait..."),
                 data?.buttonState
             );
-            window.location.href = data.redirect_to;
+            // Check if we're in an iframe (modal checkout)
+            if (window.self !== window.top) {
+                // We're in an iframe, redirect the parent window
+                window.top.location.href = data.redirect_to;
+            } else {
+                // Normal redirect
+                window.location.href = data.redirect_to;
+            }
         }
 
         if (data?.actionName === "custom") {
@@ -607,7 +614,14 @@ class FluentCartCheckoutHandler {
                 )
             );
         } else if (data?.actionName === "redirect") {
-            window.location.href = data?.payment_args?.checkout_url;
+            // Check if we're in an iframe (modal checkout)
+            if (window.self !== window.top) {
+                // We're in an iframe, redirect the parent window
+                window.top.location.href = data?.payment_args?.checkout_url;
+            } else {
+                // Normal redirect
+                window.location.href = data?.payment_args?.checkout_url;
+            }
         }
     }
 

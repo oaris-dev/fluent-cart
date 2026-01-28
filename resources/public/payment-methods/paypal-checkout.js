@@ -79,7 +79,14 @@ class PaypalCheckout {
                                     if(res?.redirect_url) {
                                         that.paymentLoader.triggerPaymentCompleteEvent(res);
                                         that.paymentLoader?.changeLoaderStatus('redirecting');
-                                        window.location.href = res.redirect_url;
+                                        
+                                        // Handle redirect based on checkout mode (modal or single page)
+                                        if (window.CheckoutHelper) {
+                                            window.CheckoutHelper.handleCheckoutRedirect(res.redirect_url);
+                                        } else {
+                                            // Fallback if CheckoutHelper is not available
+                                            window.location.href = res.redirect_url;
+                                        }
                                     }
                                 } catch (error) {
                                     console.error('An error occurred while parsing the response:', error?.message);
@@ -197,7 +204,14 @@ class PaypalCheckout {
                                 if (res?.redirect_url) {
                                     that.paymentLoader.triggerPaymentCompleteEvent(res);
                                     that.paymentLoader?.changeLoaderStatus('redirecting');
-                                    window.location.href = res.redirect_url;
+                                    
+                                    // Handle redirect based on checkout mode (modal or single page)
+                                    if (window.CheckoutHelper) {
+                                        window.CheckoutHelper.handleCheckoutRedirect(res.redirect_url);
+                                    } else {
+                                        // Fallback if CheckoutHelper is not available
+                                        window.location.href = res.redirect_url;
+                                    }
                                 }
                             } catch (error) {
                                 console.error('An error occurred while parsing the response:', error);

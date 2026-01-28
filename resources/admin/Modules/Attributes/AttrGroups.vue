@@ -383,7 +383,7 @@ export default {
         return;
       }
 
-      this.$confirm('Are you sure want to delete this group? This action is not recoverable.', 'Confirm Delete!',
+      this.$confirm('Are you sure you want to delete this group? This action is not recoverable.', 'Confirm Delete!',
           {
             confirmButtonText: 'Yes, Delete this group',
             cancelButtonText: 'Cancel',

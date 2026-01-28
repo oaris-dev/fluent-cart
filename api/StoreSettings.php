@@ -50,6 +50,7 @@ class StoreSettings implements ArrayableInterface
             // 'thousand_separator'                   => 'comma',
             'decimal_separator'                    => 'dot',
             'checkout_method_style'                => 'logo',
+            'enable_modal_checkout'                => 'no',
             'require_logged_in'                    => 'no',
             'show_cart_icon_in_nav'                => 'no',
             'show_cart_icon_in_body'               => 'yes',
@@ -432,6 +433,43 @@ class StoreSettings implements ArrayableInterface
                                     ],
                                 ]
                             ],
+
+//                            'settings_hr_modal' => [
+//                                'type'  => 'html',
+//                                'value' => '<hr class="settings-divider">'
+//                            ],
+//
+//                            'modal_checkout_grid' => [
+//                                'type'            => 'grid',
+//                                'columns'         => [
+//                                    'default' => 1,
+//                                    'md'      => 3
+//                                ],
+//                                'disable_nesting' => true,
+//                                'schema'          => [
+//                                    'label'                 => [
+//                                        'type'  => 'html',
+//                                        'value' => '<span class="setting-label">' . __('Buy Now Button Behavior', 'fluent-cart') . '</span>
+//                                                            <div class="form-note">' . __("Choose how the Buy Now button behaves. Modal checkout provides a seamless experience without leaving the product page.", 'fluent-cart') . '</div>'
+//                                    ],
+//                                    "enable_modal_checkout" => [
+//                                        'wrapperClass' => 'col-span-2 flex items-center',
+//                                        "label"        => '',
+//                                        "type"         => "radio",
+//                                        "options"      => [
+//                                            [
+//                                                "label" => __('Redirect to Checkout Page', 'fluent-cart'),
+//                                                "value" => 'no',
+//                                            ],
+//                                            [
+//                                                "label" => __('Open Checkout in Modal', 'fluent-cart'),
+//                                                "value" => 'yes',
+//                                            ],
+//                                        ],
+//                                        "value"        => "no"
+//                                    ],
+//                                ]
+//                            ],
                         ],
                     ],
 //                    'button_setup'           => [

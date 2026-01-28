@@ -123,13 +123,14 @@ export function parseAddress(object, type = 'billing', shouldExcludeName = false
         object['state'],
         object['postcode'],
         object['country'],
-        object['phone'],
     ];
-    address = address.filter((item) => {
+
+    let newAddress = address.filter((item) => {
         return item !== null && typeof item !== 'undefined' && item.toString().trim().length > 0;
     }).join(', ');
+
     /* translators: %s is the address type */
-    return address || translate(
+    return newAddress || translate(
         'No %s address provided',
         type
     );

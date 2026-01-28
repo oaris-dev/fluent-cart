@@ -27,7 +27,8 @@ const CollapsibleList = (props) => {
                             title={variants[index].variation_title}
                             media={variants[index].thumbnail}
                             stock={stockStatus}
-                            price={variants[index].item_price}
+                            // price={variants[index].item_price/100}
+                            price={''}
                             updateSelectedVariations={updateSelectedVariations}
                             checked={Object.keys(selectedVariations).includes(String(variants[index].id))}
                         />

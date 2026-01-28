@@ -467,11 +467,21 @@
     }
   }
 }
+.fct-cohort-settings {
+  @apply flex items-center gap-2 justify-between flex-1;
+}
+.fct-cohort-settings-group {
+  @apply flex gap-2 items-center flex-wrap;
+}
+
 // Responsive 
 @media (max-width: 1024px) {
   .fct-report-order-summary {
     &.summary-col-2 {
       @apply grid-cols-1 gap-0;
+    }
+    &.summary-col-4 {
+      @apply grid-cols-2;
     }
 
     .summary-item::after {

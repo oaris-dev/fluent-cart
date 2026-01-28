@@ -73,7 +73,7 @@ const handleResetNotifications = () => {
 }
 
 const deleteNotification = (id, name) => {
-  $confirm(`Are you sure want to delete "${name}"?`, "Confirm Delete!", {
+  $confirm(`Are you sure you want to delete "${name}"?`, "Confirm Delete!", {
     confirmButtonText: "Yes, Delete!",
     cancelButtonText: "Cancel",
     type: "warning",

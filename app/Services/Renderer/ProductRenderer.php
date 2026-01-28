@@ -2,15 +2,18 @@
 
 namespace FluentCart\App\Services\Renderer;
 
-use FluentCart\Api\ModuleSettings;
+use FluentCart\App\App;
+use FluentCart\App\Services\FrontendView;
+use FluentCart\App\Vite;
 use FluentCart\Api\StoreSettings;
+use FluentCart\Api\ModuleSettings;
 use FluentCart\App\Helpers\Helper;
 use FluentCart\App\Models\Product;
-use FluentCart\App\Models\ProductVariation;
-use FluentCart\App\Vite;
 use FluentCart\Framework\Support\Arr;
-use FluentCart\App\App;
+use FluentCart\App\Http\Routes\WebRoutes;
+use FluentCart\App\Models\ProductVariation;
 use FluentCart\Framework\Support\Collection;
+use FluentCart\App\Modules\Templating\AssetLoader;
 
 class ProductRenderer
 {
@@ -78,9 +81,10 @@ class ProductRenderer
             if (!$defaultVariationId || !in_array($defaultVariationId, $variationIds)) {
                 $defaultVariationId = Arr::get($variationIds, '0');
             }
-
-            $this->defaultVariationId = $defaultVariationId;
         }
+
+        // Always set resolved default variation id
+        $this->defaultVariationId = $defaultVariationId;
 
 
         $this->product->variants->load('bundleChildren.product');
@@ -888,7 +892,8 @@ class ProductRenderer
 
     public function renderPurchaseButtons($atts = [])
     {
-        $this->renderBuyNowButton($atts);
+        $buyNowButtonAtts = $atts;
+        $this->renderBuyNowButton($buyNowButtonAtts);
         $this->renderAddToCartButton($atts);
     }
 
@@ -911,6 +916,8 @@ class ProductRenderer
 
         $atts = wp_parse_args($atts, $defaults);
 
+        $enableModalCheckout = Helper::isModalCheckoutEnabled();
+
         $stockStatus = 'in-stock';
         if (ModuleSettings::isActive('stock_management')) {
             $stockStatus = $this->defaultVariant->isStock() ? 'in-stock' : 'out-of-stock';
@@ -920,6 +927,7 @@ class ProductRenderer
         if (!$this->defaultVariant->isStock()) {
             $variationClass .= ' is-hidden ';
         }
+
         $buyNowAttributes = [
                 'data-fluent-cart-direct-checkout-button' => '',
                 'data-variation-type'                     => $this->product->detail->variation_type,
@@ -931,11 +939,101 @@ class ProductRenderer
                 'data-url'                                => site_url('?fluent-cart=instant_checkout&item_id='),
         ];
 
+        if ($enableModalCheckout) {
+            $buyNowAttributes['data-fct-instant-checkout-button'] = '';
+            $buyNowAttributes['data-enable-modal-checkout'] = 'yes';
+        }
+
         $buyButtonText = apply_filters('fluent_cart/product/buy_now_button_text', $atts['buy_now_text'], [
                 'product' => $this->product
         ]);
         ?>
         <a <?php $this->renderAttributes($buyNowAttributes); ?> aria-label="<?php echo esc_attr($buyButtonText); ?>">
+            <?php echo wp_kses_post($buyButtonText); ?>
+        </a>
+        <?php
+    }
+
+    public function renderBuyNowButtonBlock($atts = [])
+    {
+        $text = Arr::get($atts, 'text', __('Buy Now', 'fluent-cart'));
+
+
+        // Stock management check using isStock() method
+//        if (ModuleSettings::isActive('stock_management')) {
+//            if ($this->product->detail->variation_type === 'simple' && $this->defaultVariant) {
+//                if (!$this->defaultVariant->isStock()) {
+//                    echo '<span aria-disabled="true">' . esc_html__('Out of stock', 'fluent-cart') . '</span>';
+//                    return;
+//                }
+//            }
+//        }
+
+        $defaults = [
+                'buy_now_text' => $text,
+                'class'        => '',
+                'target'       => '',
+                'rel'          => '',
+                'is_shortcode' => false,
+        ];
+
+        $atts = wp_parse_args($atts, $defaults);
+
+        $enableModalCheckout = Arr::get($atts, 'enable_modal_checkout', false);
+
+        $stockStatus = 'in-stock';
+        if (ModuleSettings::isActive('stock_management')) {
+            $stockStatus = $this->defaultVariant->isStock() ? 'in-stock' : 'out-of-stock';
+        }
+
+        $variationClass = 'fluent-cart-direct-checkout-button';
+        if (!$this->defaultVariant->isStock()) {
+            $variationClass .= ' is-hidden ';
+        }
+
+        $buyNowAttributes = [
+                'data-fluent-cart-direct-checkout-button' => '',
+                'data-variation-type'                     => $this->product->detail->variation_type,
+                'class'                                   => trim('wp-block-button__link wp-element-button ' . Arr::get($atts, 'class', '')),
+                'data-stock-availability'                 => $stockStatus,
+                'data-quantity'                           => '1',
+                'href'                                    => site_url('?fluent-cart=instant_checkout&item_id=') . ($this->defaultVariant ? $this->defaultVariant->id : '') . '&quantity=1',
+                'data-cart-id'                            => $this->defaultVariant ? $this->defaultVariant->id : '',
+                'data-url'                                => site_url('?fluent-cart=instant_checkout&item_id='),
+        ];
+
+        $target = Arr::get($atts, 'target');
+        if ($target) {
+            $buyNowAttributes['target'] = $target;
+            if (strtolower($target) === '_blank') {
+                $buyNowAttributes['rel'] = Arr::get($atts, 'rel', 'noopener noreferrer');
+            }
+        }
+        if ($enableModalCheckout) {
+            $buyNowAttributes['data-fct-instant-checkout-button'] = '';
+            $buyNowAttributes['data-enable-modal-checkout'] = 'yes';
+        }
+        $wrapperAttributes = '';
+        $isShortcode       = !empty($atts['is_shortcode']);
+
+        if ($isShortcode) {
+            foreach ($buyNowAttributes as $attr => $value) {
+                if ($value === '') {
+                    $wrapperAttributes .= esc_attr($attr) . ' ';
+                } else {
+                    $wrapperAttributes .= sprintf('%s="%s" ', esc_attr($attr), esc_attr((string)$value));
+                }
+            }
+            $wrapperAttributes = trim($wrapperAttributes);
+        } else {
+            $wrapperAttributes = get_block_wrapper_attributes($buyNowAttributes);
+        }
+
+        $buyButtonText = apply_filters('fluent_cart/product/buy_now_button_text', $atts['buy_now_text'], [
+                'product' => $this->product
+        ]);
+        ?>
+        <a <?php echo($wrapperAttributes); ?> aria-label="<?php echo esc_attr($buyButtonText); ?>">
             <?php echo wp_kses_post($buyButtonText); ?>
         </a>
         <?php
@@ -966,7 +1064,7 @@ class ProductRenderer
         }
 
         // Check stock availability using isStock() method
-        if (ModuleSettings::isActive('stock_management')) {
+        if (ModuleSettings::isActive('stock_management') && $this->defaultVariant) {
             if (!$this->defaultVariant->isStock()) {
                 $cartAttributes['disabled'] = 'disabled';
                 $cartAttributes['class'] .= ' out-of-stock';
@@ -1002,6 +1100,97 @@ class ProductRenderer
             </button>
         <?php
         endif;
+    }
+
+    public function renderAddToCartButtonBlock($atts = [])
+    {
+
+        $text = Arr::get($atts, 'text', __('Add To Cart', 'fluent-cart'));
+        $extraClass = trim(Arr::get($atts, 'class', ''));
+
+        $defaults = [
+                'add_to_cart_text' => $text,
+        ];
+
+        $atts = wp_parse_args($atts, $defaults);
+
+        $cartAttributes = [
+                'data-fluent-cart-add-to-cart-button'  => '',
+                'class'                               => 'wp-block-button__link wp-element-button fct-loader',
+                'data-cart-id'                        => $this->defaultVariant ? $this->defaultVariant->id : '',
+                'data-product-id'                     => $this->product->ID,
+                'data-variation-type'                 => $this->product->detail->variation_type,
+        ];
+
+        if ($extraClass) {
+            $cartAttributes['class'] .= ' ' . $extraClass;
+        }
+
+        // If the product does NOT support one-time purchase
+        if (!$this->hasOnetime) {
+            if (Helper::isAdminUser()) {
+                $view = '<p class="fct-admin-notice">' . esc_html__('Add to Cart is not supported for subscription product', 'fluent-cart') . '</p>';
+
+                FrontendView::make('', $view);
+                return;
+            }
+
+            return;
+        }
+
+        // Check stock availability using isStock() method
+        if (ModuleSettings::isActive('stock_management')) {
+            if (!$this->defaultVariant->isStock()) {
+                $cartAttributes['disabled'] = 'disabled';
+                $cartAttributes['class'] .= ' out-of-stock';
+                $cartAttributes['aria-disabled'] = 'true';
+            }
+        }
+
+        $addToCartText = apply_filters('fluent_cart/product/add_to_cart_text', $atts['add_to_cart_text'], [
+                'product' => $this->product
+        ]);
+
+        $wrapperAttributes = '';
+        $isShortcode       = !empty($atts['is_shortcode']);
+
+        if ($isShortcode) {
+            foreach ($cartAttributes as $attr => $value) {
+                if ($value === '') {
+                    $wrapperAttributes .= esc_attr($attr) . ' ';
+                } else {
+                    $wrapperAttributes .= sprintf('%s="%s" ', esc_attr($attr), esc_attr((string)$value));
+                }
+            }
+            $wrapperAttributes = trim($wrapperAttributes);
+        } else {
+            $wrapperAttributes = get_block_wrapper_attributes($cartAttributes);
+        }
+
+        ?>
+
+            <button <?php echo $wrapperAttributes; ?>
+                    aria-label="<?php echo esc_attr($addToCartText); ?>">
+                <span class="text">
+                    <?php echo wp_kses_post($addToCartText); ?>
+                </span>
+                <span class="fluent-cart-loader" role="status">
+                    <svg aria-hidden="true"
+                         width="20"
+                         height="20"
+                         class="w-5 h-5 text-gray-200 animate-spin fill-blue-600"
+                         viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path
+                                  d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                                  fill="currentColor"/>
+                          <path
+                                  d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                                  fill="currentFill"/>
+                    </svg>
+                </span>
+            </button>
+
+        <?php
     }
 
 

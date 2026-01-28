@@ -2,8 +2,8 @@ import Tab from "./tab/Tab.js";
 import ImageGallery from "./ImageGallery";
 
 window.FluentCartImageGallery = ImageGallery;
-document.addEventListener('DOMContentLoaded', () => {
 
+document.addEventListener('DOMContentLoaded', () => {
     class FluentCartSingleProduct {
         static #instance = null;
         #container;

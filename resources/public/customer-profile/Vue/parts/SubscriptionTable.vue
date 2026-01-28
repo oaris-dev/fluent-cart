@@ -60,8 +60,8 @@
                         </div>
 
                         <div class="fct-customer-orders-items-meta-wrap">
-                            <Badge :hide-icon="true" :type="scope.row.status" size="small" aria-hidden="true">
-                              {{ getStatusText(scope.row.status) }}
+                            <Badge :hide-icon="true" :type="scope.row?.overridden_status" size="small" aria-hidden="true">
+                              {{ getStatusText(scope.row?.overridden_status) }}
                             </Badge>
 
                             <div class="text-meta"

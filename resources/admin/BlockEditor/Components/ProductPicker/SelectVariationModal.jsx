@@ -17,6 +17,7 @@ const SelectVariationModal = (props) => {
         buttonLabel,
         allow_subscription = true,
         button = false,
+        not_subscribable = false
     } = props;
 
 
@@ -75,6 +76,7 @@ const SelectVariationModal = (props) => {
                         <div className="fct-popup-body">
 
                             <VariationSelector
+                                not_subscribable={not_subscribable}
                                 allow_subscription={allow_subscription}
                                 preSelectedVariations={preSelectedVariations}
                                 setAttributes={setAttributes}

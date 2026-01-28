@@ -62,7 +62,7 @@
 }
 
 .fct-global-search-result-list {
-  @apply p-0 m-0 list-none max-h-[200px] overflow-y-scroll;
+  @apply p-0 m-0 list-none max-h-[200px] overflow-x-hidden;
   &:active::-webkit-scrollbar-thumb,
   &:focus::-webkit-scrollbar-thumb,
   &:hover::-webkit-scrollbar-thumb {

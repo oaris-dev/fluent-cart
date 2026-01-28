@@ -69,8 +69,8 @@ export default class FluentCartCart {
     }
 
 
-    async addProduct(productId, quantity = 1, byInput = false, openCart = false) {
-        return this.#updateCart(productId, quantity, byInput, openCart);
+    async addProduct(productId, quantity = 1, byInput = false, openCart = false, isCustom = false) {
+        return this.#updateCart(productId, quantity, byInput, openCart, isCustom);
     }
 
     async removeProduct(variationId, openCart = false) {
@@ -118,7 +118,7 @@ export default class FluentCartCart {
     }
 
 
-    async #updateCart(productId = null, quantity = 1, byInput = false, openCart = false) {
+    async #updateCart(productId = null, quantity = 1, byInput = false, openCart = false, isCustom = false) {
         if (productId == null) {
             return;
         }
@@ -133,7 +133,8 @@ export default class FluentCartCart {
         const ref = this;
         let params = {
             item_id: productId,
-            quantity: quantity
+            quantity: quantity,
+            is_custom: isCustom,
         };
 
         if (byInput) {
@@ -171,8 +172,9 @@ export default class FluentCartCart {
                             if(Array.isArray(cartData)) {
                                 cartItemCount = cartData.length;
                                 //to all element that have data-cart-badge-count attr set the text as cartItemCount
-                                document.querySelectorAll('[data-cart-badge-count]').forEach(el => {
+                                document.querySelectorAll('[data-cart-badge-count], .fct-cart-badge-count').forEach(el => {
                                     el.textContent = cartItemCount.toString();
+                                    window.fluentcart_drawer_vars.cart_item_count = cartItemCount;
                                 });
                             }
 
@@ -461,6 +463,11 @@ export default class FluentCartCart {
 
 
     #handleMenuBarCartToggleButton() {
+
+        document.querySelectorAll('[data-cart-badge-count], .fct-cart-badge-count').forEach(el => {
+            el.textContent = window.fluentcart_drawer_vars?.cart_item_count || 0;
+        });
+
         const menuButtonContainer = document.querySelector('.fluent-cart-menu-cart-open-button-container');
         if (menuButtonContainer) {
             const containerParent = menuButtonContainer.closest('li');

@@ -144,7 +144,7 @@ export default class CurrencyFormatter {
         const formatted = new Intl.NumberFormat(undefined, {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
-        }).format(amount);
+        }).format(amount/100);
 
         const value = `${formatted}${suffix}`;
 

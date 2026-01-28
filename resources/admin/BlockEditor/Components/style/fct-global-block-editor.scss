@@ -663,3 +663,11 @@
   }
 }
 
+.fct-input {
+  @apply border border-solid border-gray-outline rounded text-sm p-2.5 leading-[1] text-system-dark focus:shadow-none focus:outline-none focus:border-primary-500 !important;
+}
+.fct-popup-search-wrap {
+  .fct-input {
+    @apply w-full;
+  }
+}

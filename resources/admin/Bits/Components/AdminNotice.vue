@@ -14,6 +14,24 @@ const props = defineProps({
 const appVars = inject('appVars');
 const route = useRoute();
 
+// Local reactive notices
+const notices = ref([]);
+
+// Sync with appVars on mount
+onMounted(() => {
+  notices.value = appVars.admin_notices || [];
+});
+
+// Watch appVars for changes
+watch(
+  () => appVars.admin_notices,
+  (newVal) => {
+    notices.value = [...newVal];
+  },
+  { deep: true }
+);
+
+// Layout classes
 const adminNoticeClass = computed(() => {
   let classes = 'notices fct-notices-wrap fct-layout-width ';
 
@@ -22,28 +40,109 @@ const adminNoticeClass = computed(() => {
   } else if (route.fullPath.includes('reports')) {
     classes += 'reports';
   }
-
-  return classes;
+  return classes.trim();
 });
 
-const hasNotices = computed(() => {
-  return appVars.admin_notices && appVars.admin_notices.length > 0;
-});
+// Visibility
+const hasNotices = computed(() => notices.value.length > 0);
 
-const showNotice = ref(false);
-onMounted(() => {
-  nextTick(() => {
-    showNotice.value = true;
-  });
+// Notice configuration mapping
+const NOTICE_CONFIG = {
+  activate_license: { icon: 'WarningFill', type: 'warning' },
+  deactivate_license: { icon: 'WarningFill', type: 'warning' },
+  update_license: { icon: 'WarningFill', type: 'warning' },
+  renew_license: { icon: 'WarningFill', type: 'warning' },
+  license_activation_success: { icon: 'CheckCircleFill', type: 'success' },
+};
+
+// Icon resolver
+const noticeIcon = (id) => NOTICE_CONFIG[id]?.icon || 'InformationFill';
+
+// Type resolver
+const noticeType = (id) => NOTICE_CONFIG[id]?.type || 'warning';
+
+const LICENSE_NOTICE_IDS = [
+  'activate_license',
+  'deactivate_license',
+  'renew_license',
+  'update_license',
+  'license_activation_success'
+];
+
+const upsertNotice = (notice) => {
+  if (!notice?.id) return;
+
+  /**
+   * License ACTIVATED (success)
+   * Remove all license related notices
+   */
+  if (notice.id === 'license_activation_success') {
+    notices.value = notices.value.filter(
+      n => !LICENSE_NOTICE_IDS.includes(n.id)
+    );
+
+    notices.value.push(notice);
+    autoRemove(notice);
+
+    appVars.admin_notices = appVars.admin_notices.filter(
+      n => !LICENSE_NOTICE_IDS.includes(n.id)
+    );
+    return;
+  }
+
+  /**
+   * License state changed (deactivate / renew / update)
+   * Remove license activation success notice
+   */
+  if (['deactivate_license', 'renew_license', 'update_license', 'activate_license']
+      .includes(notice.id)) {
+
+    notices.value = notices.value.filter(
+      n => n.id !== 'license_activation_success'
+    );
+  }
+
+  /**
+   * Upsert by ID
+   */
+  const index = notices.value.findIndex(n => n.id === notice.id);
+
+  if (index !== -1) {
+    notices.value.splice(index, 1, notice);
+  } else {
+    notices.value.push(notice);
+  }
+    
+  // Update global appVar
+  appVars.admin_notices = [...notices.value];
+};
+
+/**
+ * Auto-remove notice
+ */
+const autoRemove = (notice) => {
+  if (!notice.timeout) return;
+
+  setTimeout(() => {
+    notices.value = notices.value.filter(n => n.id !== notice.id);
+  }, notice.timeout);
+};
+
+window.addEventListener('fct-license-updated', (e) => {
+  upsertNotice(e.detail);
 });
 </script>
 
 <template>
   <div :class="adminNoticeClass" v-if="hasNotices">
-      <template v-for="notice in appVars.admin_notices">
-        <Alert type="warning" icon="WarningFill">
-          <div v-html="notice"/>
-        </Alert>
-      </template>
+    <Alert
+      v-for="(notice, index) in notices"
+      :key="notice.id || index"
+      :type="noticeType(notice.id)"
+      :icon="noticeIcon(notice.id)"
+      :data-fct-notice-wrapper="notice.type"
+    >
+      <div v-html="notice.html" />
+    </Alert>
   </div>
 </template>

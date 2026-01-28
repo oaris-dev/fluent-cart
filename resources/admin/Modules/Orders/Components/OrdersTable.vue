@@ -184,12 +184,22 @@ defineExpose({
                           <div class="fct-popover-content">
                             <div class="fct-product-orders-items is-scroll">
                               <p v-for="item in getFilteredItems(scope.row.order_items)" :key="item.id">
-                                <router-link v-if="item?.post_title" class="title"
-                                             :to="{ name: 'product_edit', params: { product_id: item?.post_id } }">
+                                <!-- Custom item: display as text -->
+                                <span 
+                                    v-if="item?.is_custom || item?.is_custom === 'true'"
+                                    class="variation-title" 
+                                >
+                                    {{ item.post_title }}
+                                </span>
+
+                                <!-- Normal product: internal route -->
+                                <router-link v-else class="title"
+                                  :to="{ name: 'product_edit', params: { product_id: item?.post_id } }">
                                   {{ item.post_title }}
                                 </router-link>
-                                <span class="variation-title"><b>{{ translateNumber(item.quantity) }} </b> x {{ item.title }}</span>
 
+                                <span class="variation-title"><b>{{ item.quantity }} </b> x {{ item.title }}</span>
+                                
                                 <!-- Bundle Products -->
                                 <BundleProducts v-if="item.bundle_items.length > 0" :product="item"/>
                               </p>

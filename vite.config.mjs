@@ -8,6 +8,26 @@ import fs from "fs"; // Add this dependency for file operations
 
 const serverConfig = require('./config/vite.json');
 
+// Read plugin version from fluent-cart.php
+function getPluginVersion() {
+    const pluginFile = fs.readFileSync(path.resolve(__dirname, 'fluent-cart.php'), 'utf8');
+    const match = pluginFile.match(/define\s*\(\s*['"]FLUENTCART_VERSION['"]\s*,\s*['"]([^'"]+)['"]\s*\)/);
+    return match ? match[1] : '1.0.0';
+}
+
+const PLUGIN_VERSION = getPluginVersion();
+console.log(`📦 Building FluentCart v${PLUGIN_VERSION}`);
+
+// Plugin to add cache busting query string to dynamic chunk imports
+const chunkCacheBustPlugin = {
+    name: 'chunk-cache-bust',
+    renderDynamicImport() {
+        return {
+            left: 'import(',
+            right: ' + "?ver=' + PLUGIN_VERSION + '")'
+        };
+    }
+};
 
 // https://vitejs.dev/config/
 
@@ -51,6 +71,11 @@ const inputs = [
     'resources/admin/BlockEditor/ProductGallery/style/product-gallery-block-editor.scss',
     'resources/admin/BlockEditor/Stock/StockBlock.jsx',
 
+    // Buttons
+    'resources/admin/BlockEditor/Buttons/AddToCartButtonBlockEditor.jsx',
+    'resources/admin/BlockEditor/Buttons/BuyNowButtonBlockEditor.jsx',
+    'resources/admin/BlockEditor/Buttons/style/button-block-editor.scss',
+
     'resources/admin/BlockEditor/Components/style/fct-global-block-editor.scss',
 
     // product card
@@ -73,7 +98,10 @@ const inputs = [
     "resources/admin/admin_hooks.js",
     "resources/admin/utils/edit-wp-user-global.js",
 
+    // Globals
     "resources/public/globals/FluentCartApp.js",
+    "resources/public/globals/style.scss",
+
     // Checkout
     "resources/public/checkout/FluentCartCheckout.js",
     "resources/public/checkout/style/checkout.scss",
@@ -131,6 +159,9 @@ const inputs = [
 
     "resources/public/orderbump/orderbump.js",
     "resources/styles/tailwind/taxonomy.scss",
+    "resources/public/checkout/style/modal-checkout.scss",
+    "resources/public/checkout/style/checkout-iframe.scss",
+    "resources/public/checkout/ModalCheckoutForm.js",
 ];
 
 let viteConfig;
@@ -253,9 +284,11 @@ export default defineConfig({
             input: inputs,
             output: {
                 manualChunks: undefined,
-                chunkFileNames: "[name]-[hash].js",
-                entryFileNames: "[name]-[hash].js",
+                chunkFileNames: "chunks/[name].js",
+                entryFileNames: "[name].js",
+                assetFileNames: "assets/[name][extname]",
             },
+            plugins: [chunkCacheBustPlugin],
         },
     },
 

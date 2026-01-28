@@ -6,13 +6,12 @@
       </div>
       <div class="content">
 
-        <h4> {{ Greeting.greeting() }} {{ user.full_name }}</h4>
+        <h4> {{ Greeting.greeting() }} {{ user.full_name }} 👋🏻</h4>
         <p>{{
             /* translators: %1$s - store name, %2$s - emoji */
             translate(
-                'Welcome to %1$s %2$s',
+                'Welcome to %1$s',
                 getStoreName(),
-                '👋🏻'
             )
           }}</p>
       </div>

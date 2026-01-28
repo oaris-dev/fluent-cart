@@ -11,6 +11,7 @@
         @open="fetchAddresses"
         :title="getTitle()"
         :append-to-body="true"
+        modal-class="fct-manage-order-address-modal"
     >
       <el-skeleton v-if="loading" animated :rows="4"/>
       <div v-if="!loading && !isEditAddress" class="fct-manage-address-wrap">
@@ -201,7 +202,7 @@ export default {
       } else if (command.action === "default") {
         this.setAddressPrimary(command.data);
       } else if (command.action === "remove") {
-        this.$confirm("Are you sure want to delete this address?", "Warning", {
+        this.$confirm("Are you sure you want to delete this address?", "Warning", {
           confirmButtonText: this.$t("Yes, Delete!"),
           cancelButtonText: this.$t("Cancel"),
           cancelButtonClass: "el-button--small",

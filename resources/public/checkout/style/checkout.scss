@@ -1352,7 +1352,8 @@ ul.fct_summary_items_list {
 /*== block checkout ==*/
 .fct_checkout {
   .fct_checkout_form_section,
-  .fct_checkout_agree_terms {
+  .fct_checkout_agree_terms,
+  .fct_allow_create_account_wrapper {
     @apply mb-6;
   }
   #fct_wrapper_ship_to_different {
@@ -1383,5 +1384,8 @@ ul.fct_summary_items_list {
       }
     }
   }
-} 
+}
 
+.fct-has-default-font-size {
+  font-size: 14px;
+}

@@ -244,6 +244,7 @@ class ProductCardRender
      */
     public function showBuyButton($atts = '')
     {
+        $enableModalCheckout = Helper::isModalCheckoutEnabled();
         $isSimple = $this->product->detail->variation_type === 'simple';
         $firstVariant = null;
         $buttonHref = $this->viewUrl;
@@ -291,6 +292,7 @@ class ProductCardRender
                     'class'                               => 'fluent-cart-add-to-cart-button',
                     'data-variation-type'                 => $this->product->detail->variation_type,
                     'data-fluent-cart-add-to-cart-button' => '',
+                    'data-is-custom'                      => false,
                     'aria-label'                          => $ariaLabel
             ];
         }
@@ -306,8 +308,13 @@ class ProductCardRender
         $anchorAttributes = [
                 'href'       => $buttonHref,
                 'class'      => 'fct-product-view-button',
-                'aria-label' => $ariaLabel
+                'aria-label' => $ariaLabel,
         ];
+
+        if ($enableModalCheckout) {
+            $anchorAttributes['data-fct-instant-checkout-button'] = '';
+            $anchorAttributes['data-enable-modal-checkout'] = 'yes';
+        }
 
         if ($isInstantCheckout) {
             $parsedCustomAttributes = $this->parseAttributes($atts);

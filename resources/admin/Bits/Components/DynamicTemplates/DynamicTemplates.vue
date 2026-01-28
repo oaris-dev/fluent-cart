@@ -117,10 +117,12 @@ const getFormStates = () => {
   return data;
 }
 const resetForms = () => {
-  console.log('called')
   if (Array.isArray(formRefs.value)) {
     for (let form of formRefs.value) {
-      form.resetForm();
+      if (form.resetOnSave()) {
+        form.resetForm();
+      }
+
     }
   }
 }
@@ -151,7 +153,9 @@ const formRefs = ref();
             <DynamicFormLoader :schema="widget.schema" :values="widget.values"
                                :submit_button_text="widget.submit_button_text" :form_name="widget.form_name"
                                ref="formRefs"
-                               @change="() => emit('change')"/>
+                               :widget="widget"
+                               @change="() => emit('change')"
+            />
           </template>
 
           <template v-else-if="typeof widget.component === 'object'">

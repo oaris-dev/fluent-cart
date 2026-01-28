@@ -241,6 +241,11 @@
 
 // switch
 .el-switch{
+    &.is-disabled {
+        .el-switch__input {
+            @apply opacity-0;
+        }
+    }
     &__label{
         @apply dark:text-gray-300;
         &.is-active{

@@ -697,13 +697,22 @@ class Helper
             return $raw_value;
         }
 
-        $raw_value = base64_decode($raw_value, true); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+        $decoded = base64_decode($raw_value, true); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+
+        if ($decoded === false) {
+            return $raw_value;
+        }
 
         $method = 'aes-256-ctr';
         $ivlen = openssl_cipher_iv_length($method);
-        $iv = substr($raw_value, 0, $ivlen);
 
-        $raw_value = substr($raw_value, $ivlen);
+        if (strlen($decoded) <= $ivlen) {
+            return $raw_value;
+        }
+
+        $iv = substr($decoded, 0, $ivlen);
+
+        $ciphertext = substr($decoded, $ivlen);
 
         if (defined('FLUENT_CART_ENCRYPTION_KEY')) {
             $key = FLUENT_CART_ENCRYPTION_KEY;
@@ -713,12 +722,12 @@ class Helper
 
         $salt = (defined('LOGGED_IN_SALT') && '' !== LOGGED_IN_SALT) ? LOGGED_IN_SALT : 'this-is-a-fallback-salt-but-not-secure';
 
-        $value = openssl_decrypt($raw_value, $method, $key, 0, $iv);
-        if (!$value || substr($value, -strlen($salt)) !== $salt) {
+        $decrypted = openssl_decrypt($ciphertext, $method, $key, 0, $iv);
+        if (!$decrypted || substr($decrypted, -strlen($salt)) !== $salt) {
             return false;
         }
 
-        return substr($value, 0, -strlen($salt));
+        return substr($decrypted, 0, -strlen($salt));
     }
 
     /**
@@ -1691,5 +1700,17 @@ class Helper
             array_combine(range(0,9),
             $digits)
         );
+    }
+
+    public static function isModalCheckoutEnabled(): bool
+    {
+        //$storeSettings = new StoreSettings();
+        //$enableModalCheckout = $storeSettings->get('enable_modal_checkout', 'no');
+        return apply_filters('fluent_cart/enable_modal_checkout', false);
+    }
+
+    public static function isAdminUser(): bool
+    {
+        return current_user_can('manage_options');
     }
 }

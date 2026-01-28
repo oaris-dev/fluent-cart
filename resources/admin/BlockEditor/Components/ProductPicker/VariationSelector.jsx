@@ -17,7 +17,8 @@ const VariationSelector = (props) => {
         onVariationSelectionUpdated,
         isMultiple = true,
         translationKey = 'fluent_cart_pricing_table_block_editor_data',
-        allow_subscription = true
+        allow_subscription = true,
+        not_subscribable = false
     } = props;
 
     const fetchUrl = rest.url + '/products';
@@ -90,6 +91,10 @@ const VariationSelector = (props) => {
             queryParams['scopes'] = ['cartable'];
         }
 
+        if (not_subscribable) {
+            queryParams['active_view'] = 'not_subscribable'
+        }
+
         apiFetch({
             path: addQueryArgs(fetchUrl, {
                 ...queryParams
@@ -143,7 +148,7 @@ const VariationSelector = (props) => {
                 <Input
                     icon
                     name="search"
-                    placeholder={blocktranslate('Type to search for products, then hit Enter')}
+                    placeholder={blocktranslate('Search for products...')}
                     onKeyDown={(event) => {
                         const value = event.target.value;
                         if (event.key === 'Enter') {

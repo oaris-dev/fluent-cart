@@ -141,6 +141,13 @@
                 <span
                     v-html="getOrderAddress(address, 'shipping', true)"
                 ></span>
+                <span v-if="address.phone" class="mt-3">
+                   <strong class="pr-1">{{ translate("Phone") }}:</strong>
+                  <a :href="'tel:' + address.phone" class="text-system-mid dark:text-gray-50 hover:underline">
+                     {{ address.phone }}
+                   </a>
+                </span>
+
               </span>
               <CopyToClipboard
                   :text="getOrderAddress(address)"
@@ -171,6 +178,13 @@
                     address.name
                   }}</strong>
                 <span v-html="getOrderAddress(address, 'billing', true)"></span>
+
+                <span v-if="address.phone" class="mt-3">
+                   <strong class="pr-1">{{ translate("Phone") }}:</strong>
+                  <a :href="'tel:' + address.phone" class="text-system-mid dark:text-gray-50 hover:underline">
+                     {{ address.phone }}
+                   </a>
+                </span>
               </span>
               <CopyToClipboard
                   :text="getOrderAddress(address)"

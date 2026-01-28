@@ -178,6 +178,13 @@
 .fct-manage-address-wrap .empty-text {
     @apply dark:text-gray-300;
 }
+.el-overlay {
+    &.fct-manage-order-address-modal {
+        .el-overlay-dialog {
+            @apply items-start;
+        }
+    }
+}
 .fct-custom-gutenberg-editor-dialog {
     .el-breadcrumb__inner{
         @apply overflow-hidden;

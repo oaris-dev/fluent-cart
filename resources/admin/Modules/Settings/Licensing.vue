@@ -184,6 +184,12 @@ export default {
       })
           .then(response => {
             this.licenseData = response;
+            if (response.notice) {
+                // Dispatch event to remove old license notice
+                window.dispatchEvent(new CustomEvent('fct-license-updated', {
+                    detail: response.notice
+                }));
+            }
           })
           .catch(errors => {
             if (errors.status_code == '422') {
@@ -203,6 +209,12 @@ export default {
       Rest.delete('settings/license')
           .then(response => {
             this.licenseData = response;
+            if (response.notice) {
+                // Dispatch event to update license notice
+                window.dispatchEvent(new CustomEvent('fct-license-updated', {
+                    detail: response.notice
+                }));
+            }
           })
           .catch(errors => {
             Notify.error(errors);

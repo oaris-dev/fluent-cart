@@ -1,4 +1,8 @@
 @config "./select.config.js";
+:root{
+  --fct-select-input-bg: var(--fct-input-bg-color, #ffffff);
+  --fct-select-input-text-color: var(--fct-input-text-color, theme('colors.system.dark'));
+}
 .fct-custom-searchable-select {
     @apply relative w-full box-border;
     * {
@@ -180,7 +184,7 @@
 .fct-nice-select {
     -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
     transition: all .2s ease-in-out;
-    @apply w-full h-9.5 pl-4.5 pr-7.5 clear-both whitespace-nowrap select-none box-border leading-[38px] relative outline-none text-[var(--fct-input-text-color)] bg-[var(--fct-input-bg-color)] text-sm cursor-pointer block font-normal rounded-none border-x-[1px] border-y-[0.5px] border-solid border-[var(--fct-checkout-input-border-color)] active:border-[#999] focus:border-[#999];
+    @apply w-full h-9.5 pl-4.5 pr-7.5 clear-both whitespace-nowrap select-none box-border leading-[38px] relative outline-none text-[var(--fct-select-input-text-color)] bg-[var(--fct-select-input-bg)] text-sm cursor-pointer block font-normal rounded-none border-x-[1px] border-y-[0.5px] border-solid border-[var(--fct-checkout-input-border-color)] active:border-[#999] focus:border-[#999];
 
     &:after {
         content: "";

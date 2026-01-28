@@ -22,8 +22,9 @@ done
 
 # Configuration
 SOURCE_DIR="$(pwd)"
+PLUGIN_SLUG="fluent-cart"
 BUILDS_DIR="$(pwd)/builds"
-OUTPUT_FILE="$BUILDS_DIR/fluent-cart.zip"
+OUTPUT_FILE="$BUILDS_DIR/${PLUGIN_SLUG}.zip"
 
 mkdir -p "$BUILDS_DIR"
 
@@ -33,59 +34,57 @@ else
     echo -e "${BLUE}📦 Creating ZIP archive (excluding faker)...${NC}"
 fi
 
-# Ignore patterns
-IGNORE_PATTERNS=(
-    "composer.lock"
-    "package-lock.json"
-    "package.json"
-    "jsconfig.json"
-    "node_modules/*"
-    "builds/*"
-    "svn/*"
-    "storage/session/*"
-    "vendor/fakerphp.zip"
-    "fluent-cart.zip"
-    ".git/*"
-    "build.sh"
-    "svn/*"
-    "research/*"
-    "resources/*"
-    "node_modules/*"
-    "logs/*"
-    ".*"
-    "dev-docs/*"
-    "dev/*"
-    "fallBackCheck.js"
-    "yarn.lock"
-    "wpf/*"
-    "vite.config.js"
-    "pnpm-lock.yaml"
-    "postcss.config.js"
-    "tailwind.config.js"
-    "globals_dev.php"
+# Files and folders to INCLUDE (whitelist approach)
+INCLUDE_ITEMS=(
+    "api"
+    "app"
+    "assets"
+    "boot"
+    "config"
+    "database"
+    "dummies"
+    "language"
+    "vendor"
+    "fluent-cart.php"
+    "readme.txt"
+    "composer.json"
+    "index.php"
 )
 
+# Remove existing zip file
+[[ -f "$OUTPUT_FILE" ]] && rm "$OUTPUT_FILE"
+
+echo -e "${YELLOW}📁 Preparing files...${NC}"
+
+# Get parent directory and folder name for proper WordPress zip structure
+PARENT_DIR="$(dirname "$SOURCE_DIR")"
+FOLDER_NAME="$(basename "$SOURCE_DIR")"
+
+# Build the include list with folder prefix
+INCLUDE_PATHS=()
+for item in "${INCLUDE_ITEMS[@]}"; do
+    INCLUDE_PATHS+=("${FOLDER_NAME}/${item}")
+done
+
+# Exclusion patterns for files within included folders
+EXCLUDE_ARGS=()
+
+# Always exclude these patterns from any included folder
+EXCLUDE_ARGS+=("-x" "*.DS_Store")
+EXCLUDE_ARGS+=("-x" "*/.DS_Store")
+EXCLUDE_ARGS+=("-x" "*.git*")
+
 if [[ "$INCLUDE_FAKER" == false ]]; then
-    IGNORE_PATTERNS+=("vendor/fakerphp/*")
-    IGNORE_PATTERNS+=("app/Http/Routes/FakerRoutes.php")
+    EXCLUDE_ARGS+=("-x" "${FOLDER_NAME}/vendor/fakerphp/*")
+    EXCLUDE_ARGS+=("-x" "${FOLDER_NAME}/app/Http/Routes/FakerRoutes.php")
     echo -e "${YELLOW}🚫 Excluding faker files${NC}"
 else
     echo -e "${GREEN}✅ Including faker files${NC}"
 fi
 
-# Build exclusion arguments
-EXCLUDE_ARGS=()
-for pattern in "${IGNORE_PATTERNS[@]}"; do
-    EXCLUDE_ARGS+=("-x" "$pattern")
-done
-
-[[ -f "$OUTPUT_FILE" ]] && rm "$OUTPUT_FILE"
-
-echo -e "${YELLOW}📁 Scanning files...${NC}"
-
 # Count files to be zipped
-TOTAL_FILES=$(zip -r9q /tmp/test_count.zip . "${EXCLUDE_ARGS[@]}" && unzip -l /tmp/test_count.zip | tail -1 | awk '{print $2}')
-rm -f /tmp/test_count.zip
+cd "$PARENT_DIR"
+TOTAL_FILES=$(find "${INCLUDE_PATHS[@]}" -type f 2>/dev/null | wc -l | tr -d ' ')
 
 if [[ "$TOTAL_FILES" -eq 0 ]]; then
     echo -e "${RED}❌ No files found to zip!${NC}"
@@ -104,17 +103,13 @@ show_progress() {
     local completed=$(( current * width / total ))
     local remaining=$(( width - completed ))
 
-
-
     local bar=""
-        if [[ "$current" -eq "$total" ]]; then
-            # When complete, fill entire bar with solid blocks
-            bar=$(printf '█%.0s' $(seq 1 $width))
-        else
-            # Normal progress bar with filled and empty blocks
-            bar=$(printf '█%.0s' $(seq 1 $completed))
-            bar+=$(printf '░%.0s' $(seq 1 $remaining))
-        fi
+    if [[ "$current" -eq "$total" ]]; then
+        bar=$(printf '█%.0s' $(seq 1 $width))
+    else
+        bar=$(printf '█%.0s' $(seq 1 $completed))
+        bar+=$(printf '░%.0s' $(seq 1 $remaining))
+    fi
 
     printf "\r${BLUE}📦 Zipping [${NC}%s${BLUE}] %3d%% (${current}/${total})${NC}" "$bar" "$percentage"
 }
@@ -122,11 +117,14 @@ show_progress() {
 echo -e "${BLUE}📦 Creating ZIP archive...${NC}"
 count=0
 
-# Actual progress tracking
-zip -r9 "$OUTPUT_FILE" . "${EXCLUDE_ARGS[@]}" | while read -r line; do
+# Create zip with only the specified folders and files
+# This creates proper WordPress structure: fluent-cart/files
+zip -r9 "$OUTPUT_FILE" "${INCLUDE_PATHS[@]}" "${EXCLUDE_ARGS[@]}" | while read -r line; do
     ((count++))
     show_progress "$count" "$TOTAL_FILES"
 done
+
+cd "$SOURCE_DIR"
 
 # Ensure the progress bar ends at 100%
 show_progress "$TOTAL_FILES" "$TOTAL_FILES"
@@ -141,14 +139,15 @@ if [[ -f "$OUTPUT_FILE" ]]; then
     fi
     FILE_SIZE_MB=$(echo "scale=2; $FILE_SIZE / 1024 / 1024" | bc)
 
-
-    echo -e "${GREEN}✅ ZIP file created in: $BUILDS_DIR${NC}"
+    echo -e "${GREEN}✅ ZIP file created: $OUTPUT_FILE${NC}"
     echo -e "${GREEN}📏 Plugin size: ${FILE_SIZE_MB} MB${NC}"
+
+    # Show included items
+    echo -e "${BLUE}📋 Included:${NC}"
+    for item in "${INCLUDE_ITEMS[@]}"; do
+        echo -e "   ${item}"
+    done
 else
     echo -e "${RED}❌ Failed to create ZIP file${NC}"
     exit 1
 fi
-
-#echo ""
-#echo -e "${YELLOW}💡 One-liner alternative:${NC}"
-#echo 'mkdir -p builds && zip -r9 builds/fluent-cart.zip . -x "composer.lock" "package*.json" "jsconfig.json" "node_modules/*" "builds/*" "storage/session/*" "vendor/fakerphp.zip" "fluent-cart.zip" ".git/*" "build.sh" "research/*" "resources/*" "logs/*" ".*" "dev-docs/*" "dev/*" "fallBackCheck.js" "yarn.lock" "wpf/*" "vite.config.js" "*lock.yaml" "postcss.config.js" "tailwind.config.js" && echo "✅ ZIP created: $(ls -lh builds/fluent-cart.zip | awk "{print \$5}")"'

@@ -43,7 +43,15 @@ class StripeCheckout {
                     name: 'never',
                     email: 'never'
                 }
-            }
+            },
+            terms: {
+                card: 'never',
+                wallet: 'never',
+                apple_pay: 'never',
+                google_pay: 'never',
+                amazon_pay: 'never',
+                paypal: 'never',
+            },
         };
 
         const paymentElement = await elements.create('payment', paymentElementOptions);
@@ -224,7 +232,14 @@ class StripeCheckout {
                                                 successUrl = responseJSON.redirect_url;
                                             }
                                         }
-                                        window.location.href = successUrl;
+
+                                        // Handle redirect based on checkout mode (modal or single page)
+                                        if (window.CheckoutHelper) {
+                                            window.CheckoutHelper.handleCheckoutRedirect(successUrl);
+                                        } else {
+                                            // Fallback if CheckoutHelper is not available
+                                            window.location.href = successUrl;
+                                        }
                                     } else {
                                         console.log(xhr.responseText, 'failed');
                                     }
@@ -349,7 +364,7 @@ window.addEventListener("fluent_cart_load_payments_stripe", function (e) {
     const stripeContainer = document.querySelector('.fluent-cart-checkout_embed_payment_container_stripe');
     removeErrorMessages();
     addLoadingText();
-    fetch(e.detail.paymentInfoUrl, {
+        fetch(e.detail.paymentInfoUrl, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

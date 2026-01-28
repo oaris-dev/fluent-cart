@@ -2,6 +2,8 @@ export default class CheckoutHelper {
 
     static quantity = null;
 
+    static excludeKeys = ['fluent-cart', 'fct_cart_hash'];
+
     static handleFragments(fragments) {
         let fargmentsReplaced = false;
         
@@ -65,9 +67,17 @@ export default class CheckoutHelper {
     static getParams() {
         const searchParams = new URLSearchParams(window.location.search);
         const params = {};
-        if (searchParams.has('fct_cart_hash')) {
-            params['fct_cart_hash'] = searchParams.get('fct_cart_hash');
+
+
+        if(window.fluentcart_checkout_vars.is_instant_checkout === 'yes'){
+            params['fct_cart_hash'] = window.fluentcart_checkout_vars.cart_hash;
         }
+
+        if(window.fluentcart_checkout_vars.is_modal_checkout === 'yes'){
+            params['modal_checkout'] = 'yes';
+        }
+
+
 
         if (searchParams.has('quantity')) {
             params['quantity'] = searchParams.get('quantity');
@@ -125,8 +135,20 @@ export default class CheckoutHelper {
         try {
             const fullUrl = new URL(url);
             for (const [key, value] of searchParams) {
+                if(CheckoutHelper.excludeKeys.includes(key)) continue;
                 fullUrl.searchParams.set(key, value);
             }
+
+            if(window.fluentcart_checkout_vars.is_instant_checkout === 'yes'){
+                fullUrl.searchParams.set('fct_cart_hash', window.fluentcart_checkout_vars.cart_hash);
+
+            }
+
+            if(window.fluentcart_checkout_vars.is_modal_checkout === 'yes'){
+                fullUrl.searchParams.set('modal_checkout', 'yes');
+            }
+
+
 
             // remove action param from url if exists
          //   fullUrl.searchParams.delete('action');
@@ -151,6 +173,31 @@ export default class CheckoutHelper {
         } catch (error) {
             console.error('Error building URL:', error);
             return url; // Fallback to raw URL
+        }
+    }
+
+    /**
+     * Handle checkout redirect based on checkout mode (modal or single page)
+     * @param {string} redirectUrl - The URL to redirect to
+     * @param {string} targetOrigin - Optional target origin for postMessage (defaults to '*')
+     */
+    static handleCheckoutRedirect(redirectUrl, targetOrigin = '*') {
+        if (!redirectUrl) {
+            console.error('CheckoutHelper: redirectUrl is required for handleCheckoutRedirect');
+            return;
+        }
+
+        const isModalCheckout = window.fluentcart_checkout_vars?.is_modal_checkout === 'yes';
+
+        if (isModalCheckout) {
+            // For modal checkout, send message to parent window
+            window.parent.postMessage({
+                type: 'fluentCartCheckoutComplete',
+                redirectUrl: redirectUrl
+            }, targetOrigin);
+        } else {
+            // For single page checkout, redirect directly
+            window.location.href = redirectUrl;
         }
     }
 }

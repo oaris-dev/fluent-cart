@@ -5,18 +5,22 @@
 class TurnstileHandler {
     constructor(checkoutHandler = null) {
         this.checkoutHandler = checkoutHandler;
-        // this.setupGlobalCallback();
+        this.pendingTokenPromise = null;
+        this.pendingResolve = null;
+        this.isExecuting = false;
+        this.setupGlobalCallback();
         this.autoRenderWidget();
     }
 
     /**
      * Setup global callback for Turnstile
      */
-    // setupGlobalCallback() {
-    //     window.fluentCartTurnstileCallback = function(token) {
-    //         window.fluentCartTurnstileToken = token;
-    //     };
-    // }
+    setupGlobalCallback() {
+        window.fluentCartTurnstileHandlerInstance = this;
+        window.fluentCartTurnstileCallback = function (token) {
+            window.fluentCartTurnstileHandlerInstance?.handleToken(token);
+        };
+    }
 
     /**
      * Check if Turnstile is enabled
@@ -62,9 +66,7 @@ class TurnstileHandler {
                     // Use string callback name to match global function
                     const renderedWidgetId = turnstile.render(widget, {
                         sitekey: siteKey,
-                        callback: function (token) {
-                            window.fluentCartTurnstileToken = token;
-                        },
+                        callback: this.handleToken.bind(this),
                         size: 'invisible',
                         theme: 'auto'
                     });
@@ -83,33 +85,30 @@ class TurnstileHandler {
      * Reset Turnstile widget
      * Clears the current token and resets the widget for next verification
      */
-   reset() {
-    if (!this.isEnabled() || typeof turnstile === 'undefined') {
-        return;
+    reset() {
+        if (!this.isEnabled() || typeof turnstile === 'undefined') {
+            return;
+        }
+
+        window.fluentCartTurnstileToken = null;
+        this.pendingTokenPromise = null;
+        this.pendingResolve = null;
+        this.isExecuting = false;
+
+        const widget = document.querySelector(
+            '[data-fluent-cart-turnstile-widget] .cf-turnstile'
+        );
+        if (!widget) return;
+
+        const widgetId = widget.getAttribute('data-widget-id');
+        if (!widgetId) return;
+
+        try {
+            turnstile.reset(widgetId);
+        } catch (e) {
+            console.error('Turnstile reset failed', e);
+        }
     }
-
-    window.fluentCartTurnstileToken = null;
-
-    const widget = document.querySelector(
-        '[data-fluent-cart-turnstile-widget] .cf-turnstile'
-    );
-    if (!widget) return;
-
-    const widgetId = widget.getAttribute('data-widget-id');
-    if (!widgetId) return;
-
-    try {
-        turnstile.reset(widgetId);
-
-        // 🔥 CRITICAL: re-execute after reset
-        setTimeout(() => {
-            turnstile.execute(widgetId);
-        }, 50);
-
-    } catch (e) {
-        console.error('Turnstile reset failed', e);
-    }
-}
 
 
     /**
@@ -123,7 +122,6 @@ class TurnstileHandler {
         }
 
         const turnstileToken = await this.getToken();
-        console.log(turnstileToken, 'turnstiletoken')
         if (!turnstileToken) {
             if (this.checkoutHandler?.cleanupAfterProcessing) {
                 this.checkoutHandler.cleanupAfterProcessing();
@@ -133,6 +131,7 @@ class TurnstileHandler {
                 className: "warning",
                 duration: 3000
             }).showToast();
+            this.reset();
             return false;
         }
 
@@ -163,6 +162,7 @@ class TurnstileHandler {
                 className: "warning",
                 duration: 3000
             }).showToast();
+            this.reset();
             return false;
         }
 
@@ -175,26 +175,122 @@ class TurnstileHandler {
      * @returns {Promise<string|null>}
      */
     async getToken() {
-        return new Promise(async (resolve) => {
-            if (!this.isEnabled()) {
-                resolve(null);
-                return;
+        if (!this.isEnabled()) {
+            return null;
+        }
+        if (typeof turnstile === 'undefined') {
+            return null;
+        }
+        const widget = document.querySelector('[data-fluent-cart-turnstile-widget] .cf-turnstile');
+        if (!widget) {
+            return null;
+        }
+
+        if (window.fluentCartTurnstileToken) {
+            return window.fluentCartTurnstileToken;
+        }
+
+        let widgetId = widget.getAttribute('data-widget-id');
+        if (!widgetId) {
+            const siteKey = widget.getAttribute('data-sitekey') || window.fluentcart_checkout_vars?.turnstile?.site_key;
+            if (!siteKey) {
+                return null;
             }
-            if (typeof turnstile === 'undefined') {
-                resolve(null);
-                return;
+            try {
+                widgetId = turnstile.render(widget, {
+                    sitekey: siteKey,
+                    callback: this.handleToken.bind(this),
+                    size: 'invisible',
+                    theme: 'auto'
+                });
+                if (widgetId) {
+                    widget.setAttribute('data-widget-id', widgetId);
+                }
+            } catch (error) {
+                return null;
             }
-            const widget = document.querySelector('[data-fluent-cart-turnstile-widget] .cf-turnstile');
-            if (!widget) {
-                resolve(null);
-                return;
+        }
+
+        if (this.pendingTokenPromise) {
+            return this.pendingTokenPromise;
+        }
+
+        this.pendingTokenPromise = new Promise((resolve) => {
+            let attempts = 0;
+            const maxAttempts = 30;
+            this.pendingResolve = resolve;
+
+            const poll = () => {
+                if (window.fluentCartTurnstileToken) {
+                    const token = window.fluentCartTurnstileToken;
+                    this.pendingTokenPromise = null;
+                    this.pendingResolve = null;
+                    this.isExecuting = false;
+                    resolve(token);
+                    return;
+                }
+
+                if (attempts >= maxAttempts) {
+                    this.pendingTokenPromise = null;
+                    this.pendingResolve = null;
+                    this.isExecuting = false;
+                    resolve(null);
+                    return;
+                }
+
+                attempts++;
+                setTimeout(poll, 100);
+            };
+
+            try {
+                if (!this.isExecuting) {
+                    this.isExecuting = true;
+                    let response = null;
+                    try {
+                        response = turnstile.getResponse(widgetId);
+                    } catch (error) {
+                        response = null;
+                    }
+
+                    if (response) {
+                        this.handleToken(response);
+                        return;
+                    }
+
+                    try {
+                        turnstile.reset(widgetId);
+                    } catch (error) {
+                        // ignore
+                    }
+                    turnstile.execute(widgetId);
+                }
+            } catch (error) {
+                this.isExecuting = false;
             }
-            if (window.fluentCartTurnstileToken) {
-                resolve(window.fluentCartTurnstileToken);
-                return;
-            }
-            resolve(null);
+
+            poll();
         });
+
+        return this.pendingTokenPromise;
+    }
+
+    resolvePendingToken(token) {
+        if (!this.pendingResolve) {
+            return;
+        }
+        const resolve = this.pendingResolve;
+        this.pendingResolve = null;
+        this.pendingTokenPromise = null;
+        this.isExecuting = false;
+        resolve(token);
+    }
+
+    handleToken(token) {
+        if (!token) {
+            return;
+        }
+        window.fluentCartTurnstileToken = token;
+        this.resolvePendingToken(token);
     }
 }
 

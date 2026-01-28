@@ -74,18 +74,22 @@ export default class CheckoutUIService {
     }
 
     enableCheckoutButton() {
+        this.initViews();
         this.setComponentState('checkoutButton', this.states.enable);
     }
 
     disableCheckoutButton() {
+        this.initViews();
         this.setComponentState('checkoutButton', this.states.disable);
     }
 
     hideCheckoutButton() {
+        this.initViews();
         this.hideComponent('checkoutButton');
     }
 
     showCheckoutButton() {
+        this.initViews();
         this.showComponent('checkoutButton');
     }
 

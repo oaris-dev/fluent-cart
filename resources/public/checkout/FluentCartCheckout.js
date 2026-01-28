@@ -2,6 +2,9 @@ import FluentCartCheckoutHandler from './FluentCartCheckoutHandler';
 import CheckoutHelper from "./CheckoutHelper";
 import TurnstileHandler from "./TurnstileHandler";
 
+// Expose CheckoutHelper to window for payment gateway JS files
+window.CheckoutHelper = CheckoutHelper;
+
 let firstTimeLoad = true;
 let fluentCheckout = {
     checkoutPageContainer: null,

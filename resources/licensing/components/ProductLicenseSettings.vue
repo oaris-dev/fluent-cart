@@ -216,7 +216,7 @@
               <DynamicIcon name="Empty/WebPage" class="w-[100px]"/>
             </div>
             <div style="max-width: 600px; margin: 0 auto; color: #606266; line-height: 1.6; text-align: left;">
-              <p style="font-size: 16px; font-weight: 500; margin-bottom: 12px; color: #303133;">
+              <p class="text-sm font-medium mb-3 text-system-dark dark:text-gray-50">
                 {{ translate('License Settings Not Available for Bundle Products') }}
               </p>
               <p style="font-size: 14px;">

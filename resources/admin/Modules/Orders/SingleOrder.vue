@@ -27,14 +27,23 @@
                 <el-breadcrumb-item :to="{ name: 'orders' }">
                   {{ translate("Orders") }}
                 </el-breadcrumb-item>
-                <el-breadcrumb-item
+                <!-- <el-breadcrumb-item
                     v-if="order?.parent_id && order.parent_id != '0'"
                     :to="{ name: 'view_order', params: {} }"
                 >
                   <a @click="getOrderUrl(order?.parent_id)">
                     #{{ order.parent_id }}
                   </a>
+                </el-breadcrumb-item> -->
+                <el-breadcrumb-item
+                    v-if="parentOrderId"
+                    :to="{ name: 'view_order', params: {} }"
+                >
+                <a @click="getOrderUrl(parentOrderId)">
+                    #{{ parentOrderId }}
+                </a>
                 </el-breadcrumb-item>
+
                 <el-breadcrumb-item> #{{ translateNumber(order_id) }}</el-breadcrumb-item>
               </el-breadcrumb>
               <div class="single-page-header-status-wrap">
@@ -175,7 +184,27 @@
                             "
                           >
                             <div class="product-thumbnail">
+                              <!-- External link -->
+                              <a
+                                v-if="product?.is_custom"
+                                :href="product?.other_info?.view_url"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="link"
+                              >
+                                <img
+                                    :src="
+                                    product.featured_media != null
+                                      ? product.featured_media
+                                      : getImageUrl(product)
+                                  "
+                                    :alt="product.title"
+                                    :class="getClass(product)"
+                                />
+                              </a>
+                              <!-- Internal route -->
                               <router-link
+                                  v-else
                                   class="link"
                                   :to="{
                                   name: 'product_edit',
@@ -200,7 +229,19 @@
                                     class="product-details-content-first flex flex-col"
                                 >
                                   <div class="product-title m-0">
+                                    <!-- External link -->
+                                    <a
+                                      v-if="product?.is_custom"
+                                      :href="product?.other_info?.view_url"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      class="link"
+                                    >
+                                      {{ product?.post_title }}
+                                    </a>
+                                    <!-- Internal route -->
                                     <router-link
+                                        v-else
                                         class="link"
                                         :to="{
                                         name: 'product_edit',
@@ -433,15 +474,18 @@
                     <tr v-if="order.tax_total">
                       <td>
                         {{ translate("Tax") }}
-                        {{ parseInt(order.tax_behavior) == 2 ?
-                          translate('(Included)') : translate('(Excluded)')
+                        {{
+                          parseInt(order.tax_behavior) == 2 ?
+                              translate('(Included)') : translate('(Excluded)')
                         }}
                       </td>
                       <td></td>
-                      <td>{{ formatNumber(order.tax_total) }} </td>
+                      <td>{{ formatNumber(order.tax_total) }}</td>
                     </tr>
                     <tr v-if="order.shipping_tax">
-                      <td>{{ translate("Shipping Tax") }} {{ parseInt(order.tax_behavior) == 2 ?  translate('(Included)') : translate('(Excluded)')}}</td>
+                      <td>{{ translate("Shipping Tax") }}
+                        {{ parseInt(order.tax_behavior) == 2 ? translate('(Included)') : translate('(Excluded)') }}
+                      </td>
                       <td></td>
                       <td>{{ formatNumber(order.shipping_tax) }}</td>
                     </tr>
@@ -708,12 +752,13 @@
                     :order_operation="order?.order_operation"
                 />
 
-                <TaxInformationWidget :taxId="taxId" />
+                <TaxInformationWidget :taxId="taxId"/>
 
               </div>
 
               <div v-if="order">
                 <DynamicTemplates
+                    ref="dynamicTemplates"
                     filter="single_order_page"
                     :widgets-query="{
                       'order_uuid': order.uuid,
@@ -933,6 +978,12 @@ export default {
     TransactionMobile,
     BundleProducts
   },
+
+  provide() {
+    return {
+      triggerChange: this.triggerChange
+    };
+  },
   data() {
     return {
       notFound: {
@@ -968,7 +1019,7 @@ export default {
         vendor_charge_id: ""
       },
       paymentMethodOption: [
-        { name: "Others", value: "others" }
+        {name: "Others", value: "others"}
       ],
       timeout: "",
       widgets: [],
@@ -1022,6 +1073,15 @@ export default {
     },
   },
   computed: {
+    parentOrderId() {
+        if (!this.order || !this.order.parent_id) {
+         return null;
+        }
+
+        return this.order.parent_id !== '0'
+            ? this.order.parent_id
+            : null;
+    },
     transactionType() {
       // basically subscription item will be only item in an order if it is a subscription order
       return this.order.order_items.some(
@@ -1035,6 +1095,9 @@ export default {
     },
   },
   methods: {
+    triggerChange(){
+      this.changes_made = 1;
+    },
     handleResize() {
       this.isMobile = window.innerWidth < 768;
     },
@@ -1046,7 +1109,7 @@ export default {
           )
       );
     },
-    triggerRefundModal(){
+    triggerRefundModal() {
       this.showRefundModal = true;
     },
     getNetPayment() {
@@ -1060,7 +1123,7 @@ export default {
       );
     },
     markOrderAsPaid() {
-      if(this.markingOrderAsPaid){
+      if (this.markingOrderAsPaid) {
         return;
       }
       this.markingOrderAsPaid = true;
@@ -1264,6 +1327,9 @@ export default {
       const orderData = {...this.order};
       delete orderData["customer"];
       delete orderData["note"];
+
+      orderData['metaValue'] = this.$refs['dynamicTemplates']?.getFormStates() || {};
+
 
       Rest.post("orders/" + this.order_id, {
         ...orderData,
@@ -1505,10 +1571,10 @@ export default {
     };
 
     const paymentMethods = (AppConfig.get('payment_routes') ?? []).filter(
-      method => !method?.upcoming
+        method => !method?.upcoming
     );
     paymentMethods.forEach(method => {
-       this.paymentMethodOption.unshift({
+      this.paymentMethodOption.unshift({
         name: method?.meta?.title,
         value: method?.path,
       });

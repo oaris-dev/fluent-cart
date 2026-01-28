@@ -1,6 +1,7 @@
 import UTMManager from "./utils/UTMManager";
 import FluentCartCart from "./Cart/FluentCartCart";
 import AddToCartButton from "../buttons/add-to-cart/script";
+import ModalCheckoutHandler from "../checkout/ModalCheckoutHandler";
 
 const translationStrings = {
     ...window.fluentcart_checkout_vars?.trans || {},
@@ -152,6 +153,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     window.fluentCartCart = new FluentCartCart().init();
     window.fluentCartUtmManager = new UTMManager();
+    AddToCartButton.init();
     window.fluentCartAjax = {
         get: function (data = {}, cancelable = false) {
             return request('GET', data, cancelable);
@@ -164,6 +166,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     window.fluentcart['ajax'] = window.fluentCartAjax;
     AddToCartButton.init();
+    ModalCheckoutHandler.init();
 
     window.dispatchEvent(
         new CustomEvent("fluent_cart_app_loaded", {})

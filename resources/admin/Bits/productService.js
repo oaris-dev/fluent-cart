@@ -34,6 +34,11 @@ function prepareProductList($raw, $orderId) {
     if ($raw) {
 
         for (const $elm of $raw) {
+            
+            if (!$elm?.detail) {
+                continue;
+            }
+
             item = {};
             item.id = $elm.detail.id; // this is the order_items_table id.
             item.order_id = $orderId; // this is order_table id

@@ -24,7 +24,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.#prefetchProduct();
             this.#bindPaginator();
 
-
             FluentCartShopApp.#instance = this;
             return this;
         }
@@ -86,6 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
         onProductFetched(views) {
             // Hook for external use if needed
         }
+
     }
 
     window.fluentCartShopApps = [];

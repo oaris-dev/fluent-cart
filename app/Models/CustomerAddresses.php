@@ -125,7 +125,8 @@ class CustomerAddresses extends Model
             'last_name' => $this->last_name,
             'full_name' => $this->full_name,
             'company_name' => $this->company_name,
-            'label' => $this->label
+            'label' => $this->label,
+            'phone' => $this->phone
         ];
 
         $addressParts = [

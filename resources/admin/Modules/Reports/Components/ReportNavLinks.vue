@@ -17,7 +17,7 @@
               :class="{'fct-tab-item-active': isRouteActive(route)}">
             <Tab.Link
                 @click="handleRouterPush(route)">
-              <DynamicIcon v-if="route.icon" :name="route.icon"/>
+              <DynamicIcon v-if="route.icon" :name="route.icon" class="w-5 h-5"/>
               {{ route.label }}
               <DynamicIcon name="ChevronRight" class="tab-icon-right"/>
             </Tab.Link>
@@ -61,31 +61,37 @@ const navLinks = [
     route: 'reports_overview',
     label: translate('Overview'),
     url: '/reports/overview',
+    icon: 'Overview'
   },
   {
     route: 'reports_sales',
     label: translate('Sales'),
     url: '/reports/sales',
+    icon: 'LineChart'
   },
   {
     route: 'reports_orders',
     label: translate('Orders'),
-    url: '/reports/orders'
+    url: '/reports/orders',
+    icon: 'Cart'
   },
   {
     route: 'reports_revenue',
     label: translate('Revenue'),
-    url: '/reports/revenue'
+    url: '/reports/revenue',
+    icon: 'Revenue'
   },
   {
     route: 'reports_refunds',
     label: translate('Refunds'),
-    url: '/reports/refunds'
+    url: '/reports/refunds',
+    icon: 'Refund'
   },
   {
     route: 'reports_subscriptions',
     label: translate('Subscriptions'),
     url: '/reports/subscriptions',
+    icon: 'Subscription',
     child: [
       {
         route: 'subscriptions-retention',
@@ -107,17 +113,20 @@ const navLinks = [
   {
     route: 'reports_products',
     label: translate('Products'),
-    url: '/reports/products'
+    url: '/reports/products',
+    icon: 'Product'
   },
   {
     route: 'reports_customer',
     label: translate('Customers'),
-    url: '/reports/customer'
+    url: '/reports/customer',
+    icon: 'Users'
   },
   {
     route: 'reports_sources',
     label: translate('Sources'),
-    url: '/reports/sources'
+    url: '/reports/sources',
+    icon: 'Source'
   },
 ];
 

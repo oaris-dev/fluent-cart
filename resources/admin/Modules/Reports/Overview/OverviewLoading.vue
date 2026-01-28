@@ -50,7 +50,7 @@ const loader4 = [
 
 <template>
   <div class="fct-overview-report-loader-wrap">
-    <div class="report-overview-col-2 grid gap-x-7.5 grid-cols-2">
+    <div class="report-overview-col-2 grid gap-x-7.5 grid-cols-1 xl:grid-cols-2">
       <div v-for="(loader, key) in loader1" :key="key">
         <Card.Container>
           <Card.Body>

@@ -144,10 +144,22 @@ const getOrderTypeText = (type) => {
                   <div class="fct-popover-content">
                     <div class="fct-product-orders-items is-scroll">
                       <p v-for="item in getFilteredItems(row.order_items)" :key="item.id">
-                        <router-link class="title"
-                                     :to="{ name: 'product_edit', params: { product_id: item?.post_id } }">
+                        <!-- If custom, use external link -->
+                        <a
+                          v-if="item?.is_custom && item?.other_info?.view_url"
+                          :href="item.other_info.view_url"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {{ item.post_title }}
+                        </a>
+
+                        <!-- Otherwise, use router-link -->
+                        <router-link v-else class="title"
+                          :to="{ name: 'product_edit', params: { product_id: item?.post_id } }">
                           {{ item.post_title }}
                         </router-link>
+                        
                         <span class="variation-title"><b>{{ item.quantity }} </b> x {{ item.title }}</span>
                       </p>
 

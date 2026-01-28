@@ -39,6 +39,8 @@ export default class PaymentLoader {
             } else {
                 this.payMethod = 'offline_payment';
                 window['is_offline_payment_ready'] = true;
+                this.#checkoutUiService.showCheckoutButton();
+                this.#checkoutUiService.enableCheckoutButton();
             }
         }
 
@@ -67,9 +69,16 @@ export default class PaymentLoader {
                     el.classList.remove('fct-payment-loading');
                     el.classList.remove('fct-payment-loading-failed');
                 });
+
                 document.querySelectorAll('.fct_payment_method_' + paymentMethod).forEach(el => {
                     el.classList.add('fct-payment-loading');
                 });
+
+                document.querySelector('.fluent-cart-checkout_embed_payment_container_' + paymentMethod).parentNode.classList.add('fct-payment-loading');
+
+                if(document.querySelector('.fct_place_order_btn_wrap')) {
+                    document.querySelector('.fct_place_order_btn_wrap').classList.add('fct-payment-loading');
+                }
             }
         });
 
@@ -91,6 +100,12 @@ export default class PaymentLoader {
                     el.classList.remove('fct-payment-loading');
                     el.classList.remove('fct-payment-loading-failed');
                 });
+
+                document.querySelector('.fluent-cart-checkout_embed_payment_container_' + paymentMethod).parentNode.classList.remove('fct-payment-loading');
+
+                if(document.querySelector('.fct_place_order_btn_wrap')) {
+                    document.querySelector('.fct_place_order_btn_wrap').classList.remove('fct-payment-loading');
+                }
             }
         });
 
@@ -101,7 +116,18 @@ export default class PaymentLoader {
     reinitializePaymentMethods() {
         const currentPayMethod = this.payMethod;
 
-        this.payMethod = this.#form.querySelector('input[name="_fct_pay_method"]:checked')?.value || currentPayMethod;
+        const paymentMethodsContainer = this.#form.querySelector('#fluent_payment_methods');
+
+        const hasPaymentMethods = !!paymentMethodsContainer;
+
+        if (!hasPaymentMethods) {
+            this.payMethod = 'offline_payment';
+            window['is_offline_payment_ready'] = true;
+            this.#checkoutUiService.showCheckoutButton();
+            this.#checkoutUiService.enableCheckoutButton();
+        } else {
+            this.payMethod = this.#form.querySelector('input[name="_fct_pay_method"]:checked')?.value || currentPayMethod;
+        }
 
         this.bindPaymentMethodListeners();
 
@@ -114,12 +140,10 @@ export default class PaymentLoader {
             checkedInput.parentNode.classList.add('active');
 
             const wrapper = checkedInput.parentNode;
-            const embed = wrapper.querySelector('.fluent-cart-checkout_embed_payment_container');
-            if (embed) {
-                // const allEmbeds = document.querySelectorAll('.fluent-cart-checkout_embed_payment_container');
-                // allEmbeds.forEach(e => e.style.display = 'none');
 
-                // embed.style.display = 'block';
+            const embed = document.querySelector('.fluent-cart-checkout_embed_payment_container_' + this.payMethod);
+            if (embed) {
+                embed.parentNode.classList.add('active');
 
                 const allInstructions = document.querySelectorAll('.fct_payment_method_instructions');
                 allInstructions.forEach(i => i.style.display = 'none');
@@ -128,7 +152,6 @@ export default class PaymentLoader {
                 if (instructions) {
                     instructions.style.display = 'block';
                 }
-
                 this.load(this.payMethod);
             }
         }
@@ -160,18 +183,20 @@ export default class PaymentLoader {
                     this.#checkoutUiService.enableCheckoutButton();
                 }
 
-                // const embeds = document.querySelectorAll('.fluent-cart-checkout_embed_payment_container');
-                // embeds.forEach(embed => {
-                //     embed.style.display = 'none';
-                // });
                 const allInstructions = document.querySelectorAll('.fct_payment_method_instructions');
                 allInstructions.forEach(node => {
                     node.style.display = 'none';
                 });
 
-                const embed = input.parentNode.querySelector('.fluent-cart-checkout_embed_payment_container');
+                const embed = document.querySelector('.fluent-cart-checkout_embed_payment_container_' + this.payMethod);
+
+                // remove active from all embed parents
+                document.querySelectorAll('.fluent-cart-checkout_embed_payment_container').forEach(box => box.parentNode.classList.remove('active'));
+
                 if (embed) {
-                    //embed.style.display = 'block';
+                    // add active to current embed parent
+                    embed.parentNode.classList.add('active');
+
                     const instructions = input.parentNode.querySelector('.fct_payment_method_instructions');
                     if (instructions) {
                         instructions.style.display = 'block';
@@ -257,15 +282,13 @@ export default class PaymentLoader {
 
                 firstPaymentMethodInput.parentNode.classList.add('active');
 
+                const firstPaymentMethodEmbed = document.querySelector('.fluent-cart-checkout_embed_payment_container_' + firstPaymentMethodInput.value);
+                if (firstPaymentMethodEmbed) {
+                    firstPaymentMethodEmbed.parentNode.classList.add('active');
+                }
 
                 const initialWrapper = firstPaymentMethodInput.parentNode;
-                const initialEmbed = initialWrapper.querySelector('.fluent-cart-checkout_embed_payment_container');
-                // if (initialEmbed) {
-                //     document.querySelectorAll('.fluent-cart-checkout_embed_payment_container').forEach(embed => {
-                //         embed.style.display = 'none';
-                //     });
-                //     initialEmbed.style.display = 'block';
-                // }
+
                 const initialInstructions = initialWrapper.querySelector('.fct_payment_method_instructions');
                 if (initialInstructions) {
                     document.querySelectorAll('.fct_payment_method_instructions').forEach(instruction => {
@@ -342,7 +365,7 @@ export default class PaymentLoader {
     hideLoader() {
         const loader = document.querySelector('.fct-order-processing');
         if (loader) {
-            loader.classList.add('hidden');
+            loader.classList.add('fct-loader-hidden');
         }
     }
 

@@ -850,3 +850,81 @@ input[type="number"] {
     @apply text-xs text-system-mid pl-[28px];
   }
 }
+
+.fct-duplicate-product-modal {
+  .product-action-modal,
+  .duplicate-product-modal {
+    .info-text {
+      @apply text-sm text-system-dark dark:text-gray-50;
+      strong {
+        @apply font-semibold;
+      }
+    }
+    .product-info {
+      @apply mb-4;
+    }
+
+    .options-wrapper {
+      @apply flex flex-col gap-4 mb-4 p-4 bg-gray-50 dark:bg-primary-700 rounded;
+      .el-checkbox {
+        @apply h-auto m-0;
+        &.is-disabled {
+          @apply opacity-70;
+        }
+        &__label {
+          @apply text-system-dark dark:text-gray-50 text-sm font-medium flex items-center gap-2;
+        }
+        .icon {
+          @apply w-4 h-4;
+        }
+      }
+    }
+
+    .el-alert {
+      &--warning {
+        &.is-light {
+          @apply bg-warning-800 text-gray-50;
+        }
+        .el-alert__title {
+          @apply text-gray-50;
+        }
+      }
+    }
+  }
+}
+
+/*==== duplicate product ====*/
+.products-preview {
+  @apply bg-gray-50 p-4 mb-4 mt-4 rounded dark:bg-dark-500;
+  .preview-title {
+    @apply text-sm mt-0 mb-2 font-medium text-system-dark dark:text-gray-50;
+  }
+  .product-list {
+    @apply list-none p-0 m-0 max-h-[200px] overflow-y-auto;
+  }
+  .product-item {
+    @apply py-2 px-3 mb-2 rounded-md bg-white text-sm text-system-dark border border-solid border-gray-outline last:mb-0 dark:bg-dark-600 dark:text-gray-50 dark:border-dark-400;
+  }
+
+  .product-name {
+    @apply block truncate;
+  }
+  .remaining-count {
+    @apply text-[13px] text-system-mid py-2 px-3;
+    font-style: italic;
+  }
+}
+
+
+/* Progress Section */
+.progress-section {
+  @apply bg-gray-50 p-4 rounded my-4 dark:bg-dark-500;
+  .progress-text {
+    @apply mt-3 mb-0 text-sm text-system-dark text-center dark:text-gray-50;
+  }
+}
+
+/* Results Section */
+.results-section {
+  @apply mt-5;
+}

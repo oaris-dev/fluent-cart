@@ -101,7 +101,7 @@
           </div>
         </li>
 
-        <li>
+        <li v-if="showNextBillingDate">
           <div class="fct-single-subscription-details-label">
             {{ $t("Next invoice") }}
           </div>
@@ -229,6 +229,10 @@ export default {
     },
     paymentMethod() {
       return this.subscription?.current_payment_method || '';
+    },
+    showNextBillingDate() {
+      const status = (this.subscription?.status || '').toLowerCase();
+      return (status === 'active' || status === 'trialing' || status === 'paused') && !!this.subscription?.next_billing_date;
     },
   },
   methods: {

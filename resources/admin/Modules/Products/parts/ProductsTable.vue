@@ -12,6 +12,7 @@ import DynamicIcon from "@/Bits/Components/Icons/DynamicIcon.vue";
 import RouteCell from "@/Bits/Components/TableNew/RouteCell.vue";
 import {formatNumber} from "@/Bits/productService";
 import CustomColumnRenderer from "@/Bits/Components/CustomColumnRenderer.vue";
+import {ref} from "vue";
 
 const props = defineProps({
   productTable: {
@@ -20,7 +21,9 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['delete']);
+const emit = defineEmits(['delete', 'duplicate', 'selectionChange']);
+
+const elTableRef = ref(null);
 
 const handleProductCommand = (command) => {
   if (command.action === 'delete') {
@@ -36,6 +39,8 @@ const handleProductCommand = (command) => {
     }).catch((errors) => {
       console.log(errors, ' handle product delete errors');
     });
+  } else if (command.action === 'duplicate') {
+    emit('duplicate', command.product);
   }
 }
 
@@ -72,11 +77,28 @@ const getVariationTypeText = (type) => {
   }
 }
 
+const handleSelectionChange = (selectedRows) => {
+  emit('selectionChange', selectedRows);
+}
+
+const clearSelection = () => {
+  elTableRef.value?.clearSelection?.();
+}
+
+defineExpose({
+  clearSelection
+});
+
 </script>
 
 <template>
-  <el-table :data="productTable.getTableData()" class="w-full compact-table">
-    <el-table-column v-if="false" type="selection" width="45"/>
+  <el-table
+      ref="elTableRef"
+      :data="productTable.getTableData()"
+      class="w-full compact-table"
+      @selection-change="handleSelectionChange"
+  >
+    <el-table-column type="selection" width="45"/>
 
     <el-table-column :label="translate('Products')" width="380">
       <template #default="scope">
@@ -114,6 +136,16 @@ const getVariationTypeText = (type) => {
 
                 <el-dropdown-item
                     :command="{
+                      action: 'duplicate',
+                      product: scope.row
+                    }"
+                >
+                  <DynamicIcon name="Duplicate"/>
+                  {{ translate('Duplicate') }}
+                </el-dropdown-item>
+
+                <el-dropdown-item
+                    :command="{
                       action: 'delete',
                       product: scope.row
                     }"
@@ -140,8 +172,8 @@ const getVariationTypeText = (type) => {
             <span v-if="scope.row.detail?.other_info?.is_bundle_product === 'yes'">{{ translate('Bundle') }} - </span>
             <span v-if="scope.row.detail">
               {{
-                  getProductTypeText(scope.row.detail.fulfillment_type)
-                }}
+                getProductTypeText(scope.row.detail.fulfillment_type)
+              }}
             </span>
             <span v-else>{{ translate('N/A') }}</span>
           </div>
@@ -290,6 +322,16 @@ const getVariationTypeText = (type) => {
                   <DynamicIcon name="Edit"/>
                   {{ translate('Edit') }}
                 </router-link>
+              </el-dropdown-item>
+
+              <el-dropdown-item
+                  :command="{
+                    action: 'duplicate',
+                    product: scope.row
+                  }"
+              >
+                <DynamicIcon name="Duplicate"/>
+                {{ translate('Duplicate') }}
               </el-dropdown-item>
 
               <el-dropdown-item

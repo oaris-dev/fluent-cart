@@ -65,11 +65,18 @@
                                     <div>
                                         <h5 class="title">
                                             {{ addon.title }}
-                                            <Badge :status="addon.enabled ? 'active' : 'info'"
+                                            <Badge v-if="addon.is_pro && !addon.enabled" status="warning" text="Pro"/>
+                                            <Badge v-else :status="addon.enabled ? 'active' : 'info'"
                                                    :text="addon.enabled ? 'enabled' : 'disabled'"/>
                                         </h5>
                                         <p class="desc">{{ addon.description }}</p>
-                                        <div v-if="!addon.enabled && addon.installable" class="mt-2">
+                                        <div v-if="addon.is_pro && !addon.is_pro_active" class="mt-2">
+                                            <el-button type="warning" size="small" tag="a" :href="upgradeUrl" target="_blank">
+                                                <DynamicIcon name="Crown" class="mr-1"/>
+                                                {{ translate('Upgrade to Pro') }}
+                                            </el-button>
+                                        </div>
+                                        <div v-else-if="!addon.enabled && addon.installable" class="mt-2">
                                             <el-button :loading="installingAdding == addonKey"
                                                        :disabled="installingAdding == addonKey"
                                                        @click="installAddon(addon, addonKey)" type="primary" size="small">
@@ -138,6 +145,7 @@ export default {
             modules: ["all", "crm", "lms", "core", 'marketing'],
             installationLoading: false,
             admin_url: AppConfig.get('admin_url'),
+            upgradeUrl: AppConfig.get('app_config.upgrade_url'),
             installing: false,
             installingAdding: ''
         };

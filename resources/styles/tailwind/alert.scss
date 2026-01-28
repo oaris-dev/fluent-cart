@@ -54,3 +54,22 @@
     @apply max-w-[1124px] mt-5 mb-0;
   }
 }
+
+.fct-alert-content {
+  @apply ml-2;
+  @apply flex-1;
+  .fct-alert-title {
+    @apply mb-2 mt-0 text-base text-system-dark dark:text-gray-50;
+  }
+
+  .fct-alert-text {
+    @apply mt-0 mb-2 text-sm text-system-mid dark:text-gray-300;
+    strong {
+      @apply text-red-500 font-semibold;
+    }
+  }
+
+  .fct-alert-subtext {
+    @apply m-0 text-[13px] text-system-dark font-semibold dark:text-gray-50;
+  }
+}
