@@ -55,9 +55,22 @@ Run each grep using the out-of-repo pattern file and expect **zero matches**. Sc
   git diff upstream/master..HEAD | \
       grep -nEf oaris/docs/upstream-proposals/.privacy-patterns.regex
   ```
+- [ ] Commit messages (subjects + bodies) on the feat branch — **these are publicly visible once pushed and cannot be cleanly undone**:
+  ```bash
+  git log upstream/master..HEAD --format="%H%n%s%n%b" | \
+      grep -nEf oaris/docs/upstream-proposals/.privacy-patterns.regex
+  ```
+- [ ] No upstream PR cross-reference triggers in commit messages (GitHub auto-pins these into the upstream PR sidebar):
+  ```bash
+  git log upstream/master..HEAD --format="%s %b" | \
+      grep -nE "fluent-cart/fluent-cart#[0-9]+|github\.com/fluent-cart/fluent-cart/(pull|issues)/[0-9]+"
+  ```
 - [ ] Consumer-identifying framings in the PR body are phrased as generic `consumer plugin` / `any FluentCart extension plugin` language
+- [ ] No privacy-meta-vocabulary (`neutralize`, `scrub`, `privacy`, `consumer identity`, `private repo`) in commit subjects on the feat branch — see [`PRIVACY-RULES.md`](PRIVACY-RULES.md) for the rationale
 
 A missing pattern file causes these greps to fail with an error. That's intentional — no silent pass. Do not attempt to "fix" it by running greps without `-f`; bootstrap the file first.
+
+If a commit-message hit is found: `git rebase -i upstream/master` on the feat branch, reword the offending commit(s), then re-run this section. This must happen **before** the branch is pushed.
 
 ## 4. Evidence
 
@@ -94,9 +107,10 @@ After successful submission, before session end:
 
 ## Why this file exists
 
-PR #41 shipped with two classes of miss this checklist prevents:
+The first upstream PR shipped with three classes of miss this checklist prevents:
 
-1. **Version staleness** — the PR was drafted against 1.3.15; upstream released 1.3.19 the same day; the rebase + body revision cost an hour mid-submission.
-2. **Privacy leaks** — the PR body and proposal doc contained forbidden consumer-identifying patterns that had to be scrubbed post-hoc with a live PR body edit and four doc commits.
+1. **Version staleness** — the PR was drafted against an older FluentCart release; upstream shipped a new version the same day; the rebase + body revision cost an hour mid-submission.
+2. **File-content privacy leaks** — the PR body and proposal doc contained forbidden consumer-identifying patterns that had to be scrubbed post-hoc with a live PR body edit and several doc commits.
+3. **Commit-message privacy leaks** — the scrub commits themselves leaked via their subjects (meta-vocabulary like *"neutralize"*, *"privacy"*, *"scrub"*) and bodies (which named the very strings being scrubbed). The commit subjects were frozen into the upstream PR's cross-reference sidebar by GitHub and couldn't be removed by force-push. Recovery required rebasing the whole branch onto the pre-divergence upstream commit and force-pushing to orphan the leaky commits.
 
 Every box here maps to a concrete miss. Skipping boxes reintroduces the risk.
