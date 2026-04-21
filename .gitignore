@@ -1,0 +1,49 @@
+#Node Packages
+node_modules
+
+#Kepp assets folder but remove files inside this
+assets/*
+!assets/.gitkeep
+
+#MacOs
+.DS_Store
+svn
+
+#IDE
+/.idea
+
+vendor/*
+!vendor/wpfluent/
+!vendor/openspout/
+!vendor/woocommerce/
+!vendor/composer/
+!vendor/symfony/
+!vendor/autoload.php
+
+#misc
+dev-docs/framework-doc.md
+vendor.zip
+/storage/session
+/dev/vendor
+
+builds
+package-lock.json
+yarn.lock
+*.lock
+config/vite_config.php
+
+#Editor
+/.github
+/dev/build-scoped
+assets
+
+# Local-only privacy-patterns file for upstream-PR enforcement.
+# See oaris/docs/upstream-proposals/PRIVACY-RULES.md for why it lives
+# out-of-repo. Bootstrap the file locally; missing file aborts submit.
+/oaris/docs/upstream-proposals/.privacy-patterns.regex
+
+# Claude Code session state, including the slash-command symlink to the
+# upstream-contribution tooling maintained in the private consumer repo.
+# Keeps the public fork free of operational tooling history.
+# Bootstrap per machine — see CLAUDE.md "Session commands" section.
+/.claude/
