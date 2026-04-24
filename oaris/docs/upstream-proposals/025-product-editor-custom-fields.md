@@ -4,6 +4,7 @@
 > **Priority:** Medium *(lowered from High — see History)*
 > **FluentCart Version:** 1.3.22 *(upstream/master tip; re-audited — targets at [api/Resource/ProductVariationResource.php:101,228](../../../api/Resource/ProductVariationResource.php#L101) unchanged)*
 > **Status:** Part A **submitted** upstream as [fluent-cart/fluent-cart#41](https://github.com/fluent-cart/fluent-cart/pull/41); Part B still Discussion-first, not filed yet.
+> - **Discussion (re-entry):** https://github.com/fluent-cart/fluent-cart/issues/44 (opened 2026-04-24)
 
 ## History
 
