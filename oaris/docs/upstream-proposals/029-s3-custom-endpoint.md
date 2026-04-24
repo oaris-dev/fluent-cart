@@ -2,10 +2,10 @@
 
 > **Consumer plugin:** independent of any single consumer — benefits anyone using FluentCart's S3 driver with a non-AWS provider.
 > **Priority:** Medium
-> **FluentCart Version:** 1.3.10
+> **FluentCart Version:** 1.3.22 *(re-audited 2026-04-24)*
 > **Status:** Draft — ready for public fork PR
 
-> ⚠ **Not re-audited against 1.3.15.** This doc still describes FluentCart 1.3.10 and hasn't been verified against the current `upstream/master` (1.3.15). The S3 driver and its operation classes may have been refactored since. Re-audit — and stamp the version header up-to-date — before opening a PR. See [`025-product-editor-custom-fields.md`](025-product-editor-custom-fields.md) for the pattern.
+> **1.3.22 audit note:** All 5 operation classes still at the same paths under `app/Services/FileSystem/Drivers/S3/`; `amazonaws.com` still hardcoded at 11 locations across them plus `app/Modules/StorageDrivers/S3/S3.php`. Upstream 1.3.22 added a `provider` field (defaults to `'aws'`) in the `S3.php` settings-mapping path — multi-backend aware but incomplete — and a new `S3InputValidator::validateRegion` that only knows AWS regions. **Reframing opportunity:** this proposal can now be pitched as "complete the `provider`-based abstraction that landed incomplete in 1.3.22" rather than "add a new `endpoint` field from scratch." The validator bypass for `provider !== 'aws'` should be added to acceptance criteria when refreshing the patch plan.
 
 ## Problem Statement
 

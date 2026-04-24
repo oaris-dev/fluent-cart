@@ -2,10 +2,10 @@
 
 > **Consumer plugin:** any FluentCart extension plugin needing to extend the block-based email renderer or reorder/replace receipt sections (e.g. legal-notice blocks, custom tax summaries, locale-specific headers, etc.).
 > **Priority:** Medium (revised from Low)
-> **FluentCart Version:** 1.3.10
+> **FluentCart Version:** 1.3.22 *(re-audited 2026-04-24)*
 > **Status:** Draft — revised after architectural analysis
 
-> ⚠ **Not re-audited against 1.3.15.** This doc still describes FluentCart 1.3.10 and hasn't been verified against the current `upstream/master` (1.3.15). The block-based email architecture has likely evolved since; FluentCart Pro 1.3.17+ ships block emails, which may also reshape this ask. Re-audit — and stamp the version header up-to-date — before opening a PR or Discussion. See [`025-product-editor-custom-fields.md`](025-product-editor-custom-fields.md) for the pattern.
+> **1.3.22 audit note:** The older `app/Services/BlockParser.php` and the `app/Services/Email/Blocks/*` class hierarchy (30+ classes) were consolidated into the single [`app/Services/Email/FluentBlockParser.php`](../../../app/Services/Email/FluentBlockParser.php) (1200+ lines) — our Part A target. The `is_customxxx` feature flag at [EmailNotificationMailer.php:180](../../../app/Services/Email/EmailNotificationMailer.php#L180) is still disabled, so the block path is still dormant. Part B targets in `ReceiptRenderer.php` are all intact (`render()` L66, `renderHeader()` L159, `renderAddresses()` L260, `renderOrderItems()` L446).
 
 ## Architectural Discovery
 

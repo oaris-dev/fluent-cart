@@ -2,10 +2,8 @@
 
 > **Consumer plugin:** any FluentCart extension plugin needing to inject content into transactional-email footers (e.g. legal notices, contact details, translated disclaimers, auxiliary branding, etc.).
 > **Priority:** Medium
-> **FluentCart Version:** 1.3.10
+> **FluentCart Version:** 1.3.22 *(re-audited 2026-04-24 — `getEmailFooter()` still at line 154, `parseEmailContent()` call site at line 191, zero structural drift from the 1.3.10 draft)*
 > **Status:** Draft — ready for public fork PR
-
-> ⚠ **Not re-audited against 1.3.15.** This doc still describes FluentCart 1.3.10 and hasn't been verified against the current `upstream/master` (1.3.15). Line numbers, hook availability, and file paths may have shifted. Re-audit — and stamp the version header up-to-date — before opening a PR or Discussion. See [`025-product-editor-custom-fields.md`](025-product-editor-custom-fields.md) for the pattern.
 
 ## Problem Statement
 
