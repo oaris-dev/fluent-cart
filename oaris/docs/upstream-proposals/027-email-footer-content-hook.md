@@ -12,8 +12,8 @@ The `getEmailFooter()` method in `EmailNotificationMailer.php` (lines 154-170) a
 footer from settings + FluentCart branding, with no extension point.
 
 German law requires specific legal texts in every transactional email:
-- Impressum (TMG § 5)
-- Widerrufsbelehrung (§ 355 BGB) for applicable orders
+- Impressum (legal-identity page required on German commercial sites; TMG § 5)
+- Widerrufsbelehrung (consumer withdrawal-rights policy; § 355 BGB) for applicable orders
 - VSBG (Alternative Dispute Resolution) notice
 - VAT ID if applicable
 

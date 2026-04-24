@@ -13,7 +13,7 @@
 
 ## Problem Statement
 
-FluentCart's Vue product editor renders a fixed set of per-variant `other_info` fields and gives plugins no way to register additional ones. Plugins that legitimately need to persist per-variant metadata — such as a German-compliance plugin carrying Lieferzeit (§ 312j Abs. 2 BGB), Grundpreis (§ 2 PAngV), and a per-variant digital-content waiver flag — must either inject DOM hacks into the built JS bundle (fragile across updates) or fall back to a WordPress meta box outside the SPA (inconsistent UX).
+FluentCart's Vue product editor renders a fixed set of per-variant `other_info` fields and gives plugins no way to register additional ones. Plugins that legitimately need to persist per-variant metadata — such as a German-compliance plugin carrying Lieferzeit (delivery-time statement; § 312j Abs. 2 BGB), Grundpreis (unit-price-per-unit disclosure; § 2 PAngV), and a per-variant digital-content waiver flag — must either inject DOM hacks into the built JS bundle (fragile across updates) or fall back to a WordPress meta box outside the SPA (inconsistent UX).
 
 Closing this gap has *two* distinct parts:
 
