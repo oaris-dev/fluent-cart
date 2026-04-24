@@ -20,25 +20,25 @@ submit upstream pull requests. Each branch contains one isolated, backward-compa
 
 Use a stable 4-branch workflow so sync/docs/proposals stay isolated:
 
-- `main` → **sync-only** branch (fast-forward from `upstream/master`)
+- `master` → **sync-only** branch (mirror of `upstream/master`; normally fast-forward, hard-reset if upstream force-pushes)
 - `docs/upstream-proposals` → docs/prompt branch only
-- `proposal-base` → proposal parent branch, rebased/merged from `main`
+- `proposal-base` → proposal parent branch, rebased/merged from `master`
 - `feat/*` → one proposal per branch, always created from `proposal-base`
 
-Never commit proposal code to `main` or `master`.
+Never commit proposal code to `master`.
 
 ### Daily Flow
 
 ```bash
 # 1) Sync
-git checkout main
+git checkout master
 git fetch upstream
 git merge --ff-only upstream/master
-git push origin main
+git push origin master
 
 # 2) Refresh proposal parent
 git checkout proposal-base
-git merge --ff-only main
+git merge --ff-only master
 git push origin proposal-base
 
 # 3) Start proposal work
@@ -66,7 +66,7 @@ perf: optimize product query by 40%
 
 - **Backward compatible** — Every change must have zero impact when no plugins hook in
 - **No consumer-identifying references** — see [`oaris/docs/upstream-proposals/PRIVACY-RULES.md`](oaris/docs/upstream-proposals/PRIVACY-RULES.md) for the exact forbidden patterns and approved neutral substitutes. Enforced by grep before any push or PR
-- **Clean sync branches** — `main`, `proposal-base`, and `docs/upstream-proposals` must always have clean working trees. Any in-progress work (WIP code, experimental patches, half-drafted changes) lives on a `feat/*` or `wip/*` branch — never in the working tree of a sync branch. When switching away mid-task, `git stash` or commit to a dedicated branch first. Rationale: uncommitted mods on `main` block `git merge --ff-only upstream/master` and silently diverge the fork from upstream
+- **Clean sync branches** — `master`, `proposal-base`, and `docs/upstream-proposals` must always have clean working trees. Any in-progress work (WIP code, experimental patches, half-drafted changes) lives on a `feat/*` or `wip/*` branch — never in the working tree of a sync branch. When switching away mid-task, `git stash` or commit to a dedicated branch first. Rationale: uncommitted mods on `master` block `git merge --ff-only upstream/master` and silently diverge the fork from upstream
 - **Self-contained** — Each branch/PR is independent, no cross-dependencies
 - **Minimal changes** — Touch as few files as possible per PR
 - **Test-friendly** — Include inline comments explaining how to verify the change
@@ -79,7 +79,7 @@ Every upstream PR must clear [`oaris/docs/upstream-proposals/PRE-SUBMIT-CHECKLIS
 
 Three slash commands automate the Stage 3–4 fork-side work:
 
-- `/sync-upstream` — fast-forward `main` and `proposal-base` from `upstream/master`, flag any newer changelog release
+- `/sync-upstream` — fast-forward `master` and `proposal-base` from `upstream/master`, flag any newer changelog release
 - `/audit-proposal NNN` — verify proposal `NNN`'s doc against current upstream (line numbers, default arrays, hook availability, privacy)
 - `/submit-pr NNN` — run the full pre-submit checklist, pause for human sign-off, then `gh pr create`
 
@@ -104,7 +104,7 @@ If the symlink is missing or the consumer repo isn't a sibling dir, the slash co
 
 ### Branch scope
 
-These commands are only loaded when `.claude/commands/` resolves, which depends on the symlink being present — the symlink is gitignored, so it exists independently of git-checked-out branch. You can invoke them from any branch in the fork, though the commands themselves may check out `main`, `proposal-base`, or `feat/*` as needed.
+These commands are only loaded when `.claude/commands/` resolves, which depends on the symlink being present — the symlink is gitignored, so it exists independently of git-checked-out branch. You can invoke them from any branch in the fork, though the commands themselves may check out `master`, `proposal-base`, or `feat/*` as needed.
 
 ## Upstream-release check
 
