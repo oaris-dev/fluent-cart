@@ -10,10 +10,12 @@ This is a public fork of [FluentCart](https://github.com/fluent-cart/fluent-cart
 
 - **Branch naming:** `feat/short-description`, `fix/short-description`, `docs/short-description`
 - **Commit format:** Conventional Commits — `feat: add ...`, `fix: prevent ...`, `perf: optimize ...`
-- **PRs target `master`** — they squash & merge
+- **PRs target `master`** — stated policy is squash & merge
 - **Big features → open a Discussion first** on the upstream repo before submitting the PR
 - **Small improvements** (single filter, mechanical fix) → direct PR is fine
 - **Testing:** Write unit tests when possible. Always test on clean WP install.
+
+> **Acceptance reality (as of 2026-04-23).** Upstream's actual behavior diverges from the stated policy. Outside PRs are silently batch-closed during periodic `master` force-pushes by the release-mirror workflow (4 PRs closed in one minute on 2026-04-23, including [#41](https://github.com/fluent-cart/fluent-cart/pull/41)) regardless of size or category. The Discussions tab is also dead (3 discussions ever, 0 maintainer replies). 1 outside PR has merged in repo history (#5). Treat the official "small → direct PR / big → Discussion" ladder as aspirational — neither rung produces engagement from outside contributors. Off-GitHub channels (Discord/Slack/support portal) remain unchecked and may be the only working contact path.
 
 ## Branch Strategy
 
@@ -32,8 +34,8 @@ Never commit proposal code to `master`.
 # 1) Sync
 git checkout master
 git fetch upstream
-git merge --ff-only upstream/master
-git push origin master
+git merge --ff-only upstream/master    # if this fails, upstream may have force-pushed
+git push origin master                 # /sync-upstream handles hard-reset recovery
 
 # 2) Refresh proposal parent
 git checkout proposal-base
@@ -44,14 +46,16 @@ git push origin proposal-base
 git checkout -b feat/email-footer-hook
 ```
 
-| Branch | Proposal | Status | Needs Discussion? |
-|--------|----------|--------|-------------------|
-| `feat/email-footer-hook` | Email footer content filter | Priority 1 | No (small) |
-| `feat/receipt-section-hooks` | Receipt section replacement + ordering | Priority 2 | Yes (structural) |
-| `feat/s3-custom-endpoint` | S3-compatible storage endpoint | Priority 3 | No (mechanical) |
-| `feat/product-editor-custom-fields` | Product editor custom fields + `other_info` whitelist | Priority 4 | Yes (big feature) |
+| Branch | Proposal doc | Description | Status |
+|--------|--------------|-------------|--------|
+| `feat/email-footer-hook` | [#027](upstream-proposals/027-email-footer-content-hook.md) | Email footer content filter | Re-audited 2026-04-24 against 1.3.22 — zero drift, ready to submit |
+| `feat/receipt-section-hooks` | [#028](upstream-proposals/028-receipt-template-override.md) | Receipt section replacement + ordering (Part B); block-email extensibility (Part A) | Re-audited 2026-04-24 — both targets intact in 1.3.22 |
+| `feat/s3-custom-endpoint` | [#029](upstream-proposals/029-s3-custom-endpoint.md) | S3-compatible storage endpoint | Re-audited 2026-04-24 — strengthened by upstream's incomplete `provider`-field addition in 1.3.22 |
+| `feat/product-editor-custom-fields` | [#025](upstream-proposals/025-product-editor-custom-fields.md) | Product editor custom fields + `other_info` whitelist | Submitted as [PR #41](https://github.com/fluent-cart/fluent-cart/pull/41) on 2026-04-20, **silently closed 2026-04-23** in mass-close event; technically still valid against 1.3.22 if re-attempted |
 
 > **Note:** Proposal #026 (Checkout JS Field Rendering) was withdrawn.
+>
+> **Submit order if/when the upstream channel unblocks:** #027 (smallest diff, zero drift) → #028 Part B (small, architecturally safe) → #029 (biggest scope, now has upstream momentum to piggyback on) → #028 Part A (defer until `is_customxxx` is enabled) → #025 (re-attempt only after channel resolves).
 
 ## Commit Format
 
@@ -78,7 +82,7 @@ Every upstream PR must clear [`oaris/docs/upstream-proposals/PRE-SUBMIT-CHECKLIS
 
 Three slash commands automate the Stage 3–4 fork-side work:
 
-- `/sync-upstream` — fast-forward `master` and `proposal-base` from `upstream/master`, flag any newer changelog release
+- `/sync-upstream` — sync `master` and `proposal-base` with `upstream/master`. Detects divergence via `git rev-list --left-right --count` and branches: fast-forward when only behind, hard-reset (with explicit prompt + `--force-with-lease`) when upstream has force-pushed. Also flags any newer release on the changelog
 - `/audit-proposal NNN` — verify proposal `NNN`'s doc against current upstream (line numbers, default arrays, hook availability, privacy)
 - `/submit-pr NNN` — run the full pre-submit checklist, pause for human sign-off, then `gh pr create`
 
